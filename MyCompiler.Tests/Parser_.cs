@@ -67,6 +67,8 @@ namespace MyCompiler.Tests
             string source = """
                         foobar;
                         57;
+                        true;
+                        false;
                         """;
 
             Parser parser = new(Lexer.ParseTokens(source), logger);
@@ -85,6 +87,16 @@ namespace MyCompiler.Tests
                     var es = Assert.IsType<ExpressionStatement>(s);
                     var number = Assert.IsType<IntegerLiteral>(es.Expression);
                     Assert.Equal(57L, number.Value);
+                },
+                s => {
+                    var es = Assert.IsType<ExpressionStatement>(s);
+                    var boolean = Assert.IsType<BooleanLiteral>(es.Expression);
+                    Assert.True(boolean.Value);
+                },
+                s => {
+                    var es = Assert.IsType<ExpressionStatement>(s);
+                    var boolean = Assert.IsType<BooleanLiteral>(es.Expression);
+                    Assert.False(boolean.Value);
                 }
             );
         }
@@ -114,6 +126,12 @@ namespace MyCompiler.Tests
         [InlineData("5 > 4 == 3 < 4", "((5>4)==(3<4))")]
         [InlineData("5 < 4 != 3 > 4", "((5<4)!=(3>4))")]
         [InlineData("3 + 4 * 5 == 3 * 1 + 4 * 5", "((3+(4*5))==((3*1)+(4*5)))")]
+
+        [InlineData("3 > 5 == false", "((3>5)==false)")]
+        [InlineData("3 < 5 == true", "((3<5)==true)")]
+        [InlineData("!true", "(!true)")]
+        [InlineData("!false", "(!false)")]
+
         public void Parses_expressions(string source, params string[] expected)
         {
             using var logger = new XUnitLogger<Parser>(outputHelper);

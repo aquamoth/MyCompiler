@@ -122,6 +122,8 @@ public class Parser
             Tokens.Integer => this.ParseIntegerLiteral,
             Tokens.Minus => this.ParsePrefixExpression,
             Tokens.Bang => this.ParsePrefixExpression,
+            Tokens.True => this.ParseBooleanLiteral,
+            Tokens.False => this.ParseBooleanLiteral,
             _ => null,
         };
 
@@ -195,6 +197,14 @@ public class Parser
             return new ArgumentOutOfRangeException($"Integer out of range {ExceptionLocatorString(currentToken)}");
 
         return new IntegerLiteral { Token = currentToken, Value = value };
+    }
+
+    private Result<IExpression> ParseBooleanLiteral()
+    {
+        if (!bool.TryParse(currentToken.Literal, out bool value))
+            return new ArgumentOutOfRangeException($"Boolean out of range {ExceptionLocatorString(currentToken)}");
+
+        return new BooleanLiteral { Token = currentToken, Value = value };
     }
 
 
