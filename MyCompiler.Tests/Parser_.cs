@@ -91,49 +91,32 @@ namespace MyCompiler.Tests
             );
         }
 
-        [Fact]
-        public void Parses_expression_prefixes()
-        {
-            using var logger = new XUnitLogger<Parser>(outputHelper);
-
-            string source = """
-                        -5;
-                        !foobar;
-                        """;
-            //                        5 + -10;
-
-            Parser parser = new(Lexer.ParseTokens(source), logger);
-
-            var program = parser.ParseProgram();
-
-            Assert.True(program.IsSuccess);
-
-            Assert.Collection(program.Value.Statements,
-                s =>
-                {
-                    var es = Assert.IsType<ExpressionStatement>(s);
-                    var exp = Assert.IsType<PrefixExpression>(es.Expression);
-                    Assert.Equal("(-(5))", exp.ToString());
-                },
-                s =>
-                {
-                    var es = Assert.IsType<ExpressionStatement>(s);
-                    var exp = Assert.IsType<PrefixExpression>(es.Expression);
-                    Assert.Equal("(!(foobar))", exp.ToString());
-                }
-            );
-        }
-
         [Theory]
-        [InlineData("5 + 6", "((5)+(6))")]
-        [InlineData("5 - 6", "((5)-(6))")]
-        [InlineData("5 * 6", "((5)*(6))")]
-        [InlineData("5 / 6", "((5)/(6))")]
-        [InlineData("5 > 6", "((5)>(6))")]
-        [InlineData("5 < 6", "((5)<(6))")]
-        [InlineData("5 == 6", "((5)==(6))")]
-        [InlineData("5 != 6", "((5)!=(6))")]
-        public void Parses_expression_infixes(string source, string expected)
+        [InlineData("-5", "(-5)")]
+        [InlineData("!foobar", "(!foobar)")]
+
+        [InlineData("5 + 6", "(5+6)")]
+        [InlineData("5 - 6", "(5-6)")]
+        [InlineData("5 * 6", "(5*6)")]
+        [InlineData("5 / 6", "(5/6)")]
+        [InlineData("5 > 6", "(5>6)")]
+        [InlineData("5 < 6", "(5<6)")]
+        [InlineData("5 == 6", "(5==6)")]
+        [InlineData("5 != 6", "(5!=6)")]
+
+        [InlineData("-a * b", "((-a)*b)")]
+        [InlineData("!-a", "(!(-a))")]
+        [InlineData("a + b + c", "((a+b)+c)")]
+        [InlineData("a + b - c", "((a+b)-c)")]
+        [InlineData("a * b * c", "((a*b)*c)")]
+        [InlineData("a * b / c", "((a*b)/c)")]
+        [InlineData("a + b / c", "(a+(b/c))")]
+        [InlineData("a + b * c + d / e - f", "(((a+(b*c))+(d/e))-f)")]
+        [InlineData("3 + 4; -5 * 5", "(3+4)", "((-5)*5)")]
+        [InlineData("5 > 4 == 3 < 4", "((5>4)==(3<4))")]
+        [InlineData("5 < 4 != 3 > 4", "((5<4)!=(3>4))")]
+        [InlineData("3 + 4 * 5 == 3 * 1 + 4 * 5", "((3+(4*5))==((3*1)+(4*5)))")]
+        public void Parses_expressions(string source, params string[] expected)
         {
             using var logger = new XUnitLogger<Parser>(outputHelper);
 
@@ -142,16 +125,13 @@ namespace MyCompiler.Tests
             var program = parser.ParseProgram();
 
             Assert.True(program.IsSuccess);
+            Assert.Equal(expected.Length, program.Value.Statements.Count);
 
-            Assert.Collection(program.Value.Statements,
-                s =>
-                {
-                    var es = Assert.IsType<ExpressionStatement>(s);
-                    var actualExpression = Assert.IsType<InfixExpression>(es.Expression);
-                    
-                    Assert.Equal(expected, actualExpression.ToString());
-                }
-            );
+            foreach (var (actualStatement, expectedStatement) in program.Value.Statements.Zip(expected))
+            {
+                var es = Assert.IsType<ExpressionStatement>(actualStatement);
+                Assert.Equal(expectedStatement, es.Expression.ToString());
+            }
         }
     }
 }

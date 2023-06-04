@@ -6,22 +6,22 @@ public interface IExpression
 {
 }
 
-[DebuggerDisplay("({Value,nq})")]
+[DebuggerDisplay("{Value,nq}")]
 public readonly struct Identifier : IExpression
 {
     public Token Token { get; init; }
     public string Value { get; init; }
 
-    public override string ToString() => $"({Value})";
+    public override string ToString() => $"{Value}";
 }
 
-[DebuggerDisplay("({Value,nq})")]
+[DebuggerDisplay("{Value,nq}")]
 public readonly struct IntegerLiteral : IExpression
 {
     public Token Token { get; init; }
     public long Value { get; init; }
 
-    public override string ToString() => $"({Value})";
+    public override string ToString() => $"{Value}";
 }
 
 [DebuggerDisplay("({Operator,nq}{Right})")]
@@ -44,11 +44,3 @@ public readonly struct InfixExpression : IExpression
 
     public override string ToString() => $"({Left}{Operator}{Right})";
 }
-
-//[DebuggerDisplay("[expression]")]
-//public readonly struct Expression
-//{
-//    public Expression Left { get; init; }
-//    public Token Operator { get; init; }
-//    public Expression Right { get; init; }
-//}
