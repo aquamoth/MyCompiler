@@ -18,7 +18,7 @@ namespace MyCompiler.Tests
                 new Token(Tokens.RSquirly,5,1  ,1,6),
                 new Token(Tokens.Comma,6,1     ,1,7),
                 new Token(Tokens.Semicolon,7,1 ,1,8),
-                new Token(Tokens.Eof,8,0       ,1,9)
+                new Token(Tokens.EndOfFile,8,0       ,1,9)
             };
 
             Assert.Equal(expectedResult, tokens);
@@ -33,7 +33,7 @@ namespace MyCompiler.Tests
             var expectedResult = new List<Token>
             {
                 new Token(Tokens.Illegal, 0, 1,1,1),
-                new Token(Tokens.Eof, 1, 0,1,2)
+                new Token(Tokens.EndOfFile, 1, 0,1,2)
             };
 
             Assert.Equal(expectedResult, tokens);
@@ -95,7 +95,7 @@ namespace MyCompiler.Tests
                 t => Assert.Equal(new Token(Tokens.RParen, 94, 1, 6, 27), t),      // )
                 t => Assert.Equal(new Token(Tokens.Semicolon, 95, 1, 6, 28), t),   // ;
 
-                t => Assert.Equal(new Token(Tokens.Eof, 96, 0, 6, 29), t)
+                t => Assert.Equal(new Token(Tokens.EndOfFile, 96, 0, 6, 29), t)
             );
         }
     }

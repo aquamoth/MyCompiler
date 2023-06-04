@@ -17,6 +17,6 @@
         Function,
 
         Illegal,
-        Eof
+        EndOfFile
     }
 }

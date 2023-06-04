@@ -35,7 +35,7 @@ public static partial class Lexer
                 while (position < input.Length && char.IsDigit(input[position]));
 
                 //var word = input[start..position];
-                yield return new Token(Tokens.Integer, start, position - start, lineNumber, start - lineStart + 1);
+                yield return Token.From(Tokens.Integer, start, position, lineNumber, lineStart);
                 continue;
             }
 
@@ -56,7 +56,7 @@ public static partial class Lexer
                     "fn" => Tokens.Function,
                     _ => Tokens.Identifier
                 };
-                yield return new Token(token, start, position - start, lineNumber, start - lineStart + 1);
+                yield return Token.From(token, start, position, lineNumber, lineStart);
                 continue;
             }
 
@@ -74,12 +74,12 @@ public static partial class Lexer
                     ';' => Tokens.Semicolon,
                     _ => Tokens.Illegal
                 };
-                yield return new Token(token, position, 1, lineNumber, position - lineStart + 1);
+                yield return Token.From(token, position, position + 1, lineNumber, lineStart);
             }
 
             position++;
         }
 
-        yield return new Token(Tokens.Eof, position, 0, lineNumber, position - lineStart + 1);
+        yield return Token.From(Tokens.EndOfFile, position, position, lineNumber, lineStart);
     }
 }
