@@ -25,6 +25,8 @@ public class Parser
         AdvanceTokens();
         AdvanceTokens();
 
+        var allErrors = new List<Exception>();
+
         while (currentToken.Type != Tokens.EndOfFile)
         {
 
@@ -33,23 +35,29 @@ public class Parser
                 Tokens.Let => ParseLetStatement(),
                 //Tokens.Return => ParseReturnStatement(),
                 //Tokens.If => ParseIfStatement(),
+                Tokens.Semicolon => Result<Node>.Success(new EmptyStatementNode { Token = currentToken }),
                 _ => Result<Node>.Failure(new NotSupportedException($"Token type {currentToken.Type} is not yet supported.")) //Silently ignore other statements
             };
 
             if (statement.IsSuccess)
             {
-                program.Statements.Add(statement.Value);
+                if (currentToken.Type != Tokens.Semicolon)
+                {
+                    program.Statements.Add(statement.Value);
+                }
             }
             else
             {
                 logger?.LogCritical(statement.Error, "Error parsing source!");
-                Console.WriteLine(statement.Error!.Message);
+                allErrors.Add(statement.Error!);
             }
 
             AdvanceTokens();
         }
 
-        return program;
+        return allErrors.Any() 
+            ? Result<ProgramNode>.Failure(new AggregateException(allErrors)) 
+            : program;
     }
 
     private Result<Node> ParseLetStatement()

@@ -10,6 +10,11 @@ public class ProgramNode
     public List<Node> Statements = new();
 }
 
+public readonly struct EmptyStatementNode : Node
+{
+    public Token Token { get; init; }
+}
+
 public readonly struct LetStatement : Node
 {
     public Token Token { get; init; }
