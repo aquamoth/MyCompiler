@@ -18,18 +18,19 @@ public readonly struct EmptyStatement : IAstStatement
     public Token Token { get; init; }
 }
 
-[DebuggerDisplay("Let {Identifier} = ?")]
+[DebuggerDisplay("Let {Identifier} = {Expression}")]
 public readonly struct LetStatement : IAstStatement
 {
     public Token Token { get; init; }
     public Identifier Identifier { get; init; }
+    public IExpression Expression { get; init; }
 }
 
 [DebuggerDisplay("Return {ReturnValue}")]
 public readonly struct ReturnStatement : IAstStatement
 {
     public Token Token { get; init; }
-    public IAstStatement ReturnValue { get; init; }
+    public IExpression ReturnValue { get; init; }
 }
 
 [DebuggerDisplay("{Expression}")]

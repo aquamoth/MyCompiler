@@ -13,16 +13,14 @@ namespace MyCompiler.Tests
             this.outputHelper = outputHelper;
         }
 
-        [Fact]
-        public void Parses_let_statements()
+        [Theory]
+        [InlineData("let x = 5;", "x", "5")]
+        [InlineData("let y = 10;", "y", "10")]
+        [InlineData("let foobar = 838383;", "foobar", "838383")]
+        [InlineData("let hyped = 2*bar-foo;", "hyped", "((2*bar)-foo)")]
+        public void Parses_let_statements(string source, string identifier, string expression)
         {
             using var logger = new XUnitLogger<Parser>(outputHelper);
-
-            string source = """
-                let x = 5;
-                let y = 10;
-                let foobar = 838383;
-                """;
 
             Parser parser = new(Lexer.ParseTokens(source), logger);
 
@@ -31,22 +29,21 @@ namespace MyCompiler.Tests
             Assert.True(program.IsSuccess);
 
             Assert.Collection(program.Value.Statements,
-                s => Assert.Equal(Tokens.Let, s.Token.Type),
-                s => Assert.Equal(Tokens.Let, s.Token.Type),
-                s => Assert.Equal(Tokens.Let, s.Token.Type)
+                s => {
+                    var rs = Assert.IsType<LetStatement>(s);
+                    Assert.Equal(identifier, rs.Identifier.Value);
+                    Assert.Equal(expression, rs.Expression.ToString());
+                }
             );
         }
 
-        [Fact]
-        public void Parses_return_statements()
+        [Theory]
+        [InlineData("return 5;", "5")]
+        [InlineData("return 10;", "10")]
+        [InlineData("return 993322;", "993322")]
+        public void Parses_return_statements(string source, string expected)
         {
             using var logger = new XUnitLogger<Parser>(outputHelper);
-
-            string source = """
-                return 5;
-                return 10;
-                return 993322;
-                """;
 
             Parser parser = new(Lexer.ParseTokens(source), logger);
 
@@ -55,9 +52,10 @@ namespace MyCompiler.Tests
             Assert.True(program.IsSuccess);
 
             Assert.Collection(program.Value.Statements,
-                s => Assert.Equal(Tokens.Return, s.Token.Type),
-                s => Assert.Equal(Tokens.Return, s.Token.Type),
-                s => Assert.Equal(Tokens.Return, s.Token.Type)
+                s => { 
+                    var rs = Assert.IsType<ReturnStatement>(s);
+                    Assert.Equal(expected, rs.ReturnValue.ToString());
+                }
             );
         }
 

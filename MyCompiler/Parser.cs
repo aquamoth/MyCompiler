@@ -14,6 +14,7 @@ public class Parser
     {
         tokenEnumerator = tokenSource.GetEnumerator();
         this.logger = logger;
+        this.currentToken = Token.From(Tokens.Illegal, "", 0, 0, 0, 0);
     }
 
     public Result<AstProgram> ParseProgram()
@@ -32,9 +33,7 @@ public class Parser
             {
                 Tokens.Let => ParseLetStatement(),
                 Tokens.Return => ParseReturnStatement(),
-                //Tokens.If => ParseIfStatement(),
                 Tokens.Semicolon => Result<IAstStatement>.Success(new EmptyStatement { Token = currentToken }),
-                //_ => Result<IAstStatement>.Failure(new NotSupportedException($"Token type {currentToken.Type} is not yet supported.")) //Silently ignore other statements
                 _ => ParseExpressionStatement()
             };
 
@@ -62,43 +61,39 @@ public class Parser
 
         var identifierToken = AdvanceTokenIf(Tokens.Identifier);
         if (!identifierToken.IsSuccess)
-            return Result<IAstStatement>.Failure(identifierToken.Error!);
+            return identifierToken.Error!;
 
         var identifier = new Identifier { Token = currentToken, Value = identifierToken.Value.Literal };
 
         var assignmentToken = AdvanceTokenIf(Tokens.Assign);
         if (!assignmentToken.IsSuccess)
-            return Result<IAstStatement>.Failure(assignmentToken.Error!);
+            return assignmentToken.Error!;
 
+        AdvanceToken();
 
-        //TODO: We're skipping the expressions until we encounter a semicolon.
-        while (PeekToken.Type != Tokens.Semicolon)
-            AdvanceToken();
+        var expression = ParseExpression();
+        if (!expression.IsSuccess)
+            return expression.Error!;
 
 
         AdvanceTokenIf(Tokens.Semicolon);
 
-        return new LetStatement { Token = letToken, Identifier = identifier };
+        return new LetStatement { Token = letToken, Identifier = identifier, Expression = expression.Value };
     }
 
     private Result<IAstStatement> ParseReturnStatement()
     {
         var returnToken = currentToken;
+        
+        AdvanceToken();
 
-
-
-        //TODO: We're skipping the expressions until we encounter a semicolon.
-        while (PeekToken.Type != Tokens.Semicolon)
-            AdvanceToken();
-        var expression = new EmptyStatement();
-        //var expression = ParseExpression();
-        //if (!expression.IsSuccess)
-        //    return Result<ReturnStatement>.Failure(expression.Error!);
-
+        var expression = ParseExpression();
+        if (!expression.IsSuccess)
+            return expression.Error!;
 
         AdvanceTokenIf(Tokens.Semicolon);
 
-        return new ReturnStatement { Token = returnToken, ReturnValue = expression };
+        return new ReturnStatement { Token = returnToken, ReturnValue = expression.Value };
     }
 
     private Result<IAstStatement> ParseExpressionStatement()
@@ -118,6 +113,7 @@ public class Parser
         return statement;
     }
 
+
     private Result<IExpression> ParseExpression(Precedence precedence = Precedence.Lowest)
     {
         Func<Result<IExpression>>? prefixFunction = currentToken.Type switch
@@ -136,7 +132,7 @@ public class Parser
         if (!leftExpression.IsSuccess)
             return leftExpression;
 
-        while (PeekToken.Type != Tokens.Semicolon && precedence < GetPrecedence(PeekToken.Type))
+        while (PeekToken.Type != Tokens.Semicolon && precedence < OperatorPrecedence(PeekToken.Type))
         {
             Func<IExpression, Result<IExpression>>? infixFunction = PeekToken.Type switch
             {
@@ -161,19 +157,6 @@ public class Parser
         return leftExpression;
     }
 
-    private Result<IExpression> ParseIdentifier()
-    {
-        return new Identifier { Token = currentToken, Value = currentToken.Literal };
-    }
-
-    private Result<IExpression> ParseIntegerLiteral()
-    {
-        if (!long.TryParse(currentToken.Literal, out long value))
-            return new ArgumentOutOfRangeException($"Integer out of range {ExceptionLocatorString(currentToken)}");
-
-        return new IntegerLiteral { Token = currentToken, Value = value };
-    }
-
     private Result<IExpression> ParsePrefixExpression()
     {
         var operatorToken = currentToken;
@@ -189,7 +172,7 @@ public class Parser
     private Result<IExpression> ParseInfixExpression(IExpression left)
     {
         var operatorToken = currentToken;
-        var precedence = GetPrecedence(currentToken.Type);
+        var precedence = OperatorPrecedence(currentToken.Type);
 
         AdvanceToken();
 
@@ -199,6 +182,21 @@ public class Parser
 
         return new InfixExpression { Token = operatorToken, Operator = operatorToken.Literal, Left = left, Right = right.Value };
     }
+
+
+    private Result<IExpression> ParseIdentifier()
+    {
+        return new Identifier { Token = currentToken, Value = currentToken.Literal };
+    }
+
+    private Result<IExpression> ParseIntegerLiteral()
+    {
+        if (!long.TryParse(currentToken.Literal, out long value))
+            return new ArgumentOutOfRangeException($"Integer out of range {ExceptionLocatorString(currentToken)}");
+
+        return new IntegerLiteral { Token = currentToken, Value = value };
+    }
+
 
     private Result<Token> AdvanceTokenIf(Tokens identifier)
     {
@@ -218,7 +216,7 @@ public class Parser
     private Token PeekToken => tokenEnumerator.Current;
 
 
-    private static Precedence GetPrecedence(Tokens type) => type switch
+    private static Precedence OperatorPrecedence(Tokens type) => type switch
     {
         Tokens.Equal => Precedence.Equals,
         Tokens.NotEqual => Precedence.Equals,

@@ -2,30 +2,27 @@
 
 namespace MyCompiler.Tests;
 
-public class Result_
+public class ResultOfT_
 {
-    public void Runner()
-    {
-        var result = MyFunctionThatResults(69);
-        Console.WriteLine((string)result);
+    //[Fact]
+    //public void Implicitly_converts_successfull_results()
+    //{
+    //    var result = MyFunctionThatResults(69);
+    //    Assert.True(result.IsSuccess);
+    //    Assert.Equal("69", (string)result);
+    //}
 
-        if (result.IsSuccess)
-        {
-
-        }
-    }
-
-    public Result<string> MyFunctionThatResults(int i)
-    {
-        return Result.Call(() => MyUnsafeFunctionThatThrows(i));
-    }
+    //public Result<string> MyFunctionThatResults(int i)
+    //{
+    //    return Result.Call(() => MyUnsafeFunctionThatThrows(i));
+    //}
 
 
-    public string MyUnsafeFunctionThatThrows(int i)
-    {
-        if (i == 69)
-            throw new NotFiniteNumberException();
+    //private string MyUnsafeFunctionThatThrows(int i)
+    //{
+    //    if (i == 69)
+    //        throw new NotFiniteNumberException();
 
-        return i.ToString();
-    }
+    //    return i.ToString();
+    //}
 }
