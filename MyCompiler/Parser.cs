@@ -124,6 +124,8 @@ public class Parser
         {
             Tokens.Identifier => this.ParseIdentifier,
             Tokens.Integer => this.ParseIntegerLiteral,
+            Tokens.Minus => this.ParsePrefixExpression,
+            Tokens.Bang => this.ParsePrefixExpression,
             _ => null,
         };
 
@@ -157,6 +159,18 @@ public class Parser
             return new ArgumentOutOfRangeException($"Integer out of range {ExceptionLocatorString(currentToken)}");
 
         return new IntegerLiteral { Token = currentToken, Value = value };
+    }
+
+    private Result<IExpression> ParsePrefixExpression()
+    {
+        var operatorToken = currentToken;
+        AdvanceTokens();
+
+        var right = ParseExpression(Precedence.Prefix);
+        if (!right.IsSuccess)
+            return right;
+
+        return new PrefixExpression { Token = operatorToken, Operator = operatorToken.Literal, Right = right.Value };
     }
 
     private Result<Token> AdvanceTokenIf(Tokens identifier)

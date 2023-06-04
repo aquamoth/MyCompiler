@@ -62,7 +62,7 @@ namespace MyCompiler.Tests
         }
 
         [Fact]
-        public void Parses_expression_identifier()
+        public void Parses_expression_identifier_and_number()
         {
             using var logger = new XUnitLogger<Parser>(outputHelper);
 
@@ -89,7 +89,39 @@ namespace MyCompiler.Tests
                     Assert.Equal(57L, number.Value);
                 }
             );
+        }
 
+        [Fact]
+        public void Parses_expression_prefixes()
+        {
+            using var logger = new XUnitLogger<Parser>(outputHelper);
+
+            string source = """
+                        -5;
+                        !foobar;
+                        """;
+            //                        5 + -10;
+
+            Parser parser = new(Lexer.ParseTokens(source), logger);
+
+            var program = parser.ParseProgram();
+
+            Assert.True(program.IsSuccess);
+
+            Assert.Collection(program.Value.Statements,
+                s =>
+                {
+                    var es = Assert.IsType<ExpressionStatement>(s);
+                    var exp = Assert.IsType<PrefixExpression>(es.Expression);
+                    Assert.Equal("(-(5))", exp.ToString());
+                },
+                s =>
+                {
+                    var es = Assert.IsType<ExpressionStatement>(s);
+                    var exp = Assert.IsType<PrefixExpression>(es.Expression);
+                    Assert.Equal("(!(foobar))", exp.ToString());
+                }
+            );
         }
     }
 }
