@@ -73,6 +73,8 @@ public readonly struct Result<T>
     public static implicit operator Result<T>(T value) => new(value);
     public static explicit operator T(Result<T> result) => result.Value;
 
+    public static implicit operator Result<T>(Exception ex) => new(ex);
+
     public static T operator ~(Result<T> r)
     {
         if (!r.IsSuccess) throw new NullReferenceException();

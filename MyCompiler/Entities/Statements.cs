@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics;
-using System.Runtime.CompilerServices;
 
 namespace MyCompiler.Entities;
 
@@ -37,25 +36,5 @@ public readonly struct ReturnStatement : IAstStatement
 public readonly struct ExpressionStatement : IAstStatement
 {
     public Token Token { get; init; }
-    public Expression Expression { get; init; }
+    public IExpression Expression { get; init; }
 }
-
-[DebuggerDisplay("{Name,nq}")]
-public readonly struct Identifier
-{
-    public Token Token { get; init; }
-    public string Name { get; init; }
-}
-
-[DebuggerDisplay("[expression]")]
-public readonly struct Expression
-{
-
-}
-
-//public readonly struct OperatorExpression : AstNode
-//{
-//    public Node Left { get; init; }
-//    public Token Operator { get; init; }
-//    public Node Right { get; init; }
-//}

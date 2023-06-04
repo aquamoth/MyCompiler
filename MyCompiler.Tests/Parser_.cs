@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging.Abstractions;
+using MyCompiler.Entities;
 using Xunit.Abstractions;
 
 namespace MyCompiler.Tests
@@ -58,6 +59,37 @@ namespace MyCompiler.Tests
                 s => Assert.Equal(Tokens.Return, s.Token.Type),
                 s => Assert.Equal(Tokens.Return, s.Token.Type)
             );
+        }
+
+        [Fact]
+        public void Parses_expression_identifier()
+        {
+            using var logger = new XUnitLogger<Parser>(outputHelper);
+
+            string source = """
+                        foobar;
+                        57;
+                        """;
+
+            Parser parser = new(Lexer.ParseTokens(source), logger);
+
+            var program = parser.ParseProgram();
+
+            Assert.True(program.IsSuccess);
+
+            Assert.Collection(program.Value.Statements,
+                s => {
+                    var es = Assert.IsType<ExpressionStatement>(s);
+                    var id = Assert.IsType<Identifier>(es.Expression);
+                    Assert.Equal("foobar", id.Value);
+                },
+                s => {
+                    var es = Assert.IsType<ExpressionStatement>(s);
+                    var number = Assert.IsType<IntegerLiteral>(es.Expression);
+                    Assert.Equal(57L, number.Value);
+                }
+            );
+
         }
     }
 }
