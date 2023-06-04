@@ -20,8 +20,8 @@ public class Parser
     {
         var program = new AstProgram();
 
-        AdvanceTokens();
-        AdvanceTokens();
+        AdvanceToken();
+        AdvanceToken();
 
         var allErrors = new List<Exception>();
 
@@ -48,7 +48,7 @@ public class Parser
                 allErrors.Add(statement.Error!);
             }
 
-            AdvanceTokens();
+            AdvanceToken();
         }
 
         return allErrors.Any()
@@ -73,7 +73,7 @@ public class Parser
 
         //TODO: We're skipping the expressions until we encounter a semicolon.
         while (PeekToken.Type != Tokens.Semicolon)
-            AdvanceTokens();
+            AdvanceToken();
 
 
         AdvanceTokenIf(Tokens.Semicolon);
@@ -89,7 +89,7 @@ public class Parser
 
         //TODO: We're skipping the expressions until we encounter a semicolon.
         while (PeekToken.Type != Tokens.Semicolon)
-            AdvanceTokens();
+            AdvanceToken();
         var expression = new EmptyStatement();
         //var expression = ParseExpression();
         //if (!expression.IsSuccess)
@@ -136,14 +136,27 @@ public class Parser
         if (!leftExpression.IsSuccess)
             return leftExpression;
 
-        //while (PeekToken.Type != Tokens.Semicolon && precedence < GetPrecedence(PeekToken.Type))
-        //{
-        //    var infix = InfixParseFunctions[PeekToken.Type];
-        //    if (infix == null)
-        //        return Result<Expression>.Failure(new NotSupportedException($"No infix parse function for token type {PeekToken.Type}."));
-        //    AdvanceTokens();
-        //    leftExpression = infix(leftExpression);
-        //}
+        while (PeekToken.Type != Tokens.Semicolon && precedence < GetPrecedence(PeekToken.Type))
+        {
+            Func<IExpression, Result<IExpression>>? infixFunction = PeekToken.Type switch
+            {
+                Tokens.Plus => this.ParseInfixExpression,
+                Tokens.Minus => this.ParseInfixExpression,
+                Tokens.Asterisk => this.ParseInfixExpression,
+                Tokens.ForwardSlash => this.ParseInfixExpression,
+                Tokens.GreaterThan => this.ParseInfixExpression,
+                Tokens.LessThan => this.ParseInfixExpression,
+                Tokens.Equal => this.ParseInfixExpression,
+                Tokens.NotEqual => this.ParseInfixExpression,
+                _ => null,
+            };
+
+            if (infixFunction == null)
+                return leftExpression;
+
+            AdvanceToken();
+            leftExpression = infixFunction(leftExpression.Value);
+        }
 
         return leftExpression;
     }
@@ -164,7 +177,7 @@ public class Parser
     private Result<IExpression> ParsePrefixExpression()
     {
         var operatorToken = currentToken;
-        AdvanceTokens();
+        AdvanceToken();
 
         var right = ParseExpression(Precedence.Prefix);
         if (!right.IsSuccess)
@@ -173,16 +186,30 @@ public class Parser
         return new PrefixExpression { Token = operatorToken, Operator = operatorToken.Literal, Right = right.Value };
     }
 
+    private Result<IExpression> ParseInfixExpression(IExpression left)
+    {
+        var operatorToken = currentToken;
+        var precedence = GetPrecedence(currentToken.Type);
+
+        AdvanceToken();
+
+        var right = ParseExpression(precedence);
+        if (!right.IsSuccess)
+            return right;
+
+        return new InfixExpression { Token = operatorToken, Operator = operatorToken.Literal, Left = left, Right = right.Value };
+    }
+
     private Result<Token> AdvanceTokenIf(Tokens identifier)
     {
         if (PeekToken.Type != identifier)
             return new Exception($"Expected '{identifier}' but found '{PeekToken.Type}' {ExceptionLocatorString(PeekToken)}.");
 
-        AdvanceTokens();
+        AdvanceToken();
         return currentToken;
     }
 
-    private void AdvanceTokens()
+    private void AdvanceToken()
     {
         currentToken = tokenEnumerator.Current;
         tokenEnumerator.MoveNext();
@@ -190,6 +217,19 @@ public class Parser
 
     private Token PeekToken => tokenEnumerator.Current;
 
+
+    private static Precedence GetPrecedence(Tokens type) => type switch
+    {
+        Tokens.Equal => Precedence.Equals,
+        Tokens.NotEqual => Precedence.Equals,
+        Tokens.LessThan => Precedence.LessGreater,
+        Tokens.GreaterThan => Precedence.LessGreater,
+        Tokens.Plus => Precedence.Sum,
+        Tokens.Minus => Precedence.Sum,
+        Tokens.ForwardSlash => Precedence.Product,
+        Tokens.Asterisk => Precedence.Product,
+        _ => Precedence.Lowest
+    };
 
     private static string ExceptionLocatorString(Token token) => $"at Line {token.Line}, Columns {token.Column}";
 }

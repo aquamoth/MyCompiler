@@ -34,6 +34,16 @@ public readonly struct PrefixExpression : IExpression
     public override string ToString() => $"({Operator}{Right})";
 }
 
+[DebuggerDisplay("({Left}{Operator,nq}{Right})")]
+public readonly struct InfixExpression : IExpression
+{
+    public Token Token { get; init; }
+    public IExpression Left { get; init; }
+    public string Operator { get; init; }
+    public IExpression Right { get; init; }
+
+    public override string ToString() => $"({Left}{Operator}{Right})";
+}
 
 //[DebuggerDisplay("[expression]")]
 //public readonly struct Expression

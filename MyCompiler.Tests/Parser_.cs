@@ -123,5 +123,35 @@ namespace MyCompiler.Tests
                 }
             );
         }
+
+        [Theory]
+        [InlineData("5 + 6", "((5)+(6))")]
+        [InlineData("5 - 6", "((5)-(6))")]
+        [InlineData("5 * 6", "((5)*(6))")]
+        [InlineData("5 / 6", "((5)/(6))")]
+        [InlineData("5 > 6", "((5)>(6))")]
+        [InlineData("5 < 6", "((5)<(6))")]
+        [InlineData("5 == 6", "((5)==(6))")]
+        [InlineData("5 != 6", "((5)!=(6))")]
+        public void Parses_expression_infixes(string source, string expected)
+        {
+            using var logger = new XUnitLogger<Parser>(outputHelper);
+
+            Parser parser = new(Lexer.ParseTokens(source), logger);
+
+            var program = parser.ParseProgram();
+
+            Assert.True(program.IsSuccess);
+
+            Assert.Collection(program.Value.Statements,
+                s =>
+                {
+                    var es = Assert.IsType<ExpressionStatement>(s);
+                    var actualExpression = Assert.IsType<InfixExpression>(es.Expression);
+                    
+                    Assert.Equal(expected, actualExpression.ToString());
+                }
+            );
+        }
     }
 }
