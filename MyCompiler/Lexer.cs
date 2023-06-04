@@ -10,8 +10,6 @@ public static partial class Lexer
 
         while (position < input.Length)
         {
-            var ch = input[position];
-
             if (char.IsWhiteSpace(input[position]))
             {
                 if (input[position] == '\n')
@@ -24,15 +22,16 @@ public static partial class Lexer
                 continue;
             }
 
+            var ch = input[position];
+            var start = position;
+            position++;
 
             if (char.IsDigit(ch))
             {
-                var start = position;
-                do
+                while (char.IsDigit(input.Peek(position)))
                 {
                     position++;
                 }
-                while (position < input.Length && char.IsDigit(input[position]));
 
                 //var word = input[start..position];
                 yield return Token.From(Tokens.Integer, start, position, lineNumber, lineStart);
@@ -42,30 +41,58 @@ public static partial class Lexer
 
             if (char.IsLetter(ch))
             {
-                var start = position;
-                do
+                while (char.IsLetterOrDigit(input.Peek(position)))
                 {
                     position++;
                 }
-                while (position < input.Length && char.IsLetterOrDigit(input[position]));
 
                 var word = input[start..position];
                 var token = word switch
                 {
                     "let" => Tokens.Let,
                     "fn" => Tokens.Function,
+                    "if" => Tokens.If,
+                    "else" => Tokens.Else,
+                    "return" => Tokens.Return,
+                    "true" => Tokens.True,
+                    "false" => Tokens.False,
                     _ => Tokens.Identifier
                 };
                 yield return Token.From(token, start, position, lineNumber, lineStart);
                 continue;
             }
 
+            if (ch == '=')
+            {
+                if (input.Peek(position) == '=')
+                {
+                    position += 1;
+                    yield return Token.From(Tokens.Equal, start, position, lineNumber, lineStart);
+                    continue;
+                }
+            }
+
+            if (ch == '!')
+            {
+                if (input.Peek(position) == '=')
+                {
+                    position += 1;
+                    yield return Token.From(Tokens.NotEqual, start, position, lineNumber, lineStart);
+                    continue;
+                }
+            }
 
             {
                 var token = ch switch
                 {
-                    '=' => Tokens.Equal,
+                    '=' => Tokens.Assign,
                     '+' => Tokens.Plus,
+                    '-' => Tokens.Minus,
+                    '/' => Tokens.ForwardSlash,
+                    '!' => Tokens.Bang,
+                    '*' => Tokens.Asterisk,
+                    '<' => Tokens.LessThan,
+                    '>' => Tokens.GreaterThan,
                     '(' => Tokens.LParen,
                     ')' => Tokens.RParen,
                     '{' => Tokens.LSquirly,
@@ -74,12 +101,19 @@ public static partial class Lexer
                     ';' => Tokens.Semicolon,
                     _ => Tokens.Illegal
                 };
-                yield return Token.From(token, position, position + 1, lineNumber, lineStart);
+                yield return Token.From(token, start, position, lineNumber, lineStart);
             }
-
-            position++;
         }
 
         yield return Token.From(Tokens.EndOfFile, position, position, lineNumber, lineStart);
+    }
+
+    private static char Peek(this string input, int position)
+    {
+        if (position >= input.Length)
+        {
+            return '\0';
+        }
+        return input[position];
     }
 }
