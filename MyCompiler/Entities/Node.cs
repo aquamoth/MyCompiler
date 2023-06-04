@@ -1,41 +1,56 @@
-﻿namespace MyCompiler.Entities;
+﻿using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
-public interface IAstNode
+namespace MyCompiler.Entities;
+
+public interface IAstStatement
 {
     public Token Token { get; init; }
 }
 
 public class AstProgram
 {
-    public List<IAstNode> Statements = new();
+    public List<IAstStatement> Statements = new();
 }
 
-public readonly struct EmptyStatement : IAstNode
+[DebuggerDisplay("Empty")]
+public readonly struct EmptyStatement : IAstStatement
 {
     public Token Token { get; init; }
 }
 
-public readonly struct LetStatement : IAstNode
+[DebuggerDisplay("Let {Identifier} = ?")]
+public readonly struct LetStatement : IAstStatement
 {
     public Token Token { get; init; }
     public Identifier Identifier { get; init; }
 }
 
-public readonly struct ReturnStatement : IAstNode
+[DebuggerDisplay("Return {ReturnValue}")]
+public readonly struct ReturnStatement : IAstStatement
 {
     public Token Token { get; init; }
-    public IAstNode ReturnValue { get; init; }
+    public IAstStatement ReturnValue { get; init; }
 }
 
-public readonly struct Identifier : IAstNode
+[DebuggerDisplay("{Expression}")]
+public readonly struct ExpressionStatement : IAstStatement
+{
+    public Token Token { get; init; }
+    public Expression Expression { get; init; }
+}
+
+[DebuggerDisplay("{Name,nq}")]
+public readonly struct Identifier
 {
     public Token Token { get; init; }
     public string Name { get; init; }
 }
 
-public readonly struct Expression : IAstNode
+[DebuggerDisplay("[expression]")]
+public readonly struct Expression
 {
-    public Token Token { get; init; }
+
 }
 
 //public readonly struct OperatorExpression : AstNode

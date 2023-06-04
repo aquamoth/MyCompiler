@@ -31,13 +31,13 @@ public class Parser
         while (currentToken.Type != Tokens.EndOfFile)
         {
 
-            Result<IAstNode> statement = currentToken.Type switch
+            Result<IAstStatement> statement = currentToken.Type switch
             {
                 Tokens.Let => ParseLetStatement(),
                 Tokens.Return => ParseReturnStatement(),
                 //Tokens.If => ParseIfStatement(),
-                Tokens.Semicolon => Result<IAstNode>.Success(new EmptyStatement { Token = currentToken }),
-                _ => Result<IAstNode>.Failure(new NotSupportedException($"Token type {currentToken.Type} is not yet supported.")) //Silently ignore other statements
+                Tokens.Semicolon => Result<IAstStatement>.Success(new EmptyStatement { Token = currentToken }),
+                _ => Result<IAstStatement>.Failure(new NotSupportedException($"Token type {currentToken.Type} is not yet supported.")) //Silently ignore other statements
             };
 
             if (statement.IsSuccess)
@@ -61,19 +61,19 @@ public class Parser
             : program;
     }
 
-    private Result<IAstNode> ParseLetStatement()
+    private Result<IAstStatement> ParseLetStatement()
     {
         var letToken = currentToken;
 
         var identifierToken = AdvanceTokensIf(Tokens.Identifier);
         if (!identifierToken.IsSuccess)
-            return Result<IAstNode>.Failure(identifierToken.Error!);
+            return Result<IAstStatement>.Failure(identifierToken.Error!);
 
         var identifier = new Identifier { Token = currentToken, Name = identifierToken.Value.Literal };
 
         var assignmentToken = AdvanceTokensIf(Tokens.Assign);
         if (!assignmentToken.IsSuccess)
-            return Result<IAstNode>.Failure(assignmentToken.Error!);
+            return Result<IAstStatement>.Failure(assignmentToken.Error!);
 
 
         //TODO: We're skipping the expressions until we encounter a semicolon.
@@ -84,7 +84,7 @@ public class Parser
         return new LetStatement { Token = letToken, Identifier = identifier };
     }
 
-    private Result<IAstNode> ParseReturnStatement()
+    private Result<IAstStatement> ParseReturnStatement()
     {
         var returnToken = currentToken;
 
