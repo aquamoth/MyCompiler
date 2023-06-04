@@ -1,4 +1,4 @@
-﻿namespace MyCompiler;
+﻿namespace MyCompiler.Entities;
 
 public enum Precedence
 {

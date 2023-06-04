@@ -1,4 +1,4 @@
-﻿namespace MyCompiler;
+﻿namespace MyCompiler.Entities;
 
 public record Token(Tokens Type, string Literal, int Position, int Length, int Line = 0, int Column = 0)
 {

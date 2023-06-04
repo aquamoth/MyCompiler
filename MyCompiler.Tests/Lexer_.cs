@@ -1,3 +1,5 @@
+using MyCompiler.Entities;
+
 namespace MyCompiler.Tests
 {
     public class Lexer_

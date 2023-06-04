@@ -1,4 +1,6 @@
-﻿namespace MyCompiler;
+﻿using MyCompiler.Entities;
+
+namespace MyCompiler;
 
 public static class Lexer
 {
