@@ -33,8 +33,8 @@ public static class Lexer
                     position++;
                 }
 
-                //var word = input[start..position];
-                yield return Token.From(Tokens.Integer, start, position, lineNumber, lineStart);
+                var word = input[start..position];
+                yield return Token.From(Tokens.Integer, word, start, position, lineNumber, lineStart);
                 continue;
             }
 
@@ -58,7 +58,7 @@ public static class Lexer
                     "false" => Tokens.False,
                     _ => Tokens.Identifier
                 };
-                yield return Token.From(token, start, position, lineNumber, lineStart);
+                yield return Token.From(token, word, start, position, lineNumber, lineStart);
                 continue;
             }
 
@@ -67,7 +67,7 @@ public static class Lexer
                 if (input.Peek(position) == '=')
                 {
                     position += 1;
-                    yield return Token.From(Tokens.Equal, start, position, lineNumber, lineStart);
+                    yield return Token.From(Tokens.Equal, "==", start, position, lineNumber, lineStart);
                     continue;
                 }
             }
@@ -77,7 +77,7 @@ public static class Lexer
                 if (input.Peek(position) == '=')
                 {
                     position += 1;
-                    yield return Token.From(Tokens.NotEqual, start, position, lineNumber, lineStart);
+                    yield return Token.From(Tokens.NotEqual, "!=", start, position, lineNumber, lineStart);
                     continue;
                 }
             }
@@ -101,11 +101,11 @@ public static class Lexer
                     ';' => Tokens.Semicolon,
                     _ => Tokens.Illegal
                 };
-                yield return Token.From(token, start, position, lineNumber, lineStart);
+                yield return Token.From(token, ch.ToString(), start, position, lineNumber, lineStart);
             }
         }
 
-        yield return Token.From(Tokens.EndOfFile, position, position, lineNumber, lineStart);
+        yield return Token.From(Tokens.EndOfFile, "", position, position, lineNumber, lineStart);
     }
 
     private static char Peek(this string input, int position)
