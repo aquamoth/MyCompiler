@@ -1,6 +1,6 @@
 ﻿namespace MyCompiler;
 
-public static partial class Lexer
+public static class Lexer
 {
     public static IEnumerable<Token> ParseTokens(string input)
     {
