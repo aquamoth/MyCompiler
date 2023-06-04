@@ -2,6 +2,7 @@
 using MyCompiler.Entities;
 using MyCompiler.Helpers;
 using System.ComponentModel.DataAnnotations;
+using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
 
 namespace MyCompiler;
@@ -18,9 +19,9 @@ public class Parser
         this.logger = logger;
     }
 
-    public Result<ProgramNode> ParseProgram()
+    public Result<AstProgram> ParseProgram()
     {
-        var program = new ProgramNode();
+        var program = new AstProgram();
 
         AdvanceTokens();
         AdvanceTokens();
@@ -30,13 +31,13 @@ public class Parser
         while (currentToken.Type != Tokens.EndOfFile)
         {
 
-            var statement = currentToken.Type switch
+            Result<IAstNode> statement = currentToken.Type switch
             {
                 Tokens.Let => ParseLetStatement(),
-                //Tokens.Return => ParseReturnStatement(),
+                Tokens.Return => ParseReturnStatement(),
                 //Tokens.If => ParseIfStatement(),
-                Tokens.Semicolon => Result<Node>.Success(new EmptyStatementNode { Token = currentToken }),
-                _ => Result<Node>.Failure(new NotSupportedException($"Token type {currentToken.Type} is not yet supported.")) //Silently ignore other statements
+                Tokens.Semicolon => Result<IAstNode>.Success(new EmptyStatement { Token = currentToken }),
+                _ => Result<IAstNode>.Failure(new NotSupportedException($"Token type {currentToken.Type} is not yet supported.")) //Silently ignore other statements
             };
 
             if (statement.IsSuccess)
@@ -56,23 +57,23 @@ public class Parser
         }
 
         return allErrors.Any() 
-            ? Result<ProgramNode>.Failure(new AggregateException(allErrors)) 
+            ? Result<AstProgram>.Failure(new AggregateException(allErrors)) 
             : program;
     }
 
-    private Result<Node> ParseLetStatement()
+    private Result<IAstNode> ParseLetStatement()
     {
         var letToken = currentToken;
 
         var identifierToken = AdvanceTokensIf(Tokens.Identifier);
         if (!identifierToken.IsSuccess)
-            return Result<Node>.Failure(identifierToken.Error!);
+            return Result<IAstNode>.Failure(identifierToken.Error!);
 
-        var identifier = new IdentifierNode { Token = currentToken, Name = identifierToken.Value.Literal };
+        var identifier = new Identifier { Token = currentToken, Name = identifierToken.Value.Literal };
 
         var assignmentToken = AdvanceTokensIf(Tokens.Assign);
         if (!assignmentToken.IsSuccess)
-            return Result<Node>.Failure(assignmentToken.Error!);
+            return Result<IAstNode>.Failure(assignmentToken.Error!);
 
 
         //TODO: We're skipping the expressions until we encounter a semicolon.
@@ -81,6 +82,24 @@ public class Parser
 
 
         return new LetStatement { Token = letToken, Identifier = identifier };
+    }
+
+    private Result<IAstNode> ParseReturnStatement()
+    {
+        var returnToken = currentToken;
+
+
+
+        //TODO: We're skipping the expressions until we encounter a semicolon.
+        while (PeekToken.Type != Tokens.Semicolon)
+            AdvanceTokens();
+
+        var expression = new EmptyStatement();
+        //var expression = ParseExpression();
+        //if (!expression.IsSuccess)
+        //    return Result<ReturnStatement>.Failure(expression.Error!);
+
+        return new ReturnStatement { Token = returnToken, ReturnValue = expression };
     }
 
     //private Result<IdentifierNode> ParseIdentifier()

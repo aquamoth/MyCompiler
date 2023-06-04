@@ -30,9 +30,33 @@ namespace MyCompiler.Tests
             Assert.True(program.IsSuccess);
 
             Assert.Collection(program.Value.Statements,
-                s => { },
-                s => { },
-                s => { }
+                s => Assert.Equal(Tokens.Let, s.Token.Type),
+                s => Assert.Equal(Tokens.Let, s.Token.Type),
+                s => Assert.Equal(Tokens.Let, s.Token.Type)
+            );
+        }
+
+        [Fact]
+        public void Parses_return_statements()
+        {
+            using var logger = new XUnitLogger<Parser>(outputHelper);
+
+            string source = """
+                return 5;
+                return 10;
+                return 993322;
+                """;
+
+            Parser parser = new(Lexer.ParseTokens(source), logger);
+
+            var program = parser.ParseProgram();
+
+            Assert.True(program.IsSuccess);
+
+            Assert.Collection(program.Value.Statements,
+                s => Assert.Equal(Tokens.Return, s.Token.Type),
+                s => Assert.Equal(Tokens.Return, s.Token.Type),
+                s => Assert.Equal(Tokens.Return, s.Token.Type)
             );
         }
     }
