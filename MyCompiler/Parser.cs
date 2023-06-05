@@ -28,12 +28,11 @@ public class Parser
 
         while (currentToken.Type != Tokens.EndOfFile)
         {
-
             Result<IAstStatement> statement = currentToken.Type switch
             {
                 Tokens.Let => ParseLetStatement(),
                 Tokens.Return => ParseReturnStatement(),
-                Tokens.Semicolon => Result<IAstStatement>.Success(new EmptyStatement { Token = currentToken }),
+                Tokens.Semicolon => new EmptyStatement { Token = currentToken },
                 _ => ParseExpressionStatement()
             };
 
@@ -51,7 +50,7 @@ public class Parser
         }
 
         return allErrors.Any()
-            ? Result<AstProgram>.Failure(new AggregateException(allErrors))
+            ? new AggregateException(allErrors)
             : program;
     }
 
@@ -84,7 +83,7 @@ public class Parser
     private Result<IAstStatement> ParseReturnStatement()
     {
         var returnToken = currentToken;
-        
+
         AdvanceToken();
 
         var expression = ParseExpression();
