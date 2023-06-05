@@ -15,8 +15,8 @@ namespace MyCompiler.Tests
 
         [Theory]
         [InlineData("let x = 5;", "x", "5")]
-        [InlineData("let y = 10;", "y", "10")]
-        [InlineData("let foobar = 838383;", "foobar", "838383")]
+        [InlineData("let y = true;", "y", "true")]
+        [InlineData("let foobar = y;", "foobar", "y")]
         [InlineData("let hyped = 2*bar-foo;", "hyped", "((2*bar)-foo)")]
         public void Parses_let_statements(string source, string identifier, string expression)
         {
