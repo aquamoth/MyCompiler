@@ -31,19 +31,7 @@ var parser = new Parser(tokens);
 var program = parser.ParseProgram();
 if (!program.IsSuccess)
 {
-    Console.WriteLine("Parsing failed.");
-    if (program.Error is AggregateException aggregateException)
-    {
-        foreach (var innerException in aggregateException.InnerExceptions)
-        {
-            Console.WriteLine(innerException);
-        }
-    }
-    else
-    {
-        Console.WriteLine(program.Error);
-    }
-
+    PrintParserError(program.Error!);
     return;
 }
 
@@ -55,3 +43,25 @@ foreach (var statement in program.Value.Statements)
 
 Console.WriteLine("Press ENTER to end.");
 Console.ReadLine();
+
+void PrintParserError(Exception error)
+{
+    if (error is AggregateException aggregateException)
+    {
+        PrintParserErrors(aggregateException.InnerExceptions.ToArray());
+    }
+    else
+    {
+        PrintParserErrors(error);
+    }
+}
+
+void PrintParserErrors(params Exception[] errors)
+{
+    Console.WriteLine("Woops! We ran into some monkey business here!");
+    Console.WriteLine(" parser errors:");
+    foreach (var error in errors)
+    {
+        Console.WriteLine($"\t{error.Message}");
+    }
+}
