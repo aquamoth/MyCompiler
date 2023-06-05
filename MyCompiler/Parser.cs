@@ -123,6 +123,7 @@ public class Parser
             Tokens.Bang => this.ParsePrefixExpression,
             Tokens.True => this.ParseBooleanLiteral,
             Tokens.False => this.ParseBooleanLiteral,
+            Tokens.LParen => this.ParseGroupedExpression,
             _ => null,
         };
 
@@ -182,6 +183,20 @@ public class Parser
             return right;
 
         return new InfixExpression { Token = operatorToken, Operator = operatorToken.Literal, Left = left, Right = right.Value };
+    }
+
+    private Result<IExpression> ParseGroupedExpression()
+    {
+        AdvanceToken();
+        var exp = ParseExpression();
+        if (!exp.IsSuccess)
+            return exp;
+
+        var rparen = AdvanceTokenIf(Tokens.RParen);
+        if (!rparen.IsSuccess)
+            return rparen.Error!;
+
+        return exp;
     }
 
 

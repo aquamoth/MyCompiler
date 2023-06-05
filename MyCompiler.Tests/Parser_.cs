@@ -132,6 +132,11 @@ namespace MyCompiler.Tests
         [InlineData("!true", "(!true)")]
         [InlineData("!false", "(!false)")]
 
+        [InlineData("1 + (2 + 3) + 4", "((1+(2+3))+4)")]
+        [InlineData("(5 + 5) * 2", "((5+5)*2)")]
+        [InlineData("2 / (5 + 5)", "(2/(5+5))")]
+        [InlineData("-(5 + 5)", "(-(5+5))")]
+        [InlineData("!(true == true)", "(!(true==true))")]
         public void Parses_expressions(string source, params string[] expected)
         {
             using var logger = new XUnitLogger<Parser>(outputHelper);
