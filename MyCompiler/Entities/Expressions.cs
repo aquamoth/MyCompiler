@@ -74,3 +74,13 @@ public readonly struct FnExpression : IExpression
 
     //public override string ToString() => $"if {Condition}\nthen {Consequence}\nelse {Alternative}";
 }
+
+[DebuggerDisplay("{Function,nq}({Arguments,nq})")]
+public readonly struct CallExpression : IExpression
+{
+    public Token Token { get; init; }
+    public IExpression Function { get; init; }
+    public IExpression[] Arguments { get; init; }
+
+    public override string ToString() => $"{Function}({string.Join<IExpression>(",", Arguments)})";
+}

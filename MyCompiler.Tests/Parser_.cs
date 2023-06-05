@@ -143,6 +143,10 @@ namespace MyCompiler.Tests
         [InlineData("2 / (5 + 5)", "(2/(5+5))")]
         [InlineData("-(5 + 5)", "(-(5+5))")]
         [InlineData("!(true == true)", "(!(true==true))")]
+
+        [InlineData("a + add(b * c) + d", "((a+add((b*c)))+d)")]
+        [InlineData("add(a, b, 1, 2 * 3, 4 + 5, add(6, 7 * 8))", "add(a,b,1,(2*3),(4+5),add(6,(7*8)))")]
+        [InlineData("add(a + b + c * d / f + g)", "add((((a+b)+((c*d)/f))+g))")]
         public void Parses_expressions(string source, params string[] expected)
         {
             using var logger = new XUnitLogger<Parser>(outputHelper);
@@ -215,5 +219,28 @@ namespace MyCompiler.Tests
             );
         }
 
+        [Theory]
+        [InlineData("add()", "add()")]
+        [InlineData("add(1);", "add(1)")]
+        [InlineData("add(1, 2 * 3, 4 + 5);", "add(1,(2*3),(4+5))")]
+        public void Parses_function_calls(string source, string expected)
+        {
+            using var logger = new XUnitLogger<Parser>(outputHelper);
+
+            Parser parser = new(Lexer.ParseTokens(source), logger);
+
+            var program = parser.ParseProgram();
+
+            Assert.True(program.IsSuccess);
+
+            Assert.Collection(program.Value.Statements,
+                s =>
+                {
+                    var es = Assert.IsType<ExpressionStatement>(s);
+                    var rs = Assert.IsType<CallExpression>(es.Expression);
+                    Assert.Equal(expected, rs.ToString());
+                }
+            );
+        }
     }
 }

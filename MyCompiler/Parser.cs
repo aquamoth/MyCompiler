@@ -152,6 +152,7 @@ public class Parser
                 Tokens.LessThan => this.ParseInfixExpression,
                 Tokens.Equal => this.ParseInfixExpression,
                 Tokens.NotEqual => this.ParseInfixExpression,
+                Tokens.LParen => this.ParseCallExpression,
                 _ => null,
             };
 
@@ -189,6 +190,53 @@ public class Parser
             return right;
 
         return new InfixExpression { Token = operatorToken, Operator = operatorToken.Literal, Left = left, Right = right.Value };
+    }
+
+    private Result<IExpression> ParseCallExpression(IExpression function)
+    {
+        var callToken = currentToken;
+
+        var arguments = ParseCallArguments();
+        if (!arguments.IsSuccess)
+            return arguments.Error!;
+
+        return new CallExpression
+        {
+            Token = callToken,
+            Function = function,
+            Arguments = arguments.Value
+        };
+    }
+
+    private Result<IExpression[]> ParseCallArguments()
+    {
+        if (AdvanceTokenIf(Tokens.RParen).IsSuccess)
+            return Array.Empty<IExpression>();
+
+        AdvanceToken();
+
+        var argument = ParseExpression();
+        if (!argument.IsSuccess)
+            return argument.Error!;
+
+        var arguments = new List<IExpression> { argument.Value };
+
+        while (AdvanceTokenIf(Tokens.Comma).IsSuccess)
+        {
+            AdvanceToken();
+
+            argument = ParseExpression();
+            if (!argument.IsSuccess)
+                return argument.Error!;
+
+            arguments.Add(argument.Value);
+        }
+
+        var rparen = AdvanceTokenIf(Tokens.RParen);
+        if(!rparen.IsSuccess)
+            return rparen.Error!;
+
+        return arguments.ToArray();
     }
 
     private Result<IExpression> ParseGroupedExpression()
@@ -388,6 +436,7 @@ public class Parser
         Tokens.Minus => Precedence.Sum,
         Tokens.ForwardSlash => Precedence.Product,
         Tokens.Asterisk => Precedence.Product,
+        Tokens.LParen => Precedence.Call,
         _ => Precedence.Lowest
     };
 
