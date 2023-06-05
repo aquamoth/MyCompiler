@@ -26,11 +26,30 @@ else
     source = await File.ReadAllTextAsync(args[0]);
 }
 
-
-foreach (var token in Lexer.ParseTokens(source))
+var tokens = Lexer.ParseTokens(source);
+var parser = new Parser(tokens);
+var program = parser.ParseProgram();
+if (!program.IsSuccess)
 {
-    var keyword = source[token.Position..(token.Position+token.Length)];
-    Console.WriteLine($"Type:{token.Type} Literal:{keyword}");
+    Console.WriteLine("Parsing failed.");
+    if (program.Error is AggregateException aggregateException)
+    {
+        foreach (var innerException in aggregateException.InnerExceptions)
+        {
+            Console.WriteLine(innerException);
+        }
+    }
+    else
+    {
+        Console.WriteLine(program.Error);
+    }
+
+    return;
+}
+
+foreach (var statement in program.Value.Statements)
+{
+    Console.WriteLine(statement);
 }
 
 

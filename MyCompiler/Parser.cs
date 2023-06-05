@@ -7,10 +7,10 @@ namespace MyCompiler;
 public class Parser
 {
     private readonly IEnumerator<Token> tokenEnumerator;
-    private readonly ILogger logger;
+    private readonly ILogger? logger;
     private Token currentToken;
 
-    public Parser(IEnumerable<Token> tokenSource, ILogger logger)
+    public Parser(IEnumerable<Token> tokenSource, ILogger? logger = null)
     {
         tokenEnumerator = tokenSource.GetEnumerator();
         this.logger = logger;
