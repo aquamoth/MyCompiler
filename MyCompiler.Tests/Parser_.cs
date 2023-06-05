@@ -188,8 +188,8 @@ namespace MyCompiler.Tests
 
         [Theory]
         [InlineData("fn(x, y) { x + y; }", "((x+y))", "x", "y")]
-        [InlineData("fn() { 1 }", "(1)")]
-        [InlineData("fn(a) { let x=0; 123 }", "let x = 0;(123)", "a")]
+        [InlineData("fn() {};", "")]
+        [InlineData("fn(x) { let a=0; 123 }", "let a = 0;(123)", "x")]
         public void Parses_functions(string source, string expectedBody, params string[] expectedParams)
         {
             using var logger = new XUnitLogger<Parser>(outputHelper);
