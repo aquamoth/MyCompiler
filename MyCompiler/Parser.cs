@@ -129,6 +129,7 @@ public class Parser
             Tokens.False => this.ParseBooleanLiteral,
             Tokens.LParen => this.ParseGroupedExpression,
             Tokens.If => this.ParseIfExpression,
+            Tokens.Function => this.ParseFnExpression,
             _ => null,
         };
 
@@ -190,6 +191,21 @@ public class Parser
         return new InfixExpression { Token = operatorToken, Operator = operatorToken.Literal, Left = left, Right = right.Value };
     }
 
+    private Result<IExpression> ParseGroupedExpression()
+    {
+        AdvanceToken();
+        var exp = ParseExpression();
+        if (!exp.IsSuccess)
+            return exp;
+
+        var rparen = AdvanceTokenIf(Tokens.RParen);
+        if (!rparen.IsSuccess)
+            return rparen.Error!;
+
+        return exp;
+    }
+
+
     private Result<IExpression> ParseIfExpression()
     {
         var ifToken = currentToken;
@@ -239,20 +255,65 @@ public class Parser
         };
     }
 
-    private Result<IExpression> ParseGroupedExpression()
+    private Result<IExpression> ParseFnExpression()
     {
-        AdvanceToken();
-        var exp = ParseExpression();
-        if (!exp.IsSuccess)
-            return exp;
+        var fnToken = currentToken;
 
+        var lparen = AdvanceTokenIf(Tokens.LParen);
+        if (!lparen.IsSuccess)
+            return lparen.Error!;
+
+        var parameters = ParseFunctionParameters();
+        if (!parameters.IsSuccess)
+            return parameters.Error!;
+
+        var lbrace = AdvanceTokenIf(Tokens.LSquirly);
+        if (!lbrace.IsSuccess)
+            return lbrace.Error!;
+
+        var body = ParseBlockStatement();
+        if (!body.IsSuccess)
+            return body.Error!;
+
+        return new FnExpression
+        {
+            Token = fnToken,
+            Parameters = parameters.Value,
+            Body = body.Value
+        };
+    }
+
+    private Result<Identifier[]> ParseFunctionParameters()
+    {
         var rparen = AdvanceTokenIf(Tokens.RParen);
+        if (rparen.IsSuccess)
+            return Array.Empty<Identifier>();
+
+        AdvanceToken();
+
+        var identifier = ParseIdentifier();
+        if (!identifier.IsSuccess)
+            return identifier.Error!;
+
+        var identifiers = new List<Identifier> { (Identifier)identifier.Value };
+
+        while (AdvanceTokenIf(Tokens.Comma).IsSuccess)
+        {
+            AdvanceToken();
+
+            identifier = ParseIdentifier();
+            if (!identifier.IsSuccess)
+                return identifier.Error!;
+
+            identifiers.Add((Identifier)identifier.Value);
+        }
+
+        rparen = AdvanceTokenIf(Tokens.RParen);
         if (!rparen.IsSuccess)
             return rparen.Error!;
 
-        return exp;
+        return identifiers.ToArray();
     }
-
 
     private Result<IExpression> ParseIdentifier()
     {

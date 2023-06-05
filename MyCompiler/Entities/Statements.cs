@@ -24,6 +24,11 @@ public readonly struct LetStatement : IAstStatement
     public Token Token { get; init; }
     public Identifier Identifier { get; init; }
     public IExpression Expression { get; init; }
+
+    public override string ToString()
+    {
+        return $"let {Identifier} = {Expression}";
+    }
 }
 
 [DebuggerDisplay("Return {ReturnValue}")]
@@ -41,7 +46,7 @@ public readonly struct ExpressionStatement : IAstStatement
     override public string ToString() => $"({Expression})";
 }
 
-//[DebuggerDisplay("{Expression}")]
+[DebuggerDisplay("{Statements}")]
 public readonly struct BlockStatement : IAstStatement
 {
     public Token Token { get; init; }

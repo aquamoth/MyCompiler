@@ -29,7 +29,8 @@ namespace MyCompiler.Tests
             Assert.True(program.IsSuccess);
 
             Assert.Collection(program.Value.Statements,
-                s => {
+                s =>
+                {
                     var rs = Assert.IsType<LetStatement>(s);
                     Assert.Equal(identifier, rs.Identifier.Value);
                     Assert.Equal(expression, rs.Expression.ToString());
@@ -52,33 +53,10 @@ namespace MyCompiler.Tests
             Assert.True(program.IsSuccess);
 
             Assert.Collection(program.Value.Statements,
-                s => { 
+                s =>
+                {
                     var rs = Assert.IsType<ReturnStatement>(s);
                     Assert.Equal(expected, rs.ReturnValue.ToString());
-                }
-            );
-        }
-
-        [Theory]
-        [InlineData("if (x < y) { x }", "(x<y)", "(x)", "")]
-        [InlineData("if (x < y) { x } else { y }", "(x<y)", "(x)", "(y)")]
-        public void Parses_if_expressions(string source, string condition, string consequence, string alternative)
-        {
-            using var logger = new XUnitLogger<Parser>(outputHelper);
-
-            Parser parser = new(Lexer.ParseTokens(source), logger);
-
-            var program = parser.ParseProgram();
-
-            Assert.True(program.IsSuccess);
-
-            Assert.Collection(program.Value.Statements,
-                s => {
-                    var es = Assert.IsType<ExpressionStatement>(s);
-                    var rs = Assert.IsType<IfExpression>(es.Expression);
-                    Assert.Equal(condition, rs.Condition.ToString());
-                    Assert.Equal(consequence, rs.Consequence.ToString());
-                    Assert.Equal(alternative, rs.Alternative.ToString());
                 }
             );
         }
@@ -102,22 +80,26 @@ namespace MyCompiler.Tests
             Assert.True(program.IsSuccess);
 
             Assert.Collection(program.Value.Statements,
-                s => {
+                s =>
+                {
                     var es = Assert.IsType<ExpressionStatement>(s);
                     var id = Assert.IsType<Identifier>(es.Expression);
                     Assert.Equal("foobar", id.Value);
                 },
-                s => {
+                s =>
+                {
                     var es = Assert.IsType<ExpressionStatement>(s);
                     var number = Assert.IsType<IntegerLiteral>(es.Expression);
                     Assert.Equal(57L, number.Value);
                 },
-                s => {
+                s =>
+                {
                     var es = Assert.IsType<ExpressionStatement>(s);
                     var boolean = Assert.IsType<BooleanLiteral>(es.Expression);
                     Assert.True(boolean.Value);
                 },
-                s => {
+                s =>
+                {
                     var es = Assert.IsType<ExpressionStatement>(s);
                     var boolean = Assert.IsType<BooleanLiteral>(es.Expression);
                     Assert.False(boolean.Value);
@@ -178,5 +160,60 @@ namespace MyCompiler.Tests
                 Assert.Equal(expectedStatement, es.Expression.ToString());
             }
         }
+
+        [Theory]
+        [InlineData("if (x < y) { x }", "(x<y)", "(x)", "")]
+        [InlineData("if (x < y) { x } else { y }", "(x<y)", "(x)", "(y)")]
+        public void Parses_if_expressions(string source, string condition, string consequence, string alternative)
+        {
+            using var logger = new XUnitLogger<Parser>(outputHelper);
+
+            Parser parser = new(Lexer.ParseTokens(source), logger);
+
+            var program = parser.ParseProgram();
+
+            Assert.True(program.IsSuccess);
+
+            Assert.Collection(program.Value.Statements,
+                s =>
+                {
+                    var es = Assert.IsType<ExpressionStatement>(s);
+                    var rs = Assert.IsType<IfExpression>(es.Expression);
+                    Assert.Equal(condition, rs.Condition.ToString());
+                    Assert.Equal(consequence, rs.Consequence.ToString());
+                    Assert.Equal(alternative, rs.Alternative.ToString());
+                }
+            );
+        }
+
+        [Theory]
+        [InlineData("fn(x, y) { x + y; }", "((x+y))", "x", "y")]
+        [InlineData("fn() { 1 }", "(1)")]
+        [InlineData("fn(a) { let x=0; 123 }", "let x = 0;(123)", "a")]
+        public void Parses_functions(string source, string expectedBody, params string[] expectedParams)
+        {
+            using var logger = new XUnitLogger<Parser>(outputHelper);
+
+            Parser parser = new(Lexer.ParseTokens(source), logger);
+
+            var program = parser.ParseProgram();
+
+            Assert.True(program.IsSuccess);
+
+            Assert.Collection(program.Value.Statements,
+                s =>
+                {
+                    var es = Assert.IsType<ExpressionStatement>(s);
+                    var rs = Assert.IsType<FnExpression>(es.Expression);
+
+                    Assert.Equal(expectedParams.Length, rs.Parameters.Length);
+                    foreach(var (expected, actual) in expectedParams.Zip(rs.Parameters))
+                        Assert.Equal(expected, actual.Value);
+
+                    Assert.Equal(expectedBody, rs.Body.ToString());
+                }
+            );
+        }
+
     }
 }

@@ -64,3 +64,13 @@ public readonly struct IfExpression : IExpression
 
     //public override string ToString() => $"if {Condition}\nthen {Consequence}\nelse {Alternative}";
 }
+
+[DebuggerDisplay("fn({Parameters,nq}) {Body,nq}")]
+public readonly struct FnExpression : IExpression
+{
+    public Token Token { get; init; }
+    public Identifier[] Parameters { get; init; }
+    public BlockStatement Body { get; init; }
+
+    //public override string ToString() => $"if {Condition}\nthen {Consequence}\nelse {Alternative}";
+}
