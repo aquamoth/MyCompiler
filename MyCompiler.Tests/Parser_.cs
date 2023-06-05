@@ -59,6 +59,30 @@ namespace MyCompiler.Tests
             );
         }
 
+        [Theory]
+        [InlineData("if (x < y) { x }", "(x<y)", "(x)", "")]
+        [InlineData("if (x < y) { x } else { y }", "(x<y)", "(x)", "(y)")]
+        public void Parses_if_expressions(string source, string condition, string consequence, string alternative)
+        {
+            using var logger = new XUnitLogger<Parser>(outputHelper);
+
+            Parser parser = new(Lexer.ParseTokens(source), logger);
+
+            var program = parser.ParseProgram();
+
+            Assert.True(program.IsSuccess);
+
+            Assert.Collection(program.Value.Statements,
+                s => {
+                    var es = Assert.IsType<ExpressionStatement>(s);
+                    var rs = Assert.IsType<IfExpression>(es.Expression);
+                    Assert.Equal(condition, rs.Condition.ToString());
+                    Assert.Equal(consequence, rs.Consequence.ToString());
+                    Assert.Equal(alternative, rs.Alternative.ToString());
+                }
+            );
+        }
+
         [Fact]
         public void Parses_expression_identifier_and_number()
         {

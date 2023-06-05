@@ -28,14 +28,7 @@ public class Parser
 
         while (currentToken.Type != Tokens.EndOfFile)
         {
-            Result<IAstStatement> statement = currentToken.Type switch
-            {
-                Tokens.Let => ParseLetStatement(),
-                Tokens.Return => ParseReturnStatement(),
-                Tokens.Semicolon => new EmptyStatement { Token = currentToken },
-                _ => ParseExpressionStatement()
-            };
-
+            var statement = ParseStatement();
             if (statement.IsSuccess)
             {
                 program.Statements.Add(statement.Value);
@@ -52,6 +45,17 @@ public class Parser
         return allErrors.Any()
             ? new AggregateException(allErrors)
             : program;
+    }
+
+    private Result<IAstStatement> ParseStatement()
+    {
+        return currentToken.Type switch
+        {
+            Tokens.Let => ParseLetStatement(),
+            Tokens.Return => ParseReturnStatement(),
+            Tokens.Semicolon => new EmptyStatement { Token = currentToken },
+            _ => ParseExpressionStatement()
+        };
     }
 
     private Result<IAstStatement> ParseLetStatement()
@@ -124,6 +128,7 @@ public class Parser
             Tokens.True => this.ParseBooleanLiteral,
             Tokens.False => this.ParseBooleanLiteral,
             Tokens.LParen => this.ParseGroupedExpression,
+            Tokens.If => this.ParseIfExpression,
             _ => null,
         };
 
@@ -185,6 +190,55 @@ public class Parser
         return new InfixExpression { Token = operatorToken, Operator = operatorToken.Literal, Left = left, Right = right.Value };
     }
 
+    private Result<IExpression> ParseIfExpression()
+    {
+        var ifToken = currentToken;
+
+        var lparen = AdvanceTokenIf(Tokens.LParen);
+        if (!lparen.IsSuccess)
+            return lparen.Error!;
+
+        AdvanceToken();
+
+        var condition = ParseExpression();
+        if (!condition.IsSuccess)
+            return condition.Error!;
+
+        var rparen = AdvanceTokenIf(Tokens.RParen);
+        if (!rparen.IsSuccess)
+            return rparen.Error!;
+
+        var lbrace = AdvanceTokenIf(Tokens.LSquirly);
+        if (!lbrace.IsSuccess)
+            return lbrace.Error!;
+
+        var consequence = ParseBlockStatement();
+
+        BlockStatement? alternative = null;
+
+        var elseStatement = AdvanceTokenIf(Tokens.Else);
+        if (elseStatement.IsSuccess)
+        {
+            lbrace = AdvanceTokenIf(Tokens.LSquirly);
+            if (!lbrace.IsSuccess)
+                return lbrace.Error!;
+
+            var block = ParseBlockStatement();
+            if (!block.IsSuccess)
+                return block.Error!;
+
+            alternative = block.Value;
+        }
+
+        return new IfExpression
+        {
+            Token = ifToken,
+            Condition = condition.Value,
+            Consequence = consequence.Value,
+            Alternative = alternative
+        };
+    }
+
     private Result<IExpression> ParseGroupedExpression()
     {
         AdvanceToken();
@@ -219,6 +273,29 @@ public class Parser
             return new ArgumentOutOfRangeException($"Boolean out of range {ExceptionLocatorString(currentToken)}");
 
         return new BooleanLiteral { Token = currentToken, Value = value };
+    }
+
+    private Result<BlockStatement> ParseBlockStatement()
+    {
+        var block = new BlockStatement
+        {
+            Token = currentToken,
+            Statements = new List<IAstStatement>()
+        };
+
+        AdvanceToken();
+
+        while (currentToken.Type != Tokens.RSquirly && currentToken.Type != Tokens.EndOfFile)
+        {
+            var statement = ParseStatement();
+            if (!statement.IsSuccess)
+                return statement.Error!;
+
+            block.Statements.Add(statement.Value);
+            AdvanceToken();
+        }
+
+        return block;
     }
 
 

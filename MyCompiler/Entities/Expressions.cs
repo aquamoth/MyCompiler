@@ -53,3 +53,14 @@ public readonly struct InfixExpression : IExpression
 
     public override string ToString() => $"({Left}{Operator}{Right})";
 }
+
+[DebuggerDisplay("if {Condition,nq}")]
+public readonly struct IfExpression : IExpression
+{
+    public Token Token { get; init; }
+    public IExpression Condition { get; init; }
+    public BlockStatement Consequence { get; init; }
+    public BlockStatement? Alternative { get; init; }
+
+    //public override string ToString() => $"if {Condition}\nthen {Consequence}\nelse {Alternative}";
+}
