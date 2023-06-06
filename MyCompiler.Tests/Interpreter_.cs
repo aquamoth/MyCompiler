@@ -31,6 +31,20 @@ namespace MyCompiler.Tests
             Assert.Equal(expected, booleanObject.Value);
         }
 
+        [Theory]
+        [InlineData("!true", false)]
+        [InlineData("!false", true)]
+        [InlineData("!5", false)]
+        [InlineData("!!true", true)]
+        [InlineData("!!false", false)]
+        [InlineData("!!5", true)]
+        //[InlineData("!0", true)]
+        public void Evaluates_bang_expressions(string source, bool expected)
+        {
+            var booleanObject = Assert.IsType<BooleanObject>(Interpret(source));
+            Assert.Equal(expected, booleanObject.Value);
+        }
+
         private IObject Interpret(string source)
         {
             using var logger = new XUnitLogger<Interpreter>(outputHelper);
@@ -38,7 +52,7 @@ namespace MyCompiler.Tests
             var program = new Parser(tokenSource).ParseProgram();
 
             var result = new Interpreter().Eval(program.Value);
-            Assert.True(result.IsSuccess);
+            Assert.True(result.IsSuccess, result.Error?.Message);
             return result.Value;
         }
     }

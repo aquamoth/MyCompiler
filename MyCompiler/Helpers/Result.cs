@@ -52,7 +52,7 @@ public readonly struct Result<T>
 
     public bool IsSuccess { get; init; }
     public T Value => IsSuccess ? value! : throw new InvalidOperationException();
-    public Exception Error => !IsSuccess ? error! : throw new InvalidOperationException();
+    public Exception? Error => !IsSuccess ? error! : null;
 
     private Result(T value)
     {

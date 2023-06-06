@@ -33,7 +33,7 @@ public readonly struct BooleanLiteral : IExpression
     public override string ToString() => Value ? "true" : "false";
 }
 
-[DebuggerDisplay("({Operator,nq}{Right})")]
+[DebuggerDisplay("prefix ({Operator,nq}{Right})")]
 public readonly struct PrefixExpression : IExpression
 {
     public Token Token { get; init; }
@@ -43,7 +43,7 @@ public readonly struct PrefixExpression : IExpression
     public override string ToString() => $"({Operator}{Right})";
 }
 
-[DebuggerDisplay("({Left}{Operator,nq}{Right})")]
+[DebuggerDisplay("infix ({Left}{Operator,nq}{Right})")]
 public readonly struct InfixExpression : IExpression
 {
     public Token Token { get; init; }
@@ -75,7 +75,7 @@ public readonly struct FnExpression : IExpression
     //public override string ToString() => $"if {Condition}\nthen {Consequence}\nelse {Alternative}";
 }
 
-[DebuggerDisplay("{Function,nq}({Arguments,nq})")]
+[DebuggerDisplay("call {Function,nq}({Arguments,nq})")]
 public readonly struct CallExpression : IExpression
 {
     public Token Token { get; init; }
