@@ -80,6 +80,25 @@ namespace MyCompiler.Tests
             Assert.Equal(expected, booleanObject.Value);
         }
 
+        [Theory]
+        [InlineData("if (true) { 10 }", 10)]
+        [InlineData("if (1) { 10 }", 10)]
+        [InlineData("if (1 < 2) { 10 }", 10)]
+        [InlineData("if (1 > 2) { 10 } else { 20 }", 20)]
+        [InlineData("if (1 < 2) { 10 } else { 20 }", 10)]
+        public void Evaluates_if_expressions(string source, long expected)
+        {
+            var integerObject = Assert.IsType<IntegerObject>(Interpret(source));
+            Assert.Equal(expected, integerObject.Value);
+        }
+
+        [Theory]
+        [InlineData("if (false) { 10 }")]
+        [InlineData("if (1 > 2) { 10 }")]
+        public void Evaluates_if_expressions_null_output(string source)
+        {
+            Assert.Equal(NullObject.Value, Interpret(source));
+        }
 
 
         private IObject Interpret(string source)

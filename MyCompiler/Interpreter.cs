@@ -1,5 +1,6 @@
 ﻿using MyCompiler.Entities;
 using MyCompiler.Helpers;
+using System.Data.SqlTypes;
 
 namespace MyCompiler;
 
@@ -28,7 +29,27 @@ public class Interpreter
         if (node is InfixExpression infix)
             return EvalInfixExpression(infix);
 
+        if (node is IfExpression ifExpression)
+            return EvalIfExpression(ifExpression);
+
+        if (node is BlockStatement block)
+            return EvalStatements(block.Statements);
+
         return new NotImplementedException($"Not yet evaluating {node}");
+    }
+
+    private Result<IObject> EvalIfExpression(IfExpression ifExpression)
+    {
+        var condition = Eval(ifExpression.Condition);
+        if (!condition.IsSuccess)
+            return condition;
+
+        if (IsTruthy(condition.Value))
+            return Eval(ifExpression.Consequence);
+        else if (ifExpression.Alternative.HasValue)
+            return Eval(ifExpression.Alternative.Value);
+        else
+            return NullObject.Value;
     }
 
     private Result<IObject> EvalStatements(IEnumerable<IAstStatement> statements)
@@ -138,5 +159,14 @@ public class Interpreter
 
         return Result<IObject>.Success(result);
     }
+
     private static BooleanObject ToBooleanObject(bool value) => value ? BooleanObject.True : BooleanObject.False;
+
+    private static bool IsTruthy(IObject condition)
+    {
+        if (condition == NullObject.Value) return false;
+        if (condition == BooleanObject.True) return true;
+        if (condition == BooleanObject.False) return false;
+        return true;//TODO: 0 -> false!
+    }
 }
