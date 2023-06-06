@@ -243,14 +243,11 @@ public class Interpreter
         return @operator switch
         {
             "+" => new StringObject { Value = leftStr.Value + rightStr.Value },
-            //"-" => new IntegerObject { Value = leftStr.Value - rightStr.Value },
-            //"*" => new IntegerObject { Value = leftStr.Value * rightStr.Value },
-            //"/" => new IntegerObject { Value = leftStr.Value / rightStr.Value },
 
-            //"<" => ToBooleanObject(leftStr.Value < rightStr.Value),
-            //">" => ToBooleanObject(leftStr.Value > rightStr.Value),
-            //"==" => ToBooleanObject(leftStr.Value == rightStr.Value),
-            //"!=" => ToBooleanObject(leftStr.Value != rightStr.Value),
+            "<" => ToBooleanObject(leftStr.Value.CompareTo(rightStr.Value) == -1),
+            ">" => ToBooleanObject(leftStr.Value.CompareTo(rightStr.Value) == 1),
+            "==" => ToBooleanObject(leftStr.Value == rightStr.Value),
+            "!=" => ToBooleanObject(leftStr.Value != rightStr.Value),
 
             _ => new Exception($"unknown operator: {leftStr.Type} {@operator} {rightStr.Type}")
         };

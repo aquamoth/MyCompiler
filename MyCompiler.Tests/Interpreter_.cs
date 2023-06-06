@@ -69,6 +69,19 @@ namespace MyCompiler.Tests
         [InlineData("(1 < 2) == false", false)]
         [InlineData("(1 > 2) == true", false)]
         [InlineData("(1 > 2) == false", true)]
+
+        [InlineData(""" "abc" == "abc" """, true)]
+        [InlineData(""" "abc" == "def" """, false)]
+        [InlineData(""" "abc" != "abc" """, false)]
+        [InlineData(""" "abc" != "def" """, true)]
+
+        [InlineData(""" "abc" < "abc" """, false)]
+        [InlineData(""" "abc" < "def" """, true)]
+        [InlineData(""" "def" < "abc" """, false)]
+
+        [InlineData(""" "abc" > "abc" """, false)]
+        [InlineData(""" "abc" > "def" """, false)]
+        [InlineData(""" "def" > "abc" """, true)]
         public void Evaluates_boolean_expressions(string source, bool expected)
         {
             var booleanObject = AssertInterpret<BooleanObject>(source);
