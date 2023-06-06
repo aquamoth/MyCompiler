@@ -18,6 +18,18 @@ namespace MyCompiler.Tests
         [InlineData("-5", -5)]
         [InlineData("10", 10)]
         [InlineData("-10", -10)]
+
+        [InlineData("5 + 5 + 5 + 5 - 10", 10)]
+        [InlineData("2 * 2 * 2 * 2 * 2", 32)]
+        [InlineData("-50 + 100 + -50", 0)]
+        [InlineData("5 * 2 + 10", 20)]
+        [InlineData("5 + 2 * 10", 25)]
+        [InlineData("20 + 2 * -10", 0)]
+        [InlineData("50 / 2 * 2 + 10", 60)]
+        [InlineData("2 * (5 + 10)", 30)]
+        [InlineData("3 * 3 * 3 + 10", 37)]
+        [InlineData("3 * (3 * 3) + 10", 37)]
+        [InlineData("(5 + 10 * 2 + 15 / 3) * 2 + -10", 50)]
         public void Evaluates_integer_expressions(string source, long expected)
         {
             var integerObject = Assert.IsType<IntegerObject>(Interpret(source));

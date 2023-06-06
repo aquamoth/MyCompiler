@@ -25,6 +25,8 @@ public class Interpreter
         if (node is PrefixExpression prefix)
             return EvalPrefixExpression(prefix);
 
+        if (node is InfixExpression infix)
+            return EvalInfixExpression(infix);
 
         return new NotImplementedException($"Not yet evaluating {node}");
     }
@@ -83,11 +85,65 @@ public class Interpreter
         return BooleanObject.False; //TODO:???
     }
 
-    private Result<IObject> EvalMinusPrefixOperatorExpression(IObject value)
+    private static Result<IObject> EvalMinusPrefixOperatorExpression(IObject value)
     {
         if (value is IntegerObject integer)
             return new IntegerObject { Value = -integer.Value };
 
         return NullObject.Value;//TODO:???
+    }
+
+
+
+    private Result<IObject> EvalInfixExpression(InfixExpression infix)
+    {
+        var left = Eval(infix.Left);
+        if (!left.IsSuccess)
+            return left;
+
+        var right = Eval(infix.Right);
+        if (!right.IsSuccess)
+            return right;
+
+        return infix.Operator switch
+        {
+            "+" => EvalPlusInfixOperatorExpression(left.Value, right.Value),
+            "-" => EvalMinusInfixOperatorExpression(left.Value, right.Value),
+            "*" => EvalAsteriskInfixOperatorExpression(left.Value, right.Value),
+            "/" => EvalForwardSlashInfixOperatorExpression(left.Value, right.Value),
+            _ => NullObject.Value, //TODO:???
+        };
+    }
+
+    private static Result<IObject> EvalPlusInfixOperatorExpression(IObject left, IObject right)
+    {
+        if (left is not IntegerObject leftInt || right is not IntegerObject rightInt)
+            return NullObject.Value;
+
+        return new IntegerObject { Value = leftInt.Value + rightInt.Value };
+    }
+
+    private static Result<IObject> EvalMinusInfixOperatorExpression(IObject left, IObject right)
+    {
+        if (left is not IntegerObject leftInt || right is not IntegerObject rightInt)
+            return NullObject.Value;
+
+        return new IntegerObject { Value = leftInt.Value - rightInt.Value };
+    }
+
+    private static Result<IObject> EvalAsteriskInfixOperatorExpression(IObject left, IObject right)
+    {
+        if (left is not IntegerObject leftInt || right is not IntegerObject rightInt)
+            return NullObject.Value;
+
+        return new IntegerObject { Value = leftInt.Value * rightInt.Value };
+    }
+
+    private static Result<IObject> EvalForwardSlashInfixOperatorExpression(IObject left, IObject right)
+    {
+        if (left is not IntegerObject leftInt || right is not IntegerObject rightInt)
+            return NullObject.Value;
+
+        return new IntegerObject { Value = leftInt.Value / rightInt.Value };
     }
 }
