@@ -39,6 +39,14 @@ namespace MyCompiler.Tests
         [Theory]
         [InlineData("true", true)]
         [InlineData("false", false)]
+        [InlineData("1 < 2", true)]
+        [InlineData("1 > 2", false)]
+        [InlineData("1 < 1", false)]
+        [InlineData("1 > 1", false)]
+        [InlineData("1 == 1", true)]
+        [InlineData("1 != 1", false)]
+        [InlineData("1 == 2", false)]
+        [InlineData("1 != 2", true)]
         public void Evaluates_boolean_expressions(string source, bool expected)
         {
             var booleanObject = Assert.IsType<BooleanObject>(Interpret(source));

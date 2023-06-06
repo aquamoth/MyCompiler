@@ -17,7 +17,7 @@ public class Interpreter
             return new IntegerObject { Value = integer.Value };
 
         if (node is BooleanLiteral boolean)
-            return EvalBooleanLiteral(boolean);
+            return ToBooleanObject(boolean.Value);
 
         //if (node is NullLiteral)
         //    return NullObject.Value;
@@ -47,14 +47,6 @@ public class Interpreter
         return Result<IObject>.Success(result);
     }
 
-    private static Result<IObject> EvalBooleanLiteral(BooleanLiteral boolean)
-    {
-        return boolean.Value
-            ? BooleanObject.True
-            : BooleanObject.False;
-    }
-
-
 
 
     private Result<IObject> EvalPrefixExpression(PrefixExpression prefix)
@@ -74,13 +66,13 @@ public class Interpreter
     private static Result<IObject> EvalBangOperatorExpression(IObject value)
     {
         if (value is BooleanObject boolean)
-            return boolean.Value ? BooleanObject.False : BooleanObject.True;
+            return ToBooleanObject(!boolean.Value);
 
         if (value is NullObject)
             return BooleanObject.True;
 
         //if (value is IntegerObject integer)
-        //    return integer.Value == 0 ? BooleanObject.False : BooleanObject.True;
+        //    return NativeBoolToBooleanObject(integer.Value != 0);
 
         return BooleanObject.False; //TODO:???
     }
@@ -113,13 +105,23 @@ public class Interpreter
 
     private Result<IObject> EvalIntegerInfixExpression(string @operator, IntegerObject leftInt, IntegerObject rightInt)
     {
-        return @operator switch
+        IObject result = @operator switch
         {
             "+" => new IntegerObject { Value = leftInt.Value + rightInt.Value },
             "-" => new IntegerObject { Value = leftInt.Value - rightInt.Value },
             "*" => new IntegerObject { Value = leftInt.Value * rightInt.Value },
             "/" => new IntegerObject { Value = leftInt.Value / rightInt.Value },
+
+            "<" => ToBooleanObject(leftInt.Value < rightInt.Value),
+            ">" => ToBooleanObject(leftInt.Value > rightInt.Value),
+            "==" => ToBooleanObject(leftInt.Value == rightInt.Value),
+            "!=" => ToBooleanObject(leftInt.Value != rightInt.Value),
+
             _ => NullObject.Value,//TODO:???
         };
+
+        return Result<IObject>.Success(result);
     }
+
+    private static BooleanObject ToBooleanObject(bool value) => value ? BooleanObject.True : BooleanObject.False;
 }
