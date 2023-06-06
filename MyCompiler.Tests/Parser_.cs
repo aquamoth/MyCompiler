@@ -20,15 +20,7 @@ namespace MyCompiler.Tests
         [InlineData("let hyped = 2*bar-foo;", "hyped", "((2*bar)-foo)")]
         public void Parses_let_statements(string source, string identifier, string expression)
         {
-            using var logger = new XUnitLogger<Parser>(outputHelper);
-
-            Parser parser = new(Lexer.ParseTokens(source), logger);
-
-            var program = parser.ParseProgram();
-
-            Assert.True(program.IsSuccess);
-
-            Assert.Collection(program.Value.Statements,
+            Assert.Collection(Parse(source),
                 s =>
                 {
                     var rs = Assert.IsType<LetStatement>(s);
@@ -44,15 +36,7 @@ namespace MyCompiler.Tests
         [InlineData("return 993322;", "993322")]
         public void Parses_return_statements(string source, string expected)
         {
-            using var logger = new XUnitLogger<Parser>(outputHelper);
-
-            Parser parser = new(Lexer.ParseTokens(source), logger);
-
-            var program = parser.ParseProgram();
-
-            Assert.True(program.IsSuccess);
-
-            Assert.Collection(program.Value.Statements,
+            Assert.Collection(Parse(source),
                 s =>
                 {
                     var rs = Assert.IsType<ReturnStatement>(s);
@@ -64,8 +48,6 @@ namespace MyCompiler.Tests
         [Fact]
         public void Parses_expression_identifier_and_number()
         {
-            using var logger = new XUnitLogger<Parser>(outputHelper);
-
             string source = """
                         foobar;
                         57;
@@ -73,13 +55,7 @@ namespace MyCompiler.Tests
                         false;
                         """;
 
-            Parser parser = new(Lexer.ParseTokens(source), logger);
-
-            var program = parser.ParseProgram();
-
-            Assert.True(program.IsSuccess);
-
-            Assert.Collection(program.Value.Statements,
+            Assert.Collection(Parse(source),
                 s =>
                 {
                     var es = Assert.IsType<ExpressionStatement>(s);
@@ -149,16 +125,11 @@ namespace MyCompiler.Tests
         [InlineData("add(a + b + c * d / f + g)", "add((((a+b)+((c*d)/f))+g))")]
         public void Parses_expressions(string source, params string[] expected)
         {
-            using var logger = new XUnitLogger<Parser>(outputHelper);
+            var statements = Parse(source);
 
-            Parser parser = new(Lexer.ParseTokens(source), logger);
+            Assert.Equal(expected.Length, statements.Count);
 
-            var program = parser.ParseProgram();
-
-            Assert.True(program.IsSuccess);
-            Assert.Equal(expected.Length, program.Value.Statements.Count);
-
-            foreach (var (actualStatement, expectedStatement) in program.Value.Statements.Zip(expected))
+            foreach (var (actualStatement, expectedStatement) in statements.Zip(expected))
             {
                 var es = Assert.IsType<ExpressionStatement>(actualStatement);
                 Assert.Equal(expectedStatement, es.Expression.ToString());
@@ -170,15 +141,7 @@ namespace MyCompiler.Tests
         [InlineData("if (x < y) { x } else { y }", "(x<y)", "(x)", "(y)")]
         public void Parses_if_expressions(string source, string condition, string consequence, string alternative)
         {
-            using var logger = new XUnitLogger<Parser>(outputHelper);
-
-            Parser parser = new(Lexer.ParseTokens(source), logger);
-
-            var program = parser.ParseProgram();
-
-            Assert.True(program.IsSuccess);
-
-            Assert.Collection(program.Value.Statements,
+            Assert.Collection(Parse(source),
                 s =>
                 {
                     var es = Assert.IsType<ExpressionStatement>(s);
@@ -196,15 +159,7 @@ namespace MyCompiler.Tests
         [InlineData("fn(x) { let a=0; 123 }", "let a = 0;(123)", "x")]
         public void Parses_functions(string source, string expectedBody, params string[] expectedParams)
         {
-            using var logger = new XUnitLogger<Parser>(outputHelper);
-
-            Parser parser = new(Lexer.ParseTokens(source), logger);
-
-            var program = parser.ParseProgram();
-
-            Assert.True(program.IsSuccess);
-
-            Assert.Collection(program.Value.Statements,
+            Assert.Collection(Parse(source),
                 s =>
                 {
                     var es = Assert.IsType<ExpressionStatement>(s);
@@ -225,15 +180,7 @@ namespace MyCompiler.Tests
         [InlineData("add(1, 2 * 3, 4 + 5);", "add(1,(2*3),(4+5))")]
         public void Parses_function_calls(string source, string expected)
         {
-            using var logger = new XUnitLogger<Parser>(outputHelper);
-
-            Parser parser = new(Lexer.ParseTokens(source), logger);
-
-            var program = parser.ParseProgram();
-
-            Assert.True(program.IsSuccess);
-
-            Assert.Collection(program.Value.Statements,
+            Assert.Collection(Parse(source),
                 s =>
                 {
                     var es = Assert.IsType<ExpressionStatement>(s);
@@ -241,6 +188,17 @@ namespace MyCompiler.Tests
                     Assert.Equal(expected, rs.ToString());
                 }
             );
+        }
+
+        private List<IAstStatement> Parse(string source)
+        {
+            using var logger = new XUnitLogger<Parser>(outputHelper);
+
+            Parser parser = new(Lexer.ParseTokens(source), logger);
+            var program = parser.ParseProgram();
+            Assert.True(program.IsSuccess);
+
+            return program.Value.Statements;
         }
     }
 }
