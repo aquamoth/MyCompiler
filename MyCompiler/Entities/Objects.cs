@@ -4,10 +4,10 @@ namespace MyCompiler.Entities;
 
 public enum ObjectType
 {
-    Integer,
-    Boolean,
-    Null,
-    ReturnValue,
+    INTEGER,
+    BOOLEAN,
+    NULL,
+    RETURN_VALUE,
 }
 
 public interface IObject
@@ -19,7 +19,7 @@ public interface IObject
 [DebuggerDisplay("{Value,nq}")]
 public class IntegerObject : IObject
 {
-    public ObjectType Type { get; init; } = ObjectType.Integer;
+    public ObjectType Type { get; init; } = ObjectType.INTEGER;
     public long Value { get; init; }
     public string Inspect() => Value.ToString();
 }
@@ -32,7 +32,7 @@ public class BooleanObject : IObject
         Value = value;
     }
 
-    public ObjectType Type { get; init; } = ObjectType.Boolean;
+    public ObjectType Type { get; init; } = ObjectType.BOOLEAN;
     public bool Value { get; init; }
     public string Inspect() => Value.ToString();
 
@@ -47,7 +47,7 @@ public class NullObject : IObject
     {
     }
 
-    public ObjectType Type { get; init; } = ObjectType.Null;
+    public ObjectType Type { get; init; } = ObjectType.NULL;
     public string Inspect() => "null";
 
     public readonly static NullObject Value = new();
@@ -61,7 +61,7 @@ public class ReturnValue : IObject
         Value = value;
     }
 
-    public ObjectType Type { get; init; } = ObjectType.ReturnValue;
+    public ObjectType Type { get; init; } = ObjectType.RETURN_VALUE;
     public IObject Value { get; init; }
     public string Inspect() => Value.ToString();
 }

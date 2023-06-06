@@ -112,6 +112,33 @@ namespace MyCompiler.Tests
             Assert.Equal(expected, actual.Value);
         }
 
+        [Theory]
+        [InlineData("5 + true;", "type mismatch: INTEGER + BOOLEAN")]
+        [InlineData("5 + true; 5;", "type mismatch: INTEGER + BOOLEAN")]
+        [InlineData("-true", "unknown operator: -BOOLEAN")]
+        [InlineData("true + false;", "unknown operator: BOOLEAN + BOOLEAN")]
+        [InlineData("5; true + false; 5", "unknown operator: BOOLEAN + BOOLEAN")]
+        [InlineData("if (10 > 1) { true + false; }", "unknown operator: BOOLEAN + BOOLEAN")]
+        [InlineData("""
+                    if (10 > 1) {
+                        if (10 > 1) {
+                            return true + false;
+                        }
+                        return 1;
+                    }
+                    """, "unknown operator: BOOLEAN + BOOLEAN")]
+        public void Handles_error_states(string source, string expectedErrorMessage)
+        {
+            using var logger = new XUnitLogger<Interpreter>(outputHelper);
+
+            var tokenSource = Lexer.ParseTokens(source);
+            var program = new Parser(tokenSource).ParseProgram();
+            var actual = new Interpreter().Eval(program.Value);
+
+            Assert.False(actual.IsSuccess, "Expected interpreter to fail, but it did not.");
+            Assert.Equal(expectedErrorMessage, actual.Error?.Message);
+        }
+
 
         private IObject Interpret(string source)
         {

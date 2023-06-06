@@ -106,7 +106,7 @@ public class Interpreter
         {
             "!" => EvalBangOperatorExpression(right.Value),
             "-" => EvalMinusPrefixOperatorExpression(right.Value),
-            _ => NullObject.Value, //TODO:???
+            _ => new Exception($"unknown operator: {prefix.Operator}{right.Value.Type}")
         };
     }
 
@@ -129,7 +129,7 @@ public class Interpreter
         if (value is IntegerObject integer)
             return new IntegerObject { Value = -integer.Value };
 
-        return NullObject.Value;//TODO:???
+        return new Exception($"unknown operator: -{value.Type}");
     }
 
 
@@ -150,12 +150,12 @@ public class Interpreter
         if (left.Value is BooleanObject leftBool && right.Value is BooleanObject rightBool)
             return EvalBooleanInfixExpression(infix.Operator, leftBool, rightBool);
 
-        return NullObject.Value; //TODO:???
+        return new Exception($"type mismatch: {left.Value.Type} {infix.Operator} {right.Value.Type}");
     }
 
     private Result<IObject> EvalIntegerInfixExpression(string @operator, IntegerObject leftInt, IntegerObject rightInt)
     {
-        IObject result = @operator switch
+        return @operator switch
         {
             "+" => new IntegerObject { Value = leftInt.Value + rightInt.Value },
             "-" => new IntegerObject { Value = leftInt.Value - rightInt.Value },
@@ -167,23 +167,19 @@ public class Interpreter
             "==" => ToBooleanObject(leftInt.Value == rightInt.Value),
             "!=" => ToBooleanObject(leftInt.Value != rightInt.Value),
 
-            _ => NullObject.Value,//TODO:???
+            _ => new Exception($"unknown operator: {leftInt.Type} {@operator} {rightInt.Type}")
         };
-
-        return Result<IObject>.Success(result);
     }
 
     private Result<IObject> EvalBooleanInfixExpression(string @operator, BooleanObject leftBool, BooleanObject rightBool)
     {
-        IObject result = @operator switch
+        return @operator switch
         {
             "==" => ToBooleanObject(leftBool == rightBool),
             "!=" => ToBooleanObject(leftBool != rightBool),
 
-            _ => NullObject.Value,//TODO:???
+            _ => new Exception($"unknown operator: {leftBool.Type} {@operator} {rightBool.Type}")
         };
-
-        return Result<IObject>.Success(result);
     }
 
     private static BooleanObject ToBooleanObject(bool value) => value ? BooleanObject.True : BooleanObject.False;
