@@ -166,6 +166,13 @@ namespace MyCompiler.Tests
         [InlineData("let add = fn(x, y) { x + y; }; add(5, 5);", 10)]
         [InlineData("let add = fn(x, y) { x + y; }; add(5 + 5, add(5, 5));", 20)]
         [InlineData("fn(x) { x; }(5)", 5)]
+        [InlineData("""
+                        let newAdder = fn(x) {
+                            fn(y) { x + y };
+                        };
+                        let addTwo = newAdder(2);
+                        addTwo(2);
+                    """, 4)]
         public void Calls_functions(string source, int expected)
         {
             var integerObject = AssertInterpret<IntegerObject>(source);
