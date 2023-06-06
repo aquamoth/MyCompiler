@@ -1,48 +1,59 @@
 ﻿using MyCompiler.Entities;
 using MyCompiler.Helpers;
-using System.Data.SqlTypes;
 
 namespace MyCompiler;
 
 public class Interpreter
 {
-    public Result<IObject> Eval(IAstNode node)
+    public Result<IObject> Eval(IAstNode node, EnvironmentStore env)
     {
         return node switch
         {
-            AstProgram program => EvalProgram(program.Statements),
-            ExpressionStatement expression => Eval(expression.Expression),
+            AstProgram program => EvalProgram(program.Statements, env),
+            ExpressionStatement expression => Eval(expression.Expression, env),
             IntegerLiteral integer => new IntegerObject { Value = integer.Value },
             BooleanLiteral boolean => ToBooleanObject(boolean.Value),
             //NullLiteral _ => NullObject.Value,
-            PrefixExpression prefix => EvalPrefixExpression(prefix),
-            InfixExpression infix => EvalInfixExpression(infix),
-            IfExpression @if => EvalIfExpression(@if),
-            BlockStatement block => EvalStatements(block.Statements),
-            ReturnStatement @return => EvalReturnStatement(@return),
-            //LetStatement letStatement => EvalLetStatement(letStatement),
+            PrefixExpression prefix => EvalPrefixExpression(prefix, env),
+            InfixExpression infix => EvalInfixExpression(infix, env),
+            IfExpression @if => EvalIfExpression(@if, env),
+            BlockStatement block => EvalStatements(block.Statements, env),
+            ReturnStatement @return => EvalReturnStatement(@return, env),
+            LetStatement let => EvalLetStatement(let, env),
+            Identifier ident => env.Get(ident.Value),
 
             _ => new NotImplementedException($"Not yet evaluating {node}")
         };
     }
 
-    private Result<IObject> EvalIfExpression(IfExpression ifExpression)
+    private Result<IObject> EvalLetStatement(LetStatement let, EnvironmentStore env)
     {
-        var condition = Eval(ifExpression.Condition);
+        var value = Eval(let.Expression, env);
+        if (!value.IsSuccess)
+            return value.Error!;
+
+        env.Set(let.Identifier.Value, value.Value);
+
+        return NullObject.Value;
+    }
+
+    private Result<IObject> EvalIfExpression(IfExpression @if, EnvironmentStore env)
+    {
+        var condition = Eval(@if.Condition, env);
         if (!condition.IsSuccess)
             return condition;
 
         if (IsTruthy(condition.Value))
-            return Eval(ifExpression.Consequence);
-        else if (ifExpression.Alternative.HasValue)
-            return Eval(ifExpression.Alternative.Value);
+            return Eval(@if.Consequence, env);
+        else if (@if.Alternative.HasValue)
+            return Eval(@if.Alternative.Value, env);
         else
             return NullObject.Value;
     }
 
-    private Result<IObject> EvalProgram(IEnumerable<IAstStatement> statements)
+    private Result<IObject> EvalProgram(IEnumerable<IAstStatement> statements, EnvironmentStore env)
     {
-        var result = EvalStatements(statements);
+        var result = EvalStatements(statements, env);
         if (!result.IsSuccess)
             return result;
 
@@ -52,13 +63,13 @@ public class Interpreter
         return result;
     }
 
-    private Result<IObject> EvalStatements(IEnumerable<IAstStatement> statements)
+    private Result<IObject> EvalStatements(IEnumerable<IAstStatement> statements, EnvironmentStore env)
     {
         IObject result = NullObject.Value;
 
         foreach (var statement in statements)
         {
-            var value = Eval(statement);
+            var value = Eval(statement, env);
             if (!value.IsSuccess)
                 return value;
 
@@ -71,9 +82,9 @@ public class Interpreter
         return Result<IObject>.Success(result);
     }
 
-    private Result<IObject> EvalReturnStatement(ReturnStatement returnStatement)
+    private Result<IObject> EvalReturnStatement(ReturnStatement returnStatement, EnvironmentStore env)
     {
-        var value = Eval(returnStatement.ReturnValue);
+        var value = Eval(returnStatement.ReturnValue, env);
         if (!value.IsSuccess)
             return value;
 
@@ -81,9 +92,9 @@ public class Interpreter
     }
 
 
-    private Result<IObject> EvalPrefixExpression(PrefixExpression prefix)
+    private Result<IObject> EvalPrefixExpression(PrefixExpression prefix, EnvironmentStore env)
     {
-        var right = Eval(prefix.Right);
+        var right = Eval(prefix.Right, env);
         if (!right.IsSuccess)
             return right;
 
@@ -119,13 +130,13 @@ public class Interpreter
 
 
 
-    private Result<IObject> EvalInfixExpression(InfixExpression infix)
+    private Result<IObject> EvalInfixExpression(InfixExpression infix, EnvironmentStore env)
     {
-        var left = Eval(infix.Left);
+        var left = Eval(infix.Left, env);
         if (!left.IsSuccess)
             return left;
 
-        var right = Eval(infix.Right);
+        var right = Eval(infix.Right, env);
         if (!right.IsSuccess)
             return right;
 

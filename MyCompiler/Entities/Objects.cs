@@ -48,7 +48,7 @@ public class NullObject : IObject
     }
 
     public ObjectType Type { get; init; } = ObjectType.NULL;
-    public string Inspect() => "null";
+    public string Inspect() => "";
 
     public readonly static NullObject Value = new();
 }

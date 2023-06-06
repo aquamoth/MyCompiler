@@ -1,7 +1,9 @@
 ﻿// See https://aka.ms/new-console-template for more information
 using MyCompiler;
+using MyCompiler.Entities;
 using System.Text;
 
+var env = EnvironmentStore.New();
 var interpreter = new Interpreter();
 
 Console.WriteLine("Monkey REPL");
@@ -11,31 +13,21 @@ if (args.Length == 0)
 {
     while (true)
     {
-        StringBuilder stringBuilder = new();
-
-        string line;
-        do
-        {
-            Console.Write(">> ");
-            line = Console.ReadLine() ?? "";
-            stringBuilder.AppendLine(line);
-        }
-        while (line != "");
-
-        var source = stringBuilder.ToString();
+        Console.Write(">> ");
+        var source = Console.ReadLine();
         if (string.IsNullOrWhiteSpace(source))
             break;
 
-        Execute(source);
+        Execute(source, env);
     }
 }
 else
 {
     var source = await File.ReadAllTextAsync(args[0]);
-    Execute(source);
+    Execute(source, env);
 }
 
-void Execute(string source)
+void Execute(string source, EnvironmentStore env)
 {
     var tokens = Lexer.ParseTokens(source);
     var parser = new Parser(tokens);
@@ -45,8 +37,8 @@ void Execute(string source)
         PrintParserError(program.Error!);
         return;
     }
-    
-    var result = interpreter.Eval(program.Value);
+
+    var result = interpreter.Eval(program.Value, env);
     if (!result.IsSuccess)
     {
         Console.WriteLine($"Woops! We ran into some monkey business here!");
@@ -55,7 +47,11 @@ void Execute(string source)
         return;
     }
 
-    Console.WriteLine(result.Value.Inspect());
+    var output = result.Value.Inspect();
+    if (!string.IsNullOrEmpty(output))
+    {
+        Console.WriteLine(output);
+    }
 }
 
 void PrintParserError(Exception error)
