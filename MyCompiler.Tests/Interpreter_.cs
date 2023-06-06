@@ -106,6 +106,7 @@ namespace MyCompiler.Tests
         [InlineData("return 2 * 5; 9;", 10)]
         [InlineData("9; return 2 * 5; 9;", 10)]
         [InlineData("if (10 > 1) { if (10 > 1) { return 10; } return 1; }", 10)]
+        [InlineData("let add = fn(a,b){ let x=7; return 4; a+b};let x=3; let c = add(x,2); (c*2)", 8)]
         public void Returns_from_return_statements(string source, int expected)
         {
             var actual = AssertInterpret<IntegerObject>(source);
@@ -146,6 +147,34 @@ namespace MyCompiler.Tests
             var integerObject = AssertInterpret<IntegerObject>(source);
             Assert.Equal(expected, integerObject.Value);
         }
+
+        [Fact]
+        public void Evaluates_functions()
+        {
+            var fnObject = AssertInterpret<FunctionObject>("fn(x) { x + 2; };");
+            Assert.Collection(fnObject.Parameters,
+                p => Assert.Equal("x", p.Value)
+            );
+
+            Assert.Equal("((x+2))", fnObject.Body.ToString());
+        }
+
+        [Theory]
+        [InlineData("let identity = fn(x) { x; }; identity(5);", 5)]
+        [InlineData("let identity = fn(x) { return x; }; identity(5);", 5)]
+        [InlineData("let double = fn(x) { x * 2; }; double(5);", 10)]
+        [InlineData("let add = fn(x, y) { x + y; }; add(5, 5);", 10)]
+        [InlineData("let add = fn(x, y) { x + y; }; add(5 + 5, add(5, 5));", 20)]
+        [InlineData("fn(x) { x; }(5)", 5)]
+        public void Calls_functions(string source, int expected)
+        {
+            var integerObject = AssertInterpret<IntegerObject>(source);
+            Assert.Equal(expected, integerObject.Value);
+        }
+
+
+
+
 
         private T AssertInterpret<T>(string source) where T : IObject
         {

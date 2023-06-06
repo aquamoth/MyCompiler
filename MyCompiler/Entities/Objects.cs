@@ -8,6 +8,7 @@ public enum ObjectType
     BOOLEAN,
     NULL,
     RETURN_VALUE,
+    FUNCTION
 }
 
 public interface IObject
@@ -64,4 +65,22 @@ public class ReturnValue : IObject
     public ObjectType Type { get; init; } = ObjectType.RETURN_VALUE;
     public IObject Value { get; init; }
     public string Inspect() => Value.ToString();
+}
+
+//[DebuggerDisplay("{Value,nq}")]
+public class FunctionObject : IObject
+{
+    public ObjectType Type { get; init; } = ObjectType.FUNCTION;
+    public Identifier[] Parameters { get; init; }
+    public BlockStatement Body { get; init; }
+    public EnvironmentStore Env { get; init; }
+
+    public FunctionObject(Identifier[] parameters, BlockStatement body, EnvironmentStore env)
+    {
+        Parameters = parameters;
+        Body = body;
+        Env = env;
+    }
+
+    public string Inspect() => $"fn({string.Join(", ", Parameters)}) {{\n{Body}\n}}";
 }

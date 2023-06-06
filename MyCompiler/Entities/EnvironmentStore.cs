@@ -5,9 +5,11 @@ namespace MyCompiler.Entities;
 public class EnvironmentStore
 {
     private readonly Dictionary<string, IObject> _store = new();
+    private readonly EnvironmentStore? _outer = null;
 
-    private EnvironmentStore()
+    private EnvironmentStore(EnvironmentStore? outer = null)
     {
+        _outer = outer;
     }
         
     public Result<IObject> Get(string name)
@@ -15,6 +17,11 @@ public class EnvironmentStore
         if (_store.TryGetValue(name, out var value))
         {
             return Result<IObject>.Success(value);
+        }
+
+        if (_outer != null)
+        {
+            return _outer.Get(name);
         }
 
         return new Exception($"identifier not found: {name}");
@@ -25,8 +32,7 @@ public class EnvironmentStore
         _store[name] = value;
     }
 
-    public static EnvironmentStore New()
-    {
-        return new EnvironmentStore();
-    }
+    public static EnvironmentStore New() => new();
+
+    public static EnvironmentStore NewEnclosed(EnvironmentStore outer) => new(outer);
 }

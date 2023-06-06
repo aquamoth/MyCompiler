@@ -20,10 +20,78 @@ public class Interpreter
             BlockStatement block => EvalStatements(block.Statements, env),
             ReturnStatement @return => EvalReturnStatement(@return, env),
             LetStatement let => EvalLetStatement(let, env),
-            Identifier ident => env.Get(ident.Value),
+            Identifier identifier => EvalIdentifier(identifier, env),
+            FnExpression fn => EvalFunction(fn, env),
+            CallExpression call => EvalCall(call, env),
 
             _ => new NotImplementedException($"Not yet evaluating {node}")
         };
+    }
+
+    private Result<IObject> EvalCall(CallExpression call, EnvironmentStore env)
+    {
+        var function = Eval(call.Function, env);
+        if (!function.IsSuccess)
+            return function;
+
+        var args = EvalExpressions(call.Arguments, env);
+        if (!args.IsSuccess)
+            return args.Error!;
+
+        return ApplyFunction(function.Value, args.Value);
+    }
+
+    private Result<IObject> ApplyFunction(IObject fn, IObject[] args)
+    {
+        if (fn is not FunctionObject function)
+            return new Exception($"not a function: {fn.Type}");
+
+        var extendedEnv = ExtendFunctionEnv(function, args);
+
+        var evaluated = Eval(function.Body, extendedEnv);
+        if (!evaluated.IsSuccess)
+            return evaluated;
+
+        return Result<IObject>.Success(
+            UnwrapReturnValue(evaluated.Value)
+        );
+    }
+
+    private static EnvironmentStore ExtendFunctionEnv(FunctionObject fn, IObject[] args)
+    {
+        var env = EnvironmentStore.NewEnclosed(fn.Env);
+        foreach (var (param, value) in fn.Parameters.Zip(args))
+        {
+            env.Set(param.Value, value!);
+        }
+
+        return env;
+    }
+
+    private Result<IObject[]> EvalExpressions(IExpression[] arguments, EnvironmentStore env)
+    {
+        var results = new List<IObject>(arguments.Length);
+
+        foreach (var arg in arguments)
+        {
+            var evaluated = Eval(arg, env);
+            if (!evaluated.IsSuccess)
+                return evaluated.Error!;
+
+            results.Add(evaluated.Value);
+        }
+
+        return results.ToArray();
+    }
+
+    private Result<IObject> EvalFunction(FnExpression fn, EnvironmentStore env)
+    {
+        return new FunctionObject(fn.Parameters, fn.Body, env);
+    }
+
+    private static Result<IObject> EvalIdentifier(Identifier identifier, EnvironmentStore env)
+    {
+        return env.Get(identifier.Value);
     }
 
     private Result<IObject> EvalLetStatement(LetStatement let, EnvironmentStore env)
@@ -57,10 +125,9 @@ public class Interpreter
         if (!result.IsSuccess)
             return result;
 
-        if (result.Value is ReturnValue returnValue)
-            return Result<IObject>.Success(returnValue.Value);
-
-        return result;
+        return Result<IObject>.Success(
+            UnwrapReturnValue(result.Value)
+        );
     }
 
     private Result<IObject> EvalStatements(IEnumerable<IAstStatement> statements, EnvironmentStore env)
@@ -186,5 +253,12 @@ public class Interpreter
         if (condition == BooleanObject.True) return true;
         if (condition == BooleanObject.False) return false;
         return true;//TODO: 0 -> false!
+    }
+
+    private static IObject UnwrapReturnValue(IObject value)
+    {
+        return value is ReturnValue returnValue
+            ? returnValue.Value
+            : value;
     }
 }
