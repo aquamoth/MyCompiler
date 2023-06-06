@@ -2,12 +2,17 @@
 
 namespace MyCompiler.Entities;
 
-public interface IAstStatement
+public interface IAstNode
+{
+
+}
+
+public interface IAstStatement : IAstNode
 {
     public Token Token { get; init; }
 }
 
-public class AstProgram
+public class AstProgram : IAstNode
 {
     public List<IAstStatement> Statements = new();
 }
@@ -38,7 +43,7 @@ public readonly struct ReturnStatement : IAstStatement
     public IExpression ReturnValue { get; init; }
 }
 
-[DebuggerDisplay("{Expression}")]
+[DebuggerDisplay("ExpressionStatement {Expression}")]
 public readonly struct ExpressionStatement : IAstStatement
 {
     public Token Token { get; init; }
@@ -46,7 +51,7 @@ public readonly struct ExpressionStatement : IAstStatement
     override public string ToString() => $"({Expression})";
 }
 
-[DebuggerDisplay("{Statements}")]
+[DebuggerDisplay("BlockStatement {Statements}")]
 public readonly struct BlockStatement : IAstStatement
 {
     public Token Token { get; init; }

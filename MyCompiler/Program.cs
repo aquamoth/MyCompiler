@@ -2,47 +2,61 @@
 using MyCompiler;
 using System.Text;
 
+var interpreter = new Interpreter();
+
 Console.WriteLine("Monkey REPL");
 Console.WriteLine("Press ENTER on an empty line to end the source input.");
 
-string source;
 if (args.Length == 0)
 {
-    StringBuilder stringBuilder = new();
-
-    string line;
-    do
+    while (true)
     {
-        Console.Write(">> ");
-        line = Console.ReadLine() ?? "";
-        stringBuilder.AppendLine(line);
-    }
-    while (line != "");
+        StringBuilder stringBuilder = new();
 
-    source = stringBuilder.ToString();
+        string line;
+        do
+        {
+            Console.Write(">> ");
+            line = Console.ReadLine() ?? "";
+            stringBuilder.AppendLine(line);
+        }
+        while (line != "");
+
+        var source = stringBuilder.ToString();
+        if (string.IsNullOrWhiteSpace(source))
+            break;
+
+        Execute(source);
+    }
 }
 else
 {
-    source = await File.ReadAllTextAsync(args[0]);
+    var source = await File.ReadAllTextAsync(args[0]);
+    Execute(source);
 }
 
-var tokens = Lexer.ParseTokens(source);
-var parser = new Parser(tokens);
-var program = parser.ParseProgram();
-if (!program.IsSuccess)
+void Execute(string source)
 {
-    PrintParserError(program.Error!);
-    return;
+    var tokens = Lexer.ParseTokens(source);
+    var parser = new Parser(tokens);
+    var program = parser.ParseProgram();
+    if (!program.IsSuccess)
+    {
+        PrintParserError(program.Error!);
+        return;
+    }
+    
+    var result = interpreter.Eval(program.Value);
+    if (!result.IsSuccess)
+    {
+        Console.WriteLine($"Woops! We ran into some monkey business here!");
+        Console.WriteLine($" interpreter errors:");
+        Console.WriteLine($"\t{result.Error!.Message}");
+        return;
+    }
+
+    Console.WriteLine(result.Value.Inspect());
 }
-
-foreach (var statement in program.Value.Statements)
-{
-    Console.WriteLine(statement);
-}
-
-
-Console.WriteLine("Press ENTER to end.");
-Console.ReadLine();
 
 void PrintParserError(Exception error)
 {

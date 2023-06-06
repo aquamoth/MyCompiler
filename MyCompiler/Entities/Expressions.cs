@@ -2,11 +2,11 @@
 
 namespace MyCompiler.Entities;
 
-public interface IExpression
+public interface IExpression : IAstNode
 {
 }
 
-[DebuggerDisplay("{Value,nq}")]
+[DebuggerDisplay("Identifier {Value,nq}")]
 public readonly struct Identifier : IExpression
 {
     public Token Token { get; init; }
@@ -15,7 +15,7 @@ public readonly struct Identifier : IExpression
     public override string ToString() => $"{Value}";
 }
 
-[DebuggerDisplay("{Value,nq}")]
+[DebuggerDisplay("IntegerLiteral {Value,nq}")]
 public readonly struct IntegerLiteral : IExpression
 {
     public Token Token { get; init; }
@@ -24,7 +24,7 @@ public readonly struct IntegerLiteral : IExpression
     public override string ToString() => $"{Value}";
 }
 
-[DebuggerDisplay("{Value,nq}")]
+[DebuggerDisplay("BooleanLiteral {Value,nq}")]
 public readonly struct BooleanLiteral : IExpression
 {
     public Token Token { get; init; }
