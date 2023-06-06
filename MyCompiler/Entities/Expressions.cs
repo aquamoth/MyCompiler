@@ -24,6 +24,15 @@ public readonly struct IntegerLiteral : IExpression
     public override string ToString() => $"{Value}";
 }
 
+[DebuggerDisplay("StringLiteral {Value,nq}")]
+public readonly struct StringLiteral : IExpression
+{
+    public Token Token { get; init; }
+    public string Value { get; init; }
+
+    public override string ToString() => $"\"{Value}\"";
+}
+
 [DebuggerDisplay("BooleanLiteral {Value,nq}")]
 public readonly struct BooleanLiteral : IExpression
 {

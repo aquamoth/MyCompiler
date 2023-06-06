@@ -53,6 +53,7 @@ namespace MyCompiler.Tests
                         57;
                         true;
                         false;
+                        "foobar"
                         """;
 
             Assert.Collection(Parse(source),
@@ -79,6 +80,12 @@ namespace MyCompiler.Tests
                     var es = Assert.IsType<ExpressionStatement>(s);
                     var boolean = Assert.IsType<BooleanLiteral>(es.Expression);
                     Assert.False(boolean.Value);
+                },
+                s =>
+                {
+                    var es = Assert.IsType<ExpressionStatement>(s);
+                    var str = Assert.IsType<StringLiteral>(es.Expression);
+                    Assert.Equal("foobar", str.Value);
                 }
             );
         }
@@ -189,6 +196,7 @@ namespace MyCompiler.Tests
                 }
             );
         }
+
 
         private List<IAstStatement> Parse(string source)
         {

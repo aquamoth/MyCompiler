@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using MyCompiler.Entities;
 using MyCompiler.Helpers;
+using System.Reflection.Metadata.Ecma335;
 
 namespace MyCompiler;
 
@@ -123,6 +124,7 @@ public class Parser
         {
             Tokens.Identifier => this.ParseIdentifier,
             Tokens.Integer => this.ParseIntegerLiteral,
+            Tokens.String => this.ParseStringLiteral,
             Tokens.Minus => this.ParsePrefixExpression,
             Tokens.Bang => this.ParsePrefixExpression,
             Tokens.True => this.ParseBooleanLiteral,
@@ -233,7 +235,7 @@ public class Parser
         }
 
         var rparen = AdvanceTokenIf(Tokens.RParen);
-        if(!rparen.IsSuccess)
+        if (!rparen.IsSuccess)
             return rparen.Error!;
 
         return arguments.ToArray();
@@ -374,6 +376,14 @@ public class Parser
             return new ArgumentOutOfRangeException($"Integer out of range {ExceptionLocatorString(currentToken)}");
 
         return new IntegerLiteral { Token = currentToken, Value = value };
+    }
+
+    private Result<IExpression> ParseStringLiteral()
+    {
+        if (!currentToken.Literal.EndsWith("\""))
+            return new Exception($"String literal must be closed correctly {ExceptionLocatorString(currentToken)}");
+
+        return new StringLiteral { Token = currentToken, Value = currentToken.Literal[1..(currentToken.Literal.Length - 1)] };
     }
 
     private Result<IExpression> ParseBooleanLiteral()

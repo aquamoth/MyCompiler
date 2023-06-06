@@ -107,6 +107,26 @@ namespace MyCompiler.Tests
         }
 
         [Fact]
+        public void Parses_string()
+        {
+            const string testInput = """
+                                "string 1"
+                                "string 2"
+                                "string
+                                    3"
+                                ""
+                                """;
+
+            Assert.Collection(Lexer.ParseTokens(testInput),
+                t => Assert.Equal(Tokens.String, t.Type),
+                t => Assert.Equal(Tokens.String, t.Type),
+                t => Assert.Equal(Tokens.String, t.Type),
+                t => Assert.Equal(Tokens.String, t.Type),
+                t => Assert.Equal(Tokens.EndOfFile, t.Type)
+            );
+        }
+
+        [Fact]
         public void Parses_simple_program()
         {
             const string testInput = """

@@ -64,6 +64,27 @@ public static class Lexer
                 continue;
             }
 
+            if (ch == '"')
+            {
+                while (position < input.Length && input.Peek(position) != '"')
+                {
+                    if (input.Peek(position) == '\n')
+                    {
+                        lineNumber++;
+                        lineStart = position + 1;
+                    }
+
+                    position++;
+                }
+
+                if (position < input.Length)
+                    position++;
+
+                var word = input[start..position];
+                yield return Token.From(Tokens.String, word, start, position, lineNumber, lineStart);
+                continue;
+            }
+
             if (ch == '=')
             {
                 if (input.Peek(position) == '=')

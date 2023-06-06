@@ -23,6 +23,7 @@ public class Interpreter
             Identifier identifier => EvalIdentifier(identifier, env),
             FnExpression fn => EvalFunction(fn, env),
             CallExpression call => EvalCall(call, env),
+            StringLiteral str => new StringObject { Value = str.Value },
 
             _ => new NotImplementedException($"Not yet evaluating {node}")
         };
@@ -210,12 +211,15 @@ public class Interpreter
         if (left.Value is IntegerObject leftInt && right.Value is IntegerObject rightInt)
             return EvalIntegerInfixExpression(infix.Operator, leftInt, rightInt);
 
+        if (left.Value is StringObject leftStr && right.Value is StringObject rightStr)
+            return EvalStringInfixExpression(infix.Operator, leftStr, rightStr);
+
         if (left.Value is BooleanObject leftBool && right.Value is BooleanObject rightBool)
             return EvalBooleanInfixExpression(infix.Operator, leftBool, rightBool);
 
         return new Exception($"type mismatch: {left.Value.Type} {infix.Operator} {right.Value.Type}");
     }
-
+    
     private Result<IObject> EvalIntegerInfixExpression(string @operator, IntegerObject leftInt, IntegerObject rightInt)
     {
         return @operator switch
@@ -231,6 +235,24 @@ public class Interpreter
             "!=" => ToBooleanObject(leftInt.Value != rightInt.Value),
 
             _ => new Exception($"unknown operator: {leftInt.Type} {@operator} {rightInt.Type}")
+        };
+    }
+
+    private Result<IObject> EvalStringInfixExpression(string @operator, StringObject leftStr, StringObject rightStr)
+    {
+        return @operator switch
+        {
+            "+" => new StringObject { Value = leftStr.Value + rightStr.Value },
+            //"-" => new IntegerObject { Value = leftStr.Value - rightStr.Value },
+            //"*" => new IntegerObject { Value = leftStr.Value * rightStr.Value },
+            //"/" => new IntegerObject { Value = leftStr.Value / rightStr.Value },
+
+            //"<" => ToBooleanObject(leftStr.Value < rightStr.Value),
+            //">" => ToBooleanObject(leftStr.Value > rightStr.Value),
+            //"==" => ToBooleanObject(leftStr.Value == rightStr.Value),
+            //"!=" => ToBooleanObject(leftStr.Value != rightStr.Value),
+
+            _ => new Exception($"unknown operator: {leftStr.Type} {@operator} {rightStr.Type}")
         };
     }
 

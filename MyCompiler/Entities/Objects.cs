@@ -5,6 +5,7 @@ namespace MyCompiler.Entities;
 public enum ObjectType
 {
     INTEGER,
+    STRING,
     BOOLEAN,
     NULL,
     RETURN_VALUE,
@@ -24,6 +25,15 @@ public class IntegerObject : IObject
     public long Value { get; init; }
     public string Inspect() => Value.ToString();
 }
+
+[DebuggerDisplay("{Value,nq}")]
+public class StringObject : IObject
+{
+    public ObjectType Type { get; init; } = ObjectType.STRING;
+    public string Value { get; init; }
+    public string Inspect() => $"{Value}";
+}
+
 
 [DebuggerDisplay("{Value,nq}")]
 public class BooleanObject : IObject

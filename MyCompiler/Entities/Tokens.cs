@@ -25,6 +25,7 @@ public enum Tokens
     Let,
     Identifier,
     Integer,
+    String,
     Function,
     True,
     False,

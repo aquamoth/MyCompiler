@@ -37,6 +37,15 @@ namespace MyCompiler.Tests
         }
 
         [Theory]
+        [InlineData("\"foobar\"", "foobar")]
+        [InlineData("\"foo\" + \"bar\"", "foobar")]
+        public void Evaluates_string_expressions(string source, string expected)
+        {
+            var stringObject = AssertInterpret<StringObject>(source);
+            Assert.Equal(expected, stringObject.Value);
+        }
+
+        [Theory]
         [InlineData("true", true)]
         [InlineData("false", false)]
 
