@@ -8,37 +8,22 @@ public class Interpreter
 {
     public Result<IObject> Eval(IAstNode node)
     {
-        if (node is AstProgram program)
-            return EvalProgram(program.Statements);
+        return node switch
+        {
+            AstProgram program => EvalProgram(program.Statements),
+            ExpressionStatement expression => Eval(expression.Expression),
+            IntegerLiteral integer => new IntegerObject { Value = integer.Value },
+            BooleanLiteral boolean => ToBooleanObject(boolean.Value),
+            //NullLiteral _ => NullObject.Value,
+            PrefixExpression prefix => EvalPrefixExpression(prefix),
+            InfixExpression infix => EvalInfixExpression(infix),
+            IfExpression @if => EvalIfExpression(@if),
+            BlockStatement block => EvalStatements(block.Statements),
+            ReturnStatement @return => EvalReturnStatement(@return),
+            //LetStatement letStatement => EvalLetStatement(letStatement),
 
-        if (node is ExpressionStatement statement)
-            return Eval(statement.Expression);
-
-        if (node is IntegerLiteral integer)
-            return new IntegerObject { Value = integer.Value };
-
-        if (node is BooleanLiteral boolean)
-            return ToBooleanObject(boolean.Value);
-
-        //if (node is NullLiteral)
-        //    return NullObject.Value;
-
-        if (node is PrefixExpression prefix)
-            return EvalPrefixExpression(prefix);
-
-        if (node is InfixExpression infix)
-            return EvalInfixExpression(infix);
-
-        if (node is IfExpression ifExpression)
-            return EvalIfExpression(ifExpression);
-
-        if (node is BlockStatement block)
-            return EvalStatements(block.Statements);
-
-        if (node is ReturnStatement returnStatement)
-            return EvalReturnStatement(returnStatement);
-
-        return new NotImplementedException($"Not yet evaluating {node}");
+            _ => new NotImplementedException($"Not yet evaluating {node}")
+        };
     }
 
     private Result<IObject> EvalIfExpression(IfExpression ifExpression)
@@ -94,7 +79,7 @@ public class Interpreter
 
         return new ReturnValue(value.Value);
     }
-	
+
 
     private Result<IObject> EvalPrefixExpression(PrefixExpression prefix)
     {
