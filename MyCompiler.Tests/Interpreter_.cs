@@ -15,7 +15,9 @@ namespace MyCompiler.Tests
 
         [Theory]
         [InlineData("5", 5)]
-        [InlineData("98", 98)]
+        [InlineData("-5", -5)]
+        [InlineData("10", 10)]
+        [InlineData("-10", -10)]
         public void Evaluates_integer_expressions(string source, long expected)
         {
             var integerObject = Assert.IsType<IntegerObject>(Interpret(source));
@@ -44,6 +46,8 @@ namespace MyCompiler.Tests
             var booleanObject = Assert.IsType<BooleanObject>(Interpret(source));
             Assert.Equal(expected, booleanObject.Value);
         }
+
+
 
         private IObject Interpret(string source)
         {

@@ -64,11 +64,12 @@ public class Interpreter
         return prefix.Operator switch
         {
             "!" => EvalBangOperatorExpression(right.Value),
+            "-" => EvalMinusPrefixOperatorExpression(right.Value),
             _ => NullObject.Value, //TODO:???
         };
     }
 
-    private Result<IObject> EvalBangOperatorExpression(IObject value)
+    private static Result<IObject> EvalBangOperatorExpression(IObject value)
     {
         if (value is BooleanObject boolean)
             return boolean.Value ? BooleanObject.False : BooleanObject.True;
@@ -80,5 +81,13 @@ public class Interpreter
         //    return integer.Value == 0 ? BooleanObject.False : BooleanObject.True;
 
         return BooleanObject.False; //TODO:???
+    }
+
+    private Result<IObject> EvalMinusPrefixOperatorExpression(IObject value)
+    {
+        if (value is IntegerObject integer)
+            return new IntegerObject { Value = -integer.Value };
+
+        return NullObject.Value;//TODO:???
     }
 }
