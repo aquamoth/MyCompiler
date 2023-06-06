@@ -16,6 +16,8 @@ public class Interpreter
         if (node is IntegerLiteral integer)
             return new IntegerObject { Value = integer.Value };
 
+        if (node is BooleanLiteral boolean)
+            return new BooleanObject { Value = boolean.Value };
 
 
 
