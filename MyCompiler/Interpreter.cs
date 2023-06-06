@@ -100,6 +100,9 @@ public class Interpreter
         if (left.Value is IntegerObject leftInt && right.Value is IntegerObject rightInt)
             return EvalIntegerInfixExpression(infix.Operator, leftInt, rightInt);
 
+        if (left.Value is BooleanObject leftBool && right.Value is BooleanObject rightBool)
+            return EvalBooleanInfixExpression(infix.Operator, leftBool, rightBool);
+
         return NullObject.Value; //TODO:???
     }
 
@@ -123,5 +126,17 @@ public class Interpreter
         return Result<IObject>.Success(result);
     }
 
+    private Result<IObject> EvalBooleanInfixExpression(string @operator, BooleanObject leftBool, BooleanObject rightBool)
+    {
+        IObject result = @operator switch
+        {
+            "==" => ToBooleanObject(leftBool == rightBool),
+            "!=" => ToBooleanObject(leftBool != rightBool),
+
+            _ => NullObject.Value,//TODO:???
+        };
+
+        return Result<IObject>.Success(result);
+    }
     private static BooleanObject ToBooleanObject(bool value) => value ? BooleanObject.True : BooleanObject.False;
 }
