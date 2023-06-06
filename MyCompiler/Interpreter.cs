@@ -105,45 +105,21 @@ public class Interpreter
         if (!right.IsSuccess)
             return right;
 
-        return infix.Operator switch
+        if (left.Value is IntegerObject leftInt && right.Value is IntegerObject rightInt)
+            return EvalIntegerInfixExpression(infix.Operator, leftInt, rightInt);
+
+        return NullObject.Value; //TODO:???
+    }
+
+    private Result<IObject> EvalIntegerInfixExpression(string @operator, IntegerObject leftInt, IntegerObject rightInt)
+    {
+        return @operator switch
         {
-            "+" => EvalPlusInfixOperatorExpression(left.Value, right.Value),
-            "-" => EvalMinusInfixOperatorExpression(left.Value, right.Value),
-            "*" => EvalAsteriskInfixOperatorExpression(left.Value, right.Value),
-            "/" => EvalForwardSlashInfixOperatorExpression(left.Value, right.Value),
-            _ => NullObject.Value, //TODO:???
+            "+" => new IntegerObject { Value = leftInt.Value + rightInt.Value },
+            "-" => new IntegerObject { Value = leftInt.Value - rightInt.Value },
+            "*" => new IntegerObject { Value = leftInt.Value * rightInt.Value },
+            "/" => new IntegerObject { Value = leftInt.Value / rightInt.Value },
+            _ => NullObject.Value,//TODO:???
         };
-    }
-
-    private static Result<IObject> EvalPlusInfixOperatorExpression(IObject left, IObject right)
-    {
-        if (left is not IntegerObject leftInt || right is not IntegerObject rightInt)
-            return NullObject.Value;
-
-        return new IntegerObject { Value = leftInt.Value + rightInt.Value };
-    }
-
-    private static Result<IObject> EvalMinusInfixOperatorExpression(IObject left, IObject right)
-    {
-        if (left is not IntegerObject leftInt || right is not IntegerObject rightInt)
-            return NullObject.Value;
-
-        return new IntegerObject { Value = leftInt.Value - rightInt.Value };
-    }
-
-    private static Result<IObject> EvalAsteriskInfixOperatorExpression(IObject left, IObject right)
-    {
-        if (left is not IntegerObject leftInt || right is not IntegerObject rightInt)
-            return NullObject.Value;
-
-        return new IntegerObject { Value = leftInt.Value * rightInt.Value };
-    }
-
-    private static Result<IObject> EvalForwardSlashInfixOperatorExpression(IObject left, IObject right)
-    {
-        if (left is not IntegerObject leftInt || right is not IntegerObject rightInt)
-            return NullObject.Value;
-
-        return new IntegerObject { Value = leftInt.Value / rightInt.Value };
     }
 }
