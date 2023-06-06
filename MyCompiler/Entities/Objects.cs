@@ -7,6 +7,7 @@ public enum ObjectType
     Integer,
     Boolean,
     Null,
+    ReturnValue,
 }
 
 public interface IObject
@@ -50,4 +51,17 @@ public class NullObject : IObject
     public string Inspect() => "null";
 
     public readonly static NullObject Value = new();
+}
+
+[DebuggerDisplay("return {Value,nq}")]
+public class ReturnValue : IObject
+{
+    public ReturnValue(IObject value)
+    {
+        Value = value;
+    }
+
+    public ObjectType Type { get; init; } = ObjectType.ReturnValue;
+    public IObject Value { get; init; }
+    public string Inspect() => Value.ToString();
 }

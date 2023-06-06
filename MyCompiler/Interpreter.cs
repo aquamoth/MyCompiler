@@ -9,7 +9,7 @@ public class Interpreter
     public Result<IObject> Eval(IAstNode node)
     {
         if (node is AstProgram program)
-            return EvalStatements(program.Statements);
+            return EvalProgram(program.Statements);
 
         if (node is ExpressionStatement statement)
             return Eval(statement.Expression);
@@ -35,6 +35,9 @@ public class Interpreter
         if (node is BlockStatement block)
             return EvalStatements(block.Statements);
 
+        if (node is ReturnStatement returnStatement)
+            return EvalReturnStatement(returnStatement);
+
         return new NotImplementedException($"Not yet evaluating {node}");
     }
 
@@ -52,6 +55,18 @@ public class Interpreter
             return NullObject.Value;
     }
 
+    private Result<IObject> EvalProgram(IEnumerable<IAstStatement> statements)
+    {
+        var result = EvalStatements(statements);
+        if (!result.IsSuccess)
+            return result;
+
+        if (result.Value is ReturnValue returnValue)
+            return Result<IObject>.Success(returnValue.Value);
+
+        return result;
+    }
+
     private Result<IObject> EvalStatements(IEnumerable<IAstStatement> statements)
     {
         IObject result = NullObject.Value;
@@ -63,12 +78,23 @@ public class Interpreter
                 return value;
 
             result = value.Value;
+
+            if (result is ReturnValue returnValue)
+                return returnValue;
         }
 
         return Result<IObject>.Success(result);
     }
 
+    private Result<IObject> EvalReturnStatement(ReturnStatement returnStatement)
+    {
+        var value = Eval(returnStatement.ReturnValue);
+        if (!value.IsSuccess)
+            return value;
 
+        return new ReturnValue(value.Value);
+    }
+	
 
     private Result<IObject> EvalPrefixExpression(PrefixExpression prefix)
     {

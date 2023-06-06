@@ -100,6 +100,18 @@ namespace MyCompiler.Tests
             Assert.Equal(NullObject.Value, Interpret(source));
         }
 
+        [Theory]
+        [InlineData("return 10;", 10)]
+        [InlineData("return 10; 9;", 10)]
+        [InlineData("return 2 * 5; 9;", 10)]
+        [InlineData("9; return 2 * 5; 9;", 10)]
+        [InlineData("if (10 > 1) { if (10 > 1) { return 10; } return 1; }", 10)]
+        public void Returns_from_return_statements(string source, int expected)
+        {
+            var actual = Assert.IsType<IntegerObject>(Interpret(source));
+            Assert.Equal(expected, actual.Value);
+        }
+
 
         private IObject Interpret(string source)
         {
