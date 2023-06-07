@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using MyCompiler.Helpers;
+using System.Diagnostics;
 
 namespace MyCompiler.Entities;
 
@@ -9,7 +10,8 @@ public enum ObjectType
     BOOLEAN,
     NULL,
     RETURN_VALUE,
-    FUNCTION
+    FUNCTION,
+    BUILTIN
 }
 
 public interface IObject
@@ -94,3 +96,22 @@ public class FunctionObject : IObject
 
     public string Inspect() => $"fn({string.Join(", ", Parameters)}) {{\n{Body}\n}}";
 }
+
+//[DebuggerDisplay("{Value,nq}")]
+public class BuiltIn : IObject
+{
+    public ObjectType Type { get; init; } = ObjectType.BUILTIN;
+    public Func<IObject[], Result<IObject>> Fn { get; init; }
+
+    //public Identifier[] Parameters { get; init; }
+    //public BlockStatement Body { get; init; }
+    //public EnvironmentStore Env { get; init; }
+
+    public BuiltIn(Func<IObject[], Result<IObject>> fn)
+    {
+        Fn = fn;
+    }
+
+    public string Inspect() => $"builtin function";
+}
+

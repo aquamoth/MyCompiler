@@ -182,6 +182,28 @@ namespace MyCompiler.Tests
         }
 
         [Theory]
+        [InlineData("len(\"\")", 0)]
+        [InlineData("len(\"four\")", 4)]
+        [InlineData("len(\"hello world\")", 11)]
+        //[InlineData("len(1)", 0)]
+        //[InlineData("len(\"one\", \"two\")", 0)]
+        public void Builtin_functions(string source, int expected)
+        {
+            var integerObject = AssertInterpret<IntegerObject>(source);
+            Assert.Equal(expected, integerObject.Value);
+        }
+
+        [Theory]
+        [InlineData("len(1)", "Expected STRING but got INTEGER")]
+        [InlineData("len(\"one\", \"two\")", "wrong number of arguments. got=2, want=1")]
+        public void Builtin_len_asserts(string source, string error)
+        {
+            var integerObject = Interpret(source);
+            Assert.False(integerObject.IsSuccess);
+            Assert.Equal(error, integerObject.Error?.Message);
+        }
+
+        [Theory]
         [InlineData("let identity = fn(x) { x; }; identity(5);", 5)]
         [InlineData("let identity = fn(x) { return x; }; identity(5);", 5)]
         [InlineData("let double = fn(x) { x * 2; }; double(5);", 10)]

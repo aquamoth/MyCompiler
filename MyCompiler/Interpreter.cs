@@ -5,6 +5,13 @@ namespace MyCompiler;
 
 public class Interpreter
 {
+    private readonly EnvironmentStore builtin;
+    public Interpreter()
+    {
+        builtin = EnvironmentStore.New();
+        builtin.Set("len", new BuiltIn(BuiltIn_Len));
+    }
+
     public Result<IObject> Eval(IAstNode node, EnvironmentStore env)
     {
         return node switch
@@ -44,18 +51,23 @@ public class Interpreter
 
     private Result<IObject> ApplyFunction(IObject fn, IObject[] args)
     {
-        if (fn is not FunctionObject function)
-            return new Exception($"not a function: {fn.Type}");
+        if (fn is FunctionObject function)
+        {
+            var extendedEnv = ExtendFunctionEnv(function, args);
 
-        var extendedEnv = ExtendFunctionEnv(function, args);
+            var evaluated = Eval(function.Body, extendedEnv);
+            if (!evaluated.IsSuccess)
+                return evaluated;
 
-        var evaluated = Eval(function.Body, extendedEnv);
-        if (!evaluated.IsSuccess)
-            return evaluated;
+            return Result<IObject>.Success(
+                UnwrapReturnValue(evaluated.Value)
+            );
+        }
 
-        return Result<IObject>.Success(
-            UnwrapReturnValue(evaluated.Value)
-        );
+        if (fn is BuiltIn builtin)
+            return builtin.Fn(args);
+
+        return new Exception($"not a function: {fn.Type}");
     }
 
     private static EnvironmentStore ExtendFunctionEnv(FunctionObject fn, IObject[] args)
@@ -90,9 +102,13 @@ public class Interpreter
         return new FunctionObject(fn.Parameters, fn.Body, env);
     }
 
-    private static Result<IObject> EvalIdentifier(Identifier identifier, EnvironmentStore env)
+    private Result<IObject> EvalIdentifier(Identifier identifier, EnvironmentStore env)
     {
-        return env.Get(identifier.Value);
+        var result = env.Get(identifier.Value);
+        if (result.IsSuccess)
+            return result;
+
+        return builtin.Get(identifier.Value);
     }
 
     private Result<IObject> EvalLetStatement(LetStatement let, EnvironmentStore env)
@@ -219,7 +235,7 @@ public class Interpreter
 
         return new Exception($"type mismatch: {left.Value.Type} {infix.Operator} {right.Value.Type}");
     }
-    
+
     private Result<IObject> EvalIntegerInfixExpression(string @operator, IntegerObject leftInt, IntegerObject rightInt)
     {
         return @operator switch
@@ -261,6 +277,19 @@ public class Interpreter
             "!=" => ToBooleanObject(leftBool != rightBool),
 
             _ => new Exception($"unknown operator: {leftBool.Type} {@operator} {rightBool.Type}")
+        };
+    }
+
+    private static Result<IObject> BuiltIn_Len(IObject[] args)
+    {
+        if (args.Length != 1)
+            return new Exception($"wrong number of arguments. got={args.Length}, want=1");
+
+        return args[0] switch
+        {
+            StringObject arg0 => new IntegerObject { Value = arg0.Value.Length },
+
+            _ => new Exception($"Expected {ObjectType.STRING} but got {args[0].Type}")
         };
     }
 
