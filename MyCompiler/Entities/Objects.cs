@@ -11,7 +11,8 @@ public enum ObjectType
     NULL,
     RETURN_VALUE,
     FUNCTION,
-    BUILTIN
+    BUILTIN,
+    ARRAY
 }
 
 public interface IObject
@@ -36,6 +37,22 @@ public class StringObject : IObject
     public string Inspect() => $"{Value}";
 }
 
+[DebuggerDisplay("[{Elements,nq}]")]
+public class ArrayLiteral : IObject
+{
+    public ObjectType Type { get; init; } = ObjectType.ARRAY;
+    public IObject[] Elements { get; init; }
+    public string Inspect() => $"[{string.Join<IObject>(",", Elements)}]";
+
+    public ArrayLiteral(IObject[] elements)
+    {
+        Elements = elements;
+    }
+}
+
+
+
+
 
 [DebuggerDisplay("{Value,nq}")]
 public class BooleanObject : IObject
@@ -56,7 +73,7 @@ public class BooleanObject : IObject
 [DebuggerDisplay("null")]
 public class NullObject : IObject
 {
-    private NullObject() 
+    private NullObject()
     {
     }
 

@@ -4,6 +4,7 @@ namespace MyCompiler.Entities;
 
 public interface IExpression : IAstNode
 {
+    public Token Token { get; }
 }
 
 [DebuggerDisplay("Identifier {Value,nq}")]
@@ -81,7 +82,7 @@ public readonly struct FnExpression : IExpression
     public Identifier[] Parameters { get; init; }
     public BlockStatement Body { get; init; }
 
-    //public override string ToString() => $"if {Condition}\nthen {Consequence}\nelse {Alternative}";
+    public override string ToString() => $"fn({string.Join(",", Parameters)}){{{Body}}}";
 }
 
 [DebuggerDisplay("call {Function,nq}({Arguments,nq})")]
@@ -92,4 +93,24 @@ public readonly struct CallExpression : IExpression
     public IExpression[] Arguments { get; init; }
 
     public override string ToString() => $"{Function}({string.Join<IExpression>(",", Arguments)})";
+}
+
+[DebuggerDisplay("[{Values,nq}]")]
+public readonly struct ArrayExpression : IExpression
+{
+    public Token Token { get; init; }
+    public IExpression[] Elements { get; init; }
+
+    public override string ToString() => $"[{string.Join<IExpression>(",", Elements)}]";
+}
+
+
+[DebuggerDisplay("index {Array,nq}({Index,nq})")]
+public readonly struct IndexExpression : IExpression
+{
+    public Token Token { get; init; }
+    public IExpression Left { get; init; }
+    public IExpression Right { get; init; }
+
+    public override string ToString() => $"({Left}[{Right}])";
 }

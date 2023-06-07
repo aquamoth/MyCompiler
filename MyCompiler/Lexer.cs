@@ -120,6 +120,8 @@ public static class Lexer
                     ')' => Tokens.RParen,
                     '{' => Tokens.LSquirly,
                     '}' => Tokens.RSquirly,
+                    '[' => Tokens.LBracket,
+                    ']' => Tokens.RBracket,
                     ',' => Tokens.Comma,
                     ';' => Tokens.Semicolon,
                     _ => Tokens.Illegal

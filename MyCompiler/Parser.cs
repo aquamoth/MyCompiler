@@ -132,6 +132,7 @@ public class Parser
             Tokens.LParen => this.ParseGroupedExpression,
             Tokens.If => this.ParseIfExpression,
             Tokens.Function => this.ParseFnExpression,
+            Tokens.LBracket => this.ParseArrayLiteral,
             _ => null,
         };
 
@@ -155,6 +156,7 @@ public class Parser
                 Tokens.Equal => this.ParseInfixExpression,
                 Tokens.NotEqual => this.ParseInfixExpression,
                 Tokens.LParen => this.ParseCallExpression,
+                Tokens.LBracket => this.ParseIndexExpression,
                 _ => null,
             };
 
@@ -239,6 +241,69 @@ public class Parser
             return rparen.Error!;
 
         return arguments.ToArray();
+    }
+
+
+    private Result<IExpression> ParseArrayLiteral()
+    {
+        var arrayToken = currentToken;
+
+        var values = new List<IExpression>();
+
+        if (!AdvanceTokenIf(Tokens.RBracket).IsSuccess)
+        {
+            AdvanceToken();
+
+            var value = ParseExpression();
+            if (!value.IsSuccess)
+                return value.Error!;
+
+            values.Add(value.Value);
+
+            while (AdvanceTokenIf(Tokens.Comma).IsSuccess)
+            {
+                AdvanceToken();
+
+                value = ParseExpression();
+                if (!value.IsSuccess)
+                    return value.Error!;
+
+                values.Add(value.Value);
+            }
+
+            var rbracket = AdvanceTokenIf(Tokens.RBracket);
+            if (!rbracket.IsSuccess)
+                return rbracket.Error!;
+        }
+
+        return new ArrayExpression
+        {
+            Token = arrayToken,
+            Elements = values.ToArray()
+        };
+    }
+
+    
+
+    private Result<IExpression> ParseIndexExpression(IExpression array)
+    {
+        var indexToken = currentToken;
+
+        AdvanceToken();
+        var index = ParseExpression();
+        if (!index.IsSuccess)
+            return index;
+
+        var rparen = AdvanceTokenIf(Tokens.RBracket);
+        if (!rparen.IsSuccess)
+            return rparen.Error!;
+
+        return new IndexExpression
+        {
+            Token = indexToken,
+            Left = array,
+            Right = index.Value
+        };
     }
 
     private Result<IExpression> ParseGroupedExpression()
@@ -332,7 +397,6 @@ public class Parser
             Body = body.Value
         };
     }
-
     private Result<Identifier[]> ParseFunctionParameters()
     {
         var rparen = AdvanceTokenIf(Tokens.RParen);
@@ -447,8 +511,9 @@ public class Parser
         Tokens.ForwardSlash => Precedence.Product,
         Tokens.Asterisk => Precedence.Product,
         Tokens.LParen => Precedence.Call,
+        Tokens.LBracket => Precedence.Index,
         _ => Precedence.Lowest
     };
 
-    private static string ExceptionLocatorString(Token token) => $"at Line {token.Line}, Columns {token.Column}";
+    public static string ExceptionLocatorString(Token token) => $"at Line {token.Line}, Columns {token.Column}";
 }

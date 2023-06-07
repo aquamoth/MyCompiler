@@ -31,6 +31,8 @@ public class Interpreter
             FnExpression fn => EvalFunction(fn, env),
             CallExpression call => EvalCall(call, env),
             StringLiteral str => new StringObject { Value = str.Value },
+            ArrayExpression array => EvalArrayExpression(array, env),
+            IndexExpression index => EvalIndexExpression(index, env),
 
             _ => new NotImplementedException($"Not yet evaluating {node}")
         };
@@ -135,6 +137,39 @@ public class Interpreter
         else
             return NullObject.Value;
     }
+
+    private Result<IObject> EvalArrayExpression(ArrayExpression array, EnvironmentStore env)
+    {
+        var elements = EvalExpressions(array.Elements, env);
+        if (!elements.IsSuccess)
+            return elements.Error!;
+
+        return new ArrayLiteral(elements.Value);
+    }
+
+    private Result<IObject> EvalIndexExpression(IndexExpression indexExpr, EnvironmentStore env)
+    {
+        var left = Eval(indexExpr.Left, env);
+        if (!left.IsSuccess)
+            return left;
+
+        if (left.Value is not ArrayLiteral array)
+            return new Exception($"index operator is not supported on {left.Value.Type} {Parser.ExceptionLocatorString(indexExpr.Token)}");
+
+        var right = Eval(indexExpr.Right, env);
+        if (!right.IsSuccess)
+            return right;
+
+        if (right.Value is not IntegerObject index)
+            return new Exception($"index value {right.Value.Type} is not supported {Parser.ExceptionLocatorString(indexExpr.Right.Token)}");
+
+        if (index.Value < 0 || index.Value >= array.Elements.Length)
+            return new Exception($"index {index.Value} is out of range {Parser.ExceptionLocatorString(indexExpr.Right.Token)}");
+
+        return Result<IObject>.Success(array.Elements[index.Value]);
+    }
+
+
 
     private Result<IObject> EvalProgram(IEnumerable<IAstStatement> statements, EnvironmentStore env)
     {

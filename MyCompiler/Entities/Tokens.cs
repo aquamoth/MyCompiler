@@ -12,6 +12,8 @@ public enum Tokens
     RParen,
     LSquirly,
     RSquirly,
+    LBracket,
+    RBracket,
     Comma,
     Semicolon,
 

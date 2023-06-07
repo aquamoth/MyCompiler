@@ -130,6 +130,9 @@ namespace MyCompiler.Tests
         [InlineData("a + add(b * c) + d", "((a+add((b*c)))+d)")]
         [InlineData("add(a, b, 1, 2 * 3, 4 + 5, add(6, 7 * 8))", "add(a,b,1,(2*3),(4+5),add(6,(7*8)))")]
         [InlineData("add(a + b + c * d / f + g)", "add((((a+b)+((c*d)/f))+g))")]
+
+        [InlineData("a * [1, 2, 3, 4][b * c] * d", "((a*([1,2,3,4][(b*c)]))*d)")]
+        [InlineData("add(a * b[2], b[1], 2 * [1, 2][1])", "add((a*(b[2])),(b[1]),(2*([1,2][1])))")]
         public void Parses_expressions(string source, params string[] expected)
         {
             var statements = Parse(source);
@@ -192,6 +195,39 @@ namespace MyCompiler.Tests
                 {
                     var es = Assert.IsType<ExpressionStatement>(s);
                     var rs = Assert.IsType<CallExpression>(es.Expression);
+                    Assert.Equal(expected, rs.ToString());
+                }
+            );
+        }
+
+
+        [Theory]
+        [InlineData("[1, 2]", "[1,2]")]
+        [InlineData("[1 + 2, \"foo\", fn(a){a*2}, 69]", "[(1+2),\"foo\",fn(a){((a*2))},69]")]
+        [InlineData("[]", "[]")]
+        public void Parses_arrays(string source, string expected)
+        {
+            Assert.Collection(Parse(source),
+                s =>
+                {
+                    var es = Assert.IsType<ExpressionStatement>(s);
+                    var rs = Assert.IsType<ArrayExpression>(es.Expression);
+                    Assert.Equal(expected, rs.ToString());
+                }
+            );
+        }
+
+        [Theory]
+        [InlineData("[1, 2][1]", "([1,2][1])")]
+        [InlineData("\"foo\"[1]", "(\"foo\"[1])")]
+        [InlineData("myArray[4]", "(myArray[4])")]
+        public void Parses_indexes(string source, string expected)
+        {
+            Assert.Collection(Parse(source),
+                s =>
+                {
+                    var es = Assert.IsType<ExpressionStatement>(s);
+                    var rs = Assert.IsType<IndexExpression>(es.Expression);
                     Assert.Equal(expected, rs.ToString());
                 }
             );
