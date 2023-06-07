@@ -208,6 +208,20 @@ namespace MyCompiler.Tests
         }
 
         [Theory]
+        [InlineData("rest([1,2,3,4])", "[2,3,4]")]
+        [InlineData("rest([1])", "[]")]
+        [InlineData("rest([])", "")]
+        [InlineData("push([], 5)", "[5]")]
+        [InlineData("push([1], 5)", "[1,5]")]
+        [InlineData("push([1,2], 5)", "[1,2,5]")]
+        public void Builtin_array_functions(string source, string expected)
+        {
+            var result = Interpret(source);
+            Assert.True(result.IsSuccess);
+            Assert.Equal(expected, result.Value.Inspect());
+        }
+
+        [Theory]
         [InlineData("let identity = fn(x) { x; }; identity(5);", 5)]
         [InlineData("let identity = fn(x) { return x; }; identity(5);", 5)]
         [InlineData("let double = fn(x) { x * 2; }; double(5);", 10)]

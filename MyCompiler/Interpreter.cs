@@ -12,6 +12,8 @@ public class Interpreter
         builtin.Set("len", new BuiltIn(BuiltIn_Len));
         builtin.Set("first", new BuiltIn(BuiltIn_First));
         builtin.Set("last", new BuiltIn(BuiltIn_Last));
+        builtin.Set("rest", new BuiltIn(BuiltIn_Rest));
+        builtin.Set("push", new BuiltIn(BuiltIn_Push));
     }
 
     public Result<IObject> Eval(IAstNode node, EnvironmentStore env)
@@ -352,6 +354,32 @@ public class Interpreter
         return args[0] switch
         {
             ArrayLiteral arg0 => Result<IObject>.Success(arg0.Elements.Length == 0 ? NullObject.Value : arg0.Elements[arg0.Elements.Length - 1]),
+
+            _ => new Exception($"Expected {ObjectType.ARRAY} but got {args[0].Type}")
+        };
+    }
+
+    private static Result<IObject> BuiltIn_Rest(IObject[] args)
+    {
+        if (args.Length != 1)
+            return new Exception($"wrong number of arguments. got={args.Length}, want=1");
+
+        return args[0] switch
+        {
+            ArrayLiteral arg0 => Result<IObject>.Success(arg0.Elements.Length == 0 ? NullObject.Value : new ArrayLiteral(arg0.Elements.Skip(1).ToArray())),
+
+            _ => new Exception($"Expected {ObjectType.ARRAY} but got {args[0].Type}")
+        };
+    }
+
+    private static Result<IObject> BuiltIn_Push(IObject[] args)
+    {
+        if (args.Length != 2)
+            return new Exception($"wrong number of arguments. got={args.Length}, want=2");
+
+        return args[0] switch
+        {
+            ArrayLiteral arg0 => Result<IObject>.Success(new ArrayLiteral(arg0.Elements.Concat(new[] { args[1] }).ToArray())),
 
             _ => new Exception($"Expected {ObjectType.ARRAY} but got {args[0].Type}")
         };

@@ -42,7 +42,7 @@ public class ArrayLiteral : IObject
 {
     public ObjectType Type { get; init; } = ObjectType.ARRAY;
     public IObject[] Elements { get; init; }
-    public string Inspect() => $"[{string.Join<IObject>(",", Elements)}]";
+    public string Inspect() => $"[{string.Join(",", Elements.Select(e => e.Inspect()))}]";
 
     public ArrayLiteral(IObject[] elements)
     {
