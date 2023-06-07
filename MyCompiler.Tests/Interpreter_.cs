@@ -185,6 +185,10 @@ namespace MyCompiler.Tests
         [InlineData("len(\"\")", 0)]
         [InlineData("len(\"four\")", 4)]
         [InlineData("len(\"hello world\")", 11)]
+        [InlineData("len([])", 0)]
+        [InlineData("len([1,1,1,1])", 4)]
+        [InlineData("first([1,2,3,4])", 1)]
+        [InlineData("last([1,2,3,4])", 4)]
         //[InlineData("len(1)", 0)]
         //[InlineData("len(\"one\", \"two\")", 0)]
         public void Builtin_functions(string source, int expected)
@@ -194,7 +198,7 @@ namespace MyCompiler.Tests
         }
 
         [Theory]
-        [InlineData("len(1)", "Expected STRING but got INTEGER")]
+        [InlineData("len(1)", "Expected STRING or ARRAY but got INTEGER")]
         [InlineData("len(\"one\", \"two\")", "wrong number of arguments. got=2, want=1")]
         public void Builtin_len_asserts(string source, string error)
         {
