@@ -260,6 +260,15 @@ namespace MyCompiler.Tests
         }
 
 
+        [Theory]
+        [InlineData("""{"name": "William", "age": 48};""", """{ "name": "William", "age": 48 }""")]
+        [InlineData("{}", "{  }")]
+        public void Evaluates_Hash_literals(string source, string expected)
+        {
+            var hashObject = AssertInterpret<HashObject>(source);
+            Assert.Equal(expected, hashObject.Inspect());
+        }
+
 
         private T AssertInterpret<T>(string source) where T : IObject
         {

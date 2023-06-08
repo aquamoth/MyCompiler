@@ -1,5 +1,6 @@
 ﻿using MyCompiler.Helpers;
 using System.Diagnostics;
+using System.Text;
 
 namespace MyCompiler.Entities;
 
@@ -12,7 +13,8 @@ public enum ObjectType
     RETURN_VALUE,
     FUNCTION,
     BUILTIN,
-    ARRAY
+    ARRAY,
+    HASH
 }
 
 public interface IObject
@@ -21,20 +23,39 @@ public interface IObject
     string Inspect();
 }
 
+public interface IHashable
+{
+    HashKey HashKey();
+}
+
 [DebuggerDisplay("{Value,nq}")]
-public class IntegerObject : IObject
+public class IntegerObject : IObject, IHashable
 {
     public ObjectType Type { get; init; } = ObjectType.INTEGER;
     public long Value { get; init; }
     public string Inspect() => Value.ToString();
+    public HashKey HashKey() => new(this.Type, this.Value);
 }
 
 [DebuggerDisplay("{Value,nq}")]
-public class StringObject : IObject
+public class StringObject : IObject, IHashable
 {
     public ObjectType Type { get; init; } = ObjectType.STRING;
     public string Value { get; init; }
-    public string Inspect() => $"{Value}";
+    public string Inspect() => $"\"{Value}\"";
+
+    public HashKey HashKey()
+    {
+        long hashCode = 0L;
+        long pow = 1L;
+        foreach (var b in Encoding.UTF8.GetBytes(this.Value))
+        {
+            hashCode = (hashCode + b * pow) % 1000000009;
+            pow = (pow * 31) % 1000000009;
+        }
+
+        return new HashKey(Type, hashCode);
+    }
 }
 
 [DebuggerDisplay("[{Elements,nq}]")]
@@ -55,7 +76,7 @@ public class ArrayLiteral : IObject
 
 
 [DebuggerDisplay("{Value,nq}")]
-public class BooleanObject : IObject
+public class BooleanObject : IObject, IHashable
 {
     private BooleanObject(bool value)
     {
@@ -65,6 +86,7 @@ public class BooleanObject : IObject
     public ObjectType Type { get; init; } = ObjectType.BOOLEAN;
     public bool Value { get; init; }
     public string Inspect() => Value.ToString();
+    public HashKey HashKey() => new(this.Type, this.Value ? 1 : 0);
 
     public readonly static BooleanObject True = new(true);
     public readonly static BooleanObject False = new(false);
@@ -120,10 +142,6 @@ public class BuiltIn : IObject
     public ObjectType Type { get; init; } = ObjectType.BUILTIN;
     public Func<IObject[], Result<IObject>> Fn { get; init; }
 
-    //public Identifier[] Parameters { get; init; }
-    //public BlockStatement Body { get; init; }
-    //public EnvironmentStore Env { get; init; }
-
     public BuiltIn(Func<IObject[], Result<IObject>> fn)
     {
         Fn = fn;
@@ -132,3 +150,43 @@ public class BuiltIn : IObject
     public string Inspect() => $"builtin function";
 }
 
+//[DebuggerDisplay("{Value,nq}")]
+public class HashObject : IObject
+{
+    public ObjectType Type { get; init; } = ObjectType.HASH;
+    public IDictionary<HashKey, HashPair> Pairs { get; init; } = new Dictionary<HashKey, HashPair>();
+
+    public string Inspect() => $"{{ {string.Join(", ", Pairs.Values.Select(p => $"{p.Key.Inspect()}: {p.Value.Inspect()}"))} }}";
+}
+
+public readonly struct HashPair
+{
+    public IObject Key { get; init; }
+    public IObject Value { get; init; }
+
+    public HashPair(IObject key, IObject value)
+    {
+        Key = key;
+        Value = value;
+    }
+}
+
+
+
+
+public readonly struct HashKey : IEquatable<HashKey>
+{
+    private readonly ObjectType type;
+    private readonly long hashCode;
+
+    public HashKey(ObjectType type, long hashCode)
+    {
+        this.type = type;
+        this.hashCode = hashCode;
+    }
+
+    public bool Equals(HashKey other)
+    {
+        return this.type == other.type && this.hashCode == other.hashCode;
+    }
+}

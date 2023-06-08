@@ -121,7 +121,7 @@ public readonly struct HashLiteral : IExpression
     public Token Token { get; init; }
     public IDictionary<IExpression, IExpression> Pairs { get; init; }
 
-    public override string ToString() => $"{{{string.Join(",", Pairs.Select(p=>$"{p.Key}:{p.Value}"))}}}";
+    public override string ToString() => $"{{{string.Join(",", Pairs.Select(p => $"{p.Key}:{p.Value}"))}}}";
 
     public HashLiteral(Token token)
     {

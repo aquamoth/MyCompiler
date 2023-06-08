@@ -37,6 +37,7 @@ public class Interpreter
             StringLiteral str => new StringObject { Value = str.Value },
             ArrayExpression array => EvalArrayExpression(array, env),
             IndexExpression index => EvalIndexExpression(index, env),
+            HashLiteral hash => EvalHashLiteral(hash, env),
 
             _ => new NotImplementedException($"Not yet evaluating {node}")
         };
@@ -150,7 +151,31 @@ public class Interpreter
 
         return new ArrayLiteral(elements.Value);
     }
+    private Result<IObject> EvalHashLiteral(HashLiteral hash, EnvironmentStore env)
+    {
+        var hashObj = new HashObject();
 
+        foreach(var (key, value) in hash.Pairs)
+        {
+            var keyEval = Eval(key, env);
+            if (!keyEval.IsSuccess)
+                return keyEval.Error!;
+
+            if (keyEval.Value is not IHashable hashable)
+                return new Exception($"unusable as hash key: {keyEval.Value.Type}");
+
+            var valueEval = Eval(value, env);
+            if (!valueEval.IsSuccess)
+                return valueEval.Error!;
+
+            var keyHash = hashable.HashKey();
+
+            hashObj.Pairs[keyHash] = new HashPair(keyEval.Value, valueEval.Value);
+        }
+
+        return hashObj;
+    }
+    
     private Result<IObject> EvalIndexExpression(IndexExpression indexExpr, EnvironmentStore env)
     {
         var left = Eval(indexExpr.Left, env);
