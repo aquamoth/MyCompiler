@@ -7,7 +7,11 @@ var env = EnvironmentStore.New();
 var interpreter = new Interpreter();
 
 Console.WriteLine("Monkey REPL");
-Console.WriteLine("Press ENTER on an empty line to end the source input.");
+Console.WriteLine("Type in your source code and press ENTER to execute.");
+Console.WriteLine("Type \"\"\" at the start of a line to start multi-line parsing.");
+Console.WriteLine(" - This is useful for pasting in large blocks of code.");
+Console.WriteLine(" - End the multi-line parsing by typing \"\"\" at the start of a line again.");
+Console.WriteLine("Press ENTER on an empty line to quit the REPL.");
 
 if (args.Length == 0)
 {
@@ -17,6 +21,22 @@ if (args.Length == 0)
         var source = Console.ReadLine();
         if (string.IsNullOrWhiteSpace(source))
             break;
+
+        if (source == "\"\"\"")
+        {
+            var sb = new StringBuilder();
+            while (true)
+            {
+                Console.Write("\"\" ");
+                var line = Console.ReadLine();
+                if (line == "\"\"\"")
+                    break;
+
+                sb.AppendLine(line);
+            }
+
+            source = sb.ToString();
+        }
 
         Execute(source, env);
     }
