@@ -17,6 +17,7 @@ public class Interpreter
         builtin.Set("last", new BuiltIn(BuiltIn_Last));
         builtin.Set("rest", new BuiltIn(BuiltIn_Rest));
         builtin.Set("push", new BuiltIn(BuiltIn_Push));
+        builtin.Set("puts", new BuiltIn(BuiltIn_Puts));
         this.logger = logger;
     }
 
@@ -437,6 +438,17 @@ public class Interpreter
             _ => new Exception($"Expected {ObjectType.ARRAY} but got {args[0].Type}")
         };
     }
+    
+    private static Result<IObject> BuiltIn_Puts(IObject[] args)
+    {
+        foreach(var arg in args)
+        {
+            Console.WriteLine(arg.Inspect());
+        }
+
+        return NullObject.Value;
+    }
+    
 
     private static BooleanObject ToBooleanObject(bool value) => value ? BooleanObject.True : BooleanObject.False;
 
