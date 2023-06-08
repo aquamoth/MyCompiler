@@ -124,6 +124,7 @@ public static class Lexer
                     ']' => Tokens.RBracket,
                     ',' => Tokens.Comma,
                     ';' => Tokens.Semicolon,
+                    ':' => Tokens.Colon,
                     _ => Tokens.Illegal
                 };
                 yield return Token.From(token, ch.ToString(), start, position, lineNumber, lineStart);

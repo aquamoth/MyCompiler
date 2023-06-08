@@ -7,7 +7,7 @@ namespace MyCompiler.Tests
         [Fact]
         public void Parses_special_characters()
         {
-            Assert.Collection(Lexer.ParseTokens("=+(){}[],;"),
+            Assert.Collection(Lexer.ParseTokens("=+(){}[],;:"),
                 t => Assert.Equal(t, new Token(Tokens.Assign, "=", 0, 1, 1, 1)),
                 t => Assert.Equal(t, new Token(Tokens.Plus, "+", 1, 1, 1, 2)),
                 t => Assert.Equal(t, new Token(Tokens.LParen, "(", 2, 1, 1, 3)),
@@ -18,7 +18,8 @@ namespace MyCompiler.Tests
                 t => Assert.Equal(t, new Token(Tokens.RBracket, "]", 7, 1, 1, 8)),
                 t => Assert.Equal(t, new Token(Tokens.Comma, ",", 8, 1, 1, 9)),
                 t => Assert.Equal(t, new Token(Tokens.Semicolon, ";", 9, 1, 1, 10)),
-                t => Assert.Equal(t, new Token(Tokens.EndOfFile, "", 10, 0, 1, 11))
+                t => Assert.Equal(t, new Token(Tokens.Colon, ":", 10, 1, 1, 11)),
+                t => Assert.Equal(t, new Token(Tokens.EndOfFile, "", 11, 0, 1, 12))
             );
         }
 

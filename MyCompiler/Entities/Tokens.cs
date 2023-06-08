@@ -16,6 +16,7 @@ public enum Tokens
     RBracket,
     Comma,
     Semicolon,
+    Colon,
 
     Bang,
     Minus,
