@@ -1,4 +1,5 @@
-﻿using MyCompiler.Entities;
+﻿using Microsoft.Extensions.Logging;
+using MyCompiler.Entities;
 using MyCompiler.Helpers;
 
 namespace MyCompiler;
@@ -6,7 +7,9 @@ namespace MyCompiler;
 public class Interpreter
 {
     private readonly EnvironmentStore builtin;
-    public Interpreter()
+    private readonly ILogger? logger;
+
+    public Interpreter(ILogger? logger = null)
     {
         builtin = EnvironmentStore.New();
         builtin.Set("len", new BuiltIn(BuiltIn_Len));
@@ -14,6 +17,7 @@ public class Interpreter
         builtin.Set("last", new BuiltIn(BuiltIn_Last));
         builtin.Set("rest", new BuiltIn(BuiltIn_Rest));
         builtin.Set("push", new BuiltIn(BuiltIn_Push));
+        this.logger = logger;
     }
 
     public Result<IObject> Eval(IAstNode node, EnvironmentStore env)
@@ -149,13 +153,13 @@ public class Interpreter
         if (!elements.IsSuccess)
             return elements.Error!;
 
-        return new ArrayLiteral(elements.Value);
+        return new ArrayObject(elements.Value);
     }
     private Result<IObject> EvalHashLiteral(HashLiteral hash, EnvironmentStore env)
     {
         var hashObj = new HashObject();
 
-        foreach(var (key, value) in hash.Pairs)
+        foreach (var (key, value) in hash.Pairs)
         {
             var keyEval = Eval(key, env);
             if (!keyEval.IsSuccess)
@@ -175,27 +179,48 @@ public class Interpreter
 
         return hashObj;
     }
-    
+
     private Result<IObject> EvalIndexExpression(IndexExpression indexExpr, EnvironmentStore env)
     {
         var left = Eval(indexExpr.Left, env);
         if (!left.IsSuccess)
             return left;
 
-        if (left.Value is not ArrayLiteral array)
-            return new Exception($"index operator is not supported on {left.Value.Type} {Parser.ExceptionLocatorString(indexExpr.Token)}");
+        switch (left.Value)
+        {
+            case ArrayObject array:
+                {
+                    var right = Eval(indexExpr.Right, env);
+                    if (!right.IsSuccess)
+                        return right;
 
-        var right = Eval(indexExpr.Right, env);
-        if (!right.IsSuccess)
-            return right;
+                    if (right.Value is not IntegerObject index)
+                        return new Exception($"index value {right.Value.Type} is not supported {Parser.ExceptionLocatorString(indexExpr.Right.Token)}");
 
-        if (right.Value is not IntegerObject index)
-            return new Exception($"index value {right.Value.Type} is not supported {Parser.ExceptionLocatorString(indexExpr.Right.Token)}");
+                    if (index.Value < 0 || index.Value >= array.Elements.Length)
+                        return new Exception($"index {index.Value} is out of range {Parser.ExceptionLocatorString(indexExpr.Right.Token)}");
 
-        if (index.Value < 0 || index.Value >= array.Elements.Length)
-            return new Exception($"index {index.Value} is out of range {Parser.ExceptionLocatorString(indexExpr.Right.Token)}");
+                    return Result<IObject>.Success(array.Elements[index.Value]);
+                }
 
-        return Result<IObject>.Success(array.Elements[index.Value]);
+            case HashObject hash:
+                {
+                    var right = Eval(indexExpr.Right, env);
+                    if (!right.IsSuccess)
+                        return right;
+
+                    if (right.Value is not IHashable hashable)
+                        return new Exception($"unusable as hash key: {right.Value.Type} {Parser.ExceptionLocatorString(indexExpr.Right.Token)}");
+
+                    if (hash.Pairs.TryGetValue(hashable.HashKey(), out var hashPair))
+                        return Result<IObject>.Success(hashPair.Value);
+                    else
+                        return NullObject.Value;
+                }
+
+            default:
+                return new Exception($"index operator is not supported on {left.Value.Type} {Parser.ExceptionLocatorString(indexExpr.Token)}");
+        }
     }
 
 
@@ -204,7 +229,10 @@ public class Interpreter
     {
         var result = EvalStatements(statements, env);
         if (!result.IsSuccess)
+        {
+            logger?.LogCritical(result.Error!.Message);
             return result;
+        }
 
         return Result<IObject>.Success(
             UnwrapReturnValue(result.Value)
@@ -352,7 +380,7 @@ public class Interpreter
         return args[0] switch
         {
             StringObject arg0 => new IntegerObject { Value = arg0.Value.Length },
-            ArrayLiteral arg0 => new IntegerObject { Value = arg0.Elements.Length },
+            ArrayObject arg0 => new IntegerObject { Value = arg0.Elements.Length },
 
             _ => new Exception($"Expected {ObjectType.STRING} or {ObjectType.ARRAY} but got {args[0].Type}")
         };
@@ -365,7 +393,7 @@ public class Interpreter
 
         return args[0] switch
         {
-            ArrayLiteral arg0 => Result<IObject>.Success(arg0.Elements.Length == 0 ? NullObject.Value : arg0.Elements[0]),
+            ArrayObject arg0 => Result<IObject>.Success(arg0.Elements.Length == 0 ? NullObject.Value : arg0.Elements[0]),
 
             _ => new Exception($"Expected {ObjectType.ARRAY} but got {args[0].Type}")
         };
@@ -378,7 +406,7 @@ public class Interpreter
 
         return args[0] switch
         {
-            ArrayLiteral arg0 => Result<IObject>.Success(arg0.Elements.Length == 0 ? NullObject.Value : arg0.Elements[arg0.Elements.Length - 1]),
+            ArrayObject arg0 => Result<IObject>.Success(arg0.Elements.Length == 0 ? NullObject.Value : arg0.Elements[arg0.Elements.Length - 1]),
 
             _ => new Exception($"Expected {ObjectType.ARRAY} but got {args[0].Type}")
         };
@@ -391,7 +419,7 @@ public class Interpreter
 
         return args[0] switch
         {
-            ArrayLiteral arg0 => Result<IObject>.Success(arg0.Elements.Length == 0 ? NullObject.Value : new ArrayLiteral(arg0.Elements.Skip(1).ToArray())),
+            ArrayObject arg0 => Result<IObject>.Success(arg0.Elements.Length == 0 ? NullObject.Value : new ArrayObject(arg0.Elements.Skip(1).ToArray())),
 
             _ => new Exception($"Expected {ObjectType.ARRAY} but got {args[0].Type}")
         };
@@ -404,7 +432,7 @@ public class Interpreter
 
         return args[0] switch
         {
-            ArrayLiteral arg0 => Result<IObject>.Success(new ArrayLiteral(arg0.Elements.Concat(new[] { args[1] }).ToArray())),
+            ArrayObject arg0 => Result<IObject>.Success(new ArrayObject(arg0.Elements.Concat(new[] { args[1] }).ToArray())),
 
             _ => new Exception($"Expected {ObjectType.ARRAY} but got {args[0].Type}")
         };

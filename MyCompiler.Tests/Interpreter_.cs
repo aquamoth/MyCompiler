@@ -269,6 +269,20 @@ namespace MyCompiler.Tests
             Assert.Equal(expected, hashObject.Inspect());
         }
 
+        [Theory]
+        [InlineData("""{"name": "William", "age": 48}["age"];""", "48")]
+        [InlineData("""{}["foo"];""", "")]
+        [InlineData("""let key = "foo"; {"foo": 5}[key];""", "5")]
+        [InlineData("""{5:5}[5];""", "5")]
+        [InlineData("""{true:5}[true];""", "5")]
+        [InlineData("""{false:5}[false];""", "5")]
+        public void Evaluates_Hash_Indexes(string source, string expected)
+        {
+            var hashObject = Interpret(source);
+            Assert.True(hashObject.IsSuccess);
+            Assert.Equal(expected, hashObject.Value.Inspect());
+        }
+
 
         private T AssertInterpret<T>(string source) where T : IObject
         {
@@ -285,7 +299,7 @@ namespace MyCompiler.Tests
             Assert.True(program.IsSuccess, "Failed to parse program!");
 
             var env = EnvironmentStore.New();
-            Interpreter interpreter = new();
+            Interpreter interpreter = new(logger);
             return interpreter.Eval(program.Value, env);
         }
     }
