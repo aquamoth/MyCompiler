@@ -133,6 +133,7 @@ public class Parser
             Tokens.If => this.ParseIfExpression,
             Tokens.Function => this.ParseFnExpression,
             Tokens.LBracket => this.ParseArrayLiteral,
+            Tokens.LSquirly => this.ParseHashLiteral,
             _ => null,
         };
 
@@ -283,7 +284,59 @@ public class Parser
         };
     }
 
-    
+
+    private Result<IExpression> ParseHashLiteral()
+    {
+        var hashLiteral = new HashLiteral(currentToken);
+
+        if (!AdvanceTokenIf(Tokens.RSquirly).IsSuccess)
+        {
+            AdvanceToken();
+
+            var pair = ParseHashPair();
+            if (!pair.IsSuccess)
+                return pair.Error!;
+
+            hashLiteral.Pairs.Add(pair.Value.key, pair.Value.value);
+
+            while (AdvanceTokenIf(Tokens.Comma).IsSuccess)
+            {
+                AdvanceToken();
+
+                pair = ParseHashPair();
+                if (!pair.IsSuccess)
+                    return pair.Error!;
+
+                hashLiteral.Pairs.Add(pair.Value.key, pair.Value.value);
+            }
+
+            var rsquirly = AdvanceTokenIf(Tokens.RSquirly);
+            if (!rsquirly.IsSuccess)
+                return rsquirly.Error!;
+        }
+
+        return hashLiteral;
+    }
+
+    private Result<(IExpression key, IExpression value)> ParseHashPair()
+    {
+        var key = ParseExpression();
+        if (!key.IsSuccess)
+            return key.Error!;
+
+        var colon = AdvanceTokenIf(Tokens.Colon);
+        if (!colon.IsSuccess)
+            return colon.Error!;
+
+        AdvanceToken();
+
+        var value = ParseExpression();
+        if (!value.IsSuccess)
+            return value.Error!;
+
+        return (key.Value, value.Value);
+    }
+
 
     private Result<IExpression> ParseIndexExpression(IExpression array)
     {

@@ -133,6 +133,9 @@ namespace MyCompiler.Tests
 
         [InlineData("a * [1, 2, 3, 4][b * c] * d", "((a*([1,2,3,4][(b*c)]))*d)")]
         [InlineData("add(a * b[2], b[1], 2 * [1, 2][1])", "add((a*(b[2])),(b[1]),(2*([1,2][1])))")]
+
+        [InlineData("""{ "name": "Jimmy", "age": 72 }""", """{"name":"Jimmy","age":72}""")]
+        [InlineData("""{ }""", """{}""")]
         public void Parses_expressions(string source, params string[] expected)
         {
             var statements = Parse(source);
