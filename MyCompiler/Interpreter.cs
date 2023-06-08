@@ -18,6 +18,7 @@ public class Interpreter
         builtin.Set("rest", new BuiltIn(BuiltIn_Rest));
         builtin.Set("push", new BuiltIn(BuiltIn_Push));
         builtin.Set("puts", new BuiltIn(BuiltIn_Puts));
+        builtin.Set("gets", new BuiltIn(BuiltIn_Gets));
         this.logger = logger;
     }
 
@@ -438,17 +439,29 @@ public class Interpreter
             _ => new Exception($"Expected {ObjectType.ARRAY} but got {args[0].Type}")
         };
     }
-    
+
     private static Result<IObject> BuiltIn_Puts(IObject[] args)
     {
-        foreach(var arg in args)
+        foreach (var arg in args)
         {
             Console.WriteLine(arg.Inspect());
         }
 
         return NullObject.Value;
     }
-    
+
+    private static Result<IObject> BuiltIn_Gets(IObject[] args)
+    {
+        if (args.Length != 0)
+            return new Exception($"wrong number of arguments. got={args.Length}, want=0");
+
+        var s = Console.ReadLine();
+        if (s == null)
+            return new Exception("Received no string from console input");
+
+        return new StringObject { Value = s };
+    }
+
 
     private static BooleanObject ToBooleanObject(bool value) => value ? BooleanObject.True : BooleanObject.False;
 
