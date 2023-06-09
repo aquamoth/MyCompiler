@@ -72,7 +72,7 @@ public class Interpreter
             if (evaluated.HasError)
                 return evaluated;
 
-            return Maybe<IObject>.Success(
+            return Maybe<IObject>.From(
                 UnwrapReturnValue(evaluated.Value)
             );
         }
@@ -202,7 +202,7 @@ public class Interpreter
                     if (index.Value < 0 || index.Value >= array.Elements.Length)
                         return new Exception($"index {index.Value} is out of range {Parser.ExceptionLocatorString(indexExpr.Right.Token)}");
 
-                    return Maybe<IObject>.Success(array.Elements[index.Value]);
+                    return Maybe<IObject>.From(array.Elements[index.Value]);
                 }
 
             case HashObject hash:
@@ -215,7 +215,7 @@ public class Interpreter
                         return new Exception($"unusable as hash key: {right.Value.Type} {Parser.ExceptionLocatorString(indexExpr.Right.Token)}");
 
                     if (hash.Pairs.TryGetValue(hashable.HashKey(), out var hashPair))
-                        return Maybe<IObject>.Success(hashPair.Value);
+                        return Maybe<IObject>.From(hashPair.Value);
                     else
                         return NullObject.Value;
                 }
@@ -236,7 +236,7 @@ public class Interpreter
             return result;
         }
 
-        return Maybe<IObject>.Success(
+        return Maybe<IObject>.From(
             UnwrapReturnValue(result.Value)
         );
     }
@@ -257,7 +257,7 @@ public class Interpreter
                 return returnValue;
         }
 
-        return Maybe<IObject>.Success(result);
+        return Maybe<IObject>.From(result);
     }
 
     private Maybe<IObject> EvalReturnStatement(ReturnStatement returnStatement, EnvironmentStore env)
@@ -395,7 +395,9 @@ public class Interpreter
 
         return args[0] switch
         {
-            ArrayObject arg0 => Maybe<IObject>.Success(arg0.Elements.Length == 0 ? NullObject.Value : arg0.Elements[0]),
+            ArrayObject arg0 => Maybe<IObject>.From(
+                arg0.Elements.Length == 0 ? NullObject.Value : arg0.Elements[0]
+            ),
 
             _ => new Exception($"Expected {ObjectType.ARRAY} but got {args[0].Type}")
         };
@@ -408,7 +410,9 @@ public class Interpreter
 
         return args[0] switch
         {
-            ArrayObject arg0 => Maybe<IObject>.Success(arg0.Elements.Length == 0 ? NullObject.Value : arg0.Elements[arg0.Elements.Length - 1]),
+            ArrayObject arg0 => Maybe<IObject>.From(
+                arg0.Elements.Length == 0 ? NullObject.Value : arg0.Elements[^1]
+            ),
 
             _ => new Exception($"Expected {ObjectType.ARRAY} but got {args[0].Type}")
         };
@@ -421,7 +425,9 @@ public class Interpreter
 
         return args[0] switch
         {
-            ArrayObject arg0 => Maybe<IObject>.Success(arg0.Elements.Length == 0 ? NullObject.Value : new ArrayObject(arg0.Elements.Skip(1).ToArray())),
+            ArrayObject arg0 => Maybe<IObject>.From(
+                arg0.Elements.Length == 0 ? NullObject.Value : new ArrayObject(arg0.Elements[1..])
+            ),
 
             _ => new Exception($"Expected {ObjectType.ARRAY} but got {args[0].Type}")
         };
@@ -434,7 +440,9 @@ public class Interpreter
 
         return args[0] switch
         {
-            ArrayObject arg0 => Maybe<IObject>.Success(new ArrayObject(arg0.Elements.Concat(new[] { args[1] }).ToArray())),
+            ArrayObject arg0 => Maybe<IObject>.From(
+                new ArrayObject(arg0.Elements.Concat(new[] { args[1] }).ToArray())
+            ),
 
             _ => new Exception($"Expected {ObjectType.ARRAY} but got {args[0].Type}")
         };

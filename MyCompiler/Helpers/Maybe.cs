@@ -1,50 +1,5 @@
 ﻿namespace MyCompiler.Helpers;
 
-//public readonly struct Result
-//{
-//    public bool IsSuccess { get; init; }
-//    public Exception? Error { get; init; }
-
-//    public static Result Failure(Exception ex) => new(ex);
-    
-//    public Result()
-//    {
-//        this.IsSuccess = true;
-//        this.Error = null;
-//    }
-
-//    private Result(Exception error)
-//    {
-//        this.IsSuccess = false;
-//        this.Error = error;
-//    }
-
-//    public static Result<T> Call<T>(Func<T> func)
-//    {
-//        try
-//        {
-//            return Result<T>.Success(func());
-//        }
-//        catch (Exception ex)
-//        {
-//            return Result<T>.Failure(ex);
-//        }
-//    }
-
-//    public static Result Call(Action action)
-//    {
-//        try
-//        {
-//            action();
-//            return new Result();
-//        }
-//        catch (Exception ex)
-//        {
-//            return Failure(ex);
-//        }
-//    }
-//}
-
 public readonly struct Maybe<T>
 {
     private readonly T? value;
@@ -54,7 +9,7 @@ public readonly struct Maybe<T>
     public bool HasError => !HasValue;
 
     public T Value => HasValue ? value! : throw new InvalidOperationException();
-    public Exception? Error => HasError ? error! : null;
+    public Exception? Error => HasError ? error : null;
 
     private Maybe(T value)
     {
@@ -70,11 +25,12 @@ public readonly struct Maybe<T>
         this.error = error;
     }
 
-    public static Maybe<T> Success(T value) => new(value);
-    public static Maybe<T> Failure(Exception ex) => new(ex);
+    public static Maybe<T> From(T value) => new(value);
+    //public static Maybe<T> Failure(Exception ex) => new(ex);
 
     public static implicit operator Maybe<T>(T value) => new(value);
-    public static explicit operator T(Maybe<T> result) => result.Value;
+
+    //public static explicit operator T(Maybe<T> result) => result.Value;
 
     public static implicit operator Maybe<T>(Exception ex) => new(ex);
 }

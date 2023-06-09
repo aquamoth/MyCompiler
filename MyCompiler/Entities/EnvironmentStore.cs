@@ -16,7 +16,7 @@ public class EnvironmentStore
     {
         if (_store.TryGetValue(name, out var value))
         {
-            return Maybe<IObject>.Success(value);
+            return Maybe<IObject>.From(value);
         }
 
         if (_outer != null)
