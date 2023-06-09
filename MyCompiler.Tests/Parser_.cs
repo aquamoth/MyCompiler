@@ -243,7 +243,7 @@ namespace MyCompiler.Tests
 
             Parser parser = new(Lexer.ParseTokens(source), logger);
             var program = parser.ParseProgram();
-            Assert.True(program.IsSuccess);
+            Assert.True(program.HasValue);
 
             return program.Value.Statements;
         }

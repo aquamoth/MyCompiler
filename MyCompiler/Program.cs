@@ -52,14 +52,14 @@ void Execute(string source, EnvironmentStore env)
     var tokens = Lexer.ParseTokens(source);
     var parser = new Parser(tokens);
     var program = parser.ParseProgram();
-    if (!program.IsSuccess)
+    if (program.HasError)
     {
         PrintParserError(program.Error!);
         return;
     }
 
     var result = interpreter.Eval(program.Value, env);
-    if (!result.IsSuccess)
+    if (result.HasError)
     {
         Console.WriteLine($"Woops! We ran into some monkey business here!");
         Console.WriteLine($" interpreter errors:");

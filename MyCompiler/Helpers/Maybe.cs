@@ -45,34 +45,36 @@
 //    }
 //}
 
-public readonly struct Result<T>
+public readonly struct Maybe<T>
 {
     private readonly T? value;
     private readonly Exception? error;
 
-    public bool IsSuccess { get; init; }
-    public T Value => IsSuccess ? value! : throw new InvalidOperationException();
-    public Exception? Error => !IsSuccess ? error! : null;
+    public bool HasValue { get; init; }
+    public bool HasError => !HasValue;
 
-    private Result(T value)
+    public T Value => HasValue ? value! : throw new InvalidOperationException();
+    public Exception? Error => HasError ? error! : null;
+
+    private Maybe(T value)
     {
-        this.IsSuccess = true;
+        this.HasValue = true;
         this.value = value;
         this.error = default;
     }
 
-    private Result(Exception error)
+    private Maybe(Exception error)
     {
-        this.IsSuccess = false;
+        this.HasValue = false;
         this.value = default;
         this.error = error;
     }
 
-    public static Result<T> Success(T value) => new(value);
-    public static Result<T> Failure(Exception ex) => new(ex);
+    public static Maybe<T> Success(T value) => new(value);
+    public static Maybe<T> Failure(Exception ex) => new(ex);
 
-    public static implicit operator Result<T>(T value) => new(value);
-    public static explicit operator T(Result<T> result) => result.Value;
+    public static implicit operator Maybe<T>(T value) => new(value);
+    public static explicit operator T(Maybe<T> result) => result.Value;
 
-    public static implicit operator Result<T>(Exception ex) => new(ex);
+    public static implicit operator Maybe<T>(Exception ex) => new(ex);
 }

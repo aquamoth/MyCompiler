@@ -140,9 +140,9 @@ public class FunctionObject : IObject
 public class BuiltIn : IObject
 {
     public ObjectType Type { get; init; } = ObjectType.BUILTIN;
-    public Func<IObject[], Result<IObject>> Fn { get; init; }
+    public Func<IObject[], Maybe<IObject>> Fn { get; init; }
 
-    public BuiltIn(Func<IObject[], Result<IObject>> fn)
+    public BuiltIn(Func<IObject[], Maybe<IObject>> fn)
     {
         Fn = fn;
     }

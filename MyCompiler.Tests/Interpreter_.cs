@@ -155,7 +155,7 @@ namespace MyCompiler.Tests
         {
             var actual = Interpret(source);
 
-            Assert.False(actual.IsSuccess, "Expected interpreter to fail, but it did not.");
+            Assert.False(actual.HasValue, "Expected interpreter to fail, but it did not.");
             Assert.Equal(expectedErrorMessage, actual.Error?.Message);
         }
 
@@ -203,7 +203,7 @@ namespace MyCompiler.Tests
         public void Builtin_len_asserts(string source, string error)
         {
             var integerObject = Interpret(source);
-            Assert.False(integerObject.IsSuccess);
+            Assert.False(integerObject.HasValue);
             Assert.Equal(error, integerObject.Error?.Message);
         }
 
@@ -217,7 +217,7 @@ namespace MyCompiler.Tests
         public void Builtin_array_functions(string source, string expected)
         {
             var result = Interpret(source);
-            Assert.True(result.IsSuccess);
+            Assert.True(result.HasValue);
             Assert.Equal(expected, result.Value.Inspect());
         }
 
@@ -279,7 +279,7 @@ namespace MyCompiler.Tests
         public void Evaluates_Hash_Indexes(string source, string expected)
         {
             var hashObject = Interpret(source);
-            Assert.True(hashObject.IsSuccess);
+            Assert.True(hashObject.HasValue);
             Assert.Equal(expected, hashObject.Value.Inspect());
         }
 
@@ -287,16 +287,16 @@ namespace MyCompiler.Tests
         private T AssertInterpret<T>(string source) where T : IObject
         {
             var result = Interpret(source);
-            Assert.True(result.IsSuccess, result.Error?.Message);
+            Assert.True(result.HasValue, result.Error?.Message);
             return Assert.IsType<T>(result.Value);
         }
 
-        private Result<IObject> Interpret(string source)
+        private Maybe<IObject> Interpret(string source)
         {
             using var logger = new XUnitLogger<Interpreter>(outputHelper);
             var tokenSource = Lexer.ParseTokens(source);
             var program = new Parser(tokenSource, logger).ParseProgram();
-            Assert.True(program.IsSuccess, "Failed to parse program!");
+            Assert.True(program.HasValue, "Failed to parse program!");
 
             var env = EnvironmentStore.New();
             Interpreter interpreter = new(logger);

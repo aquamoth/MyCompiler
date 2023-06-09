@@ -22,7 +22,7 @@ public class Interpreter
         this.logger = logger;
     }
 
-    public Result<IObject> Eval(IAstNode node, EnvironmentStore env)
+    public Maybe<IObject> Eval(IAstNode node, EnvironmentStore env)
     {
         return node switch
         {
@@ -49,30 +49,30 @@ public class Interpreter
         };
     }
 
-    private Result<IObject> EvalCall(CallExpression call, EnvironmentStore env)
+    private Maybe<IObject> EvalCall(CallExpression call, EnvironmentStore env)
     {
         var function = Eval(call.Function, env);
-        if (!function.IsSuccess)
+        if (function.HasError)
             return function;
 
         var args = EvalExpressions(call.Arguments, env);
-        if (!args.IsSuccess)
+        if (args.HasError)
             return args.Error!;
 
         return ApplyFunction(function.Value, args.Value);
     }
 
-    private Result<IObject> ApplyFunction(IObject fn, IObject[] args)
+    private Maybe<IObject> ApplyFunction(IObject fn, IObject[] args)
     {
         if (fn is FunctionObject function)
         {
             var extendedEnv = ExtendFunctionEnv(function, args);
 
             var evaluated = Eval(function.Body, extendedEnv);
-            if (!evaluated.IsSuccess)
+            if (evaluated.HasError)
                 return evaluated;
 
-            return Result<IObject>.Success(
+            return Maybe<IObject>.Success(
                 UnwrapReturnValue(evaluated.Value)
             );
         }
@@ -94,14 +94,14 @@ public class Interpreter
         return env;
     }
 
-    private Result<IObject[]> EvalExpressions(IExpression[] arguments, EnvironmentStore env)
+    private Maybe<IObject[]> EvalExpressions(IExpression[] arguments, EnvironmentStore env)
     {
         var results = new List<IObject>(arguments.Length);
 
         foreach (var arg in arguments)
         {
             var evaluated = Eval(arg, env);
-            if (!evaluated.IsSuccess)
+            if (evaluated.HasError)
                 return evaluated.Error!;
 
             results.Add(evaluated.Value);
@@ -110,24 +110,24 @@ public class Interpreter
         return results.ToArray();
     }
 
-    private Result<IObject> EvalFunction(FnExpression fn, EnvironmentStore env)
+    private Maybe<IObject> EvalFunction(FnExpression fn, EnvironmentStore env)
     {
         return new FunctionObject(fn.Parameters, fn.Body, env);
     }
 
-    private Result<IObject> EvalIdentifier(Identifier identifier, EnvironmentStore env)
+    private Maybe<IObject> EvalIdentifier(Identifier identifier, EnvironmentStore env)
     {
         var result = env.Get(identifier.Value);
-        if (result.IsSuccess)
+        if (result.HasValue)
             return result;
 
         return builtin.Get(identifier.Value);
     }
 
-    private Result<IObject> EvalLetStatement(LetStatement let, EnvironmentStore env)
+    private Maybe<IObject> EvalLetStatement(LetStatement let, EnvironmentStore env)
     {
         var value = Eval(let.Expression, env);
-        if (!value.IsSuccess)
+        if (value.HasError)
             return value.Error!;
 
         env.Set(let.Identifier.Value, value.Value);
@@ -135,10 +135,10 @@ public class Interpreter
         return NullObject.Value;
     }
 
-    private Result<IObject> EvalIfExpression(IfExpression @if, EnvironmentStore env)
+    private Maybe<IObject> EvalIfExpression(IfExpression @if, EnvironmentStore env)
     {
         var condition = Eval(@if.Condition, env);
-        if (!condition.IsSuccess)
+        if (condition.HasError)
             return condition;
 
         if (IsTruthy(condition.Value))
@@ -149,29 +149,29 @@ public class Interpreter
             return NullObject.Value;
     }
 
-    private Result<IObject> EvalArrayExpression(ArrayExpression array, EnvironmentStore env)
+    private Maybe<IObject> EvalArrayExpression(ArrayExpression array, EnvironmentStore env)
     {
         var elements = EvalExpressions(array.Elements, env);
-        if (!elements.IsSuccess)
+        if (elements.HasError)
             return elements.Error!;
 
         return new ArrayObject(elements.Value);
     }
-    private Result<IObject> EvalHashLiteral(HashLiteral hash, EnvironmentStore env)
+    private Maybe<IObject> EvalHashLiteral(HashLiteral hash, EnvironmentStore env)
     {
         var hashObj = new HashObject();
 
         foreach (var (key, value) in hash.Pairs)
         {
             var keyEval = Eval(key, env);
-            if (!keyEval.IsSuccess)
+            if (keyEval.HasError)
                 return keyEval.Error!;
 
             if (keyEval.Value is not IHashable hashable)
                 return new Exception($"unusable as hash key: {keyEval.Value.Type}");
 
             var valueEval = Eval(value, env);
-            if (!valueEval.IsSuccess)
+            if (valueEval.HasError)
                 return valueEval.Error!;
 
             var keyHash = hashable.HashKey();
@@ -182,10 +182,10 @@ public class Interpreter
         return hashObj;
     }
 
-    private Result<IObject> EvalIndexExpression(IndexExpression indexExpr, EnvironmentStore env)
+    private Maybe<IObject> EvalIndexExpression(IndexExpression indexExpr, EnvironmentStore env)
     {
         var left = Eval(indexExpr.Left, env);
-        if (!left.IsSuccess)
+        if (left.HasError)
             return left;
 
         switch (left.Value)
@@ -193,7 +193,7 @@ public class Interpreter
             case ArrayObject array:
                 {
                     var right = Eval(indexExpr.Right, env);
-                    if (!right.IsSuccess)
+                    if (right.HasError)
                         return right;
 
                     if (right.Value is not IntegerObject index)
@@ -202,20 +202,20 @@ public class Interpreter
                     if (index.Value < 0 || index.Value >= array.Elements.Length)
                         return new Exception($"index {index.Value} is out of range {Parser.ExceptionLocatorString(indexExpr.Right.Token)}");
 
-                    return Result<IObject>.Success(array.Elements[index.Value]);
+                    return Maybe<IObject>.Success(array.Elements[index.Value]);
                 }
 
             case HashObject hash:
                 {
                     var right = Eval(indexExpr.Right, env);
-                    if (!right.IsSuccess)
+                    if (right.HasError)
                         return right;
 
                     if (right.Value is not IHashable hashable)
                         return new Exception($"unusable as hash key: {right.Value.Type} {Parser.ExceptionLocatorString(indexExpr.Right.Token)}");
 
                     if (hash.Pairs.TryGetValue(hashable.HashKey(), out var hashPair))
-                        return Result<IObject>.Success(hashPair.Value);
+                        return Maybe<IObject>.Success(hashPair.Value);
                     else
                         return NullObject.Value;
                 }
@@ -227,28 +227,28 @@ public class Interpreter
 
 
 
-    private Result<IObject> EvalProgram(IEnumerable<IAstStatement> statements, EnvironmentStore env)
+    private Maybe<IObject> EvalProgram(IEnumerable<IAstStatement> statements, EnvironmentStore env)
     {
         var result = EvalStatements(statements, env);
-        if (!result.IsSuccess)
+        if (result.HasError)
         {
             logger?.LogCritical(result.Error!.Message);
             return result;
         }
 
-        return Result<IObject>.Success(
+        return Maybe<IObject>.Success(
             UnwrapReturnValue(result.Value)
         );
     }
 
-    private Result<IObject> EvalStatements(IEnumerable<IAstStatement> statements, EnvironmentStore env)
+    private Maybe<IObject> EvalStatements(IEnumerable<IAstStatement> statements, EnvironmentStore env)
     {
         IObject result = NullObject.Value;
 
         foreach (var statement in statements)
         {
             var value = Eval(statement, env);
-            if (!value.IsSuccess)
+            if (value.HasError)
                 return value;
 
             result = value.Value;
@@ -257,23 +257,23 @@ public class Interpreter
                 return returnValue;
         }
 
-        return Result<IObject>.Success(result);
+        return Maybe<IObject>.Success(result);
     }
 
-    private Result<IObject> EvalReturnStatement(ReturnStatement returnStatement, EnvironmentStore env)
+    private Maybe<IObject> EvalReturnStatement(ReturnStatement returnStatement, EnvironmentStore env)
     {
         var value = Eval(returnStatement.ReturnValue, env);
-        if (!value.IsSuccess)
+        if (value.HasError)
             return value;
 
         return new ReturnValue(value.Value);
     }
 
 
-    private Result<IObject> EvalPrefixExpression(PrefixExpression prefix, EnvironmentStore env)
+    private Maybe<IObject> EvalPrefixExpression(PrefixExpression prefix, EnvironmentStore env)
     {
         var right = Eval(prefix.Right, env);
-        if (!right.IsSuccess)
+        if (right.HasError)
             return right;
 
         return prefix.Operator switch
@@ -284,7 +284,7 @@ public class Interpreter
         };
     }
 
-    private static Result<IObject> EvalBangOperatorExpression(IObject value)
+    private static Maybe<IObject> EvalBangOperatorExpression(IObject value)
     {
         if (value is BooleanObject boolean)
             return ToBooleanObject(!boolean.Value);
@@ -298,7 +298,7 @@ public class Interpreter
         return BooleanObject.False; //TODO:???
     }
 
-    private static Result<IObject> EvalMinusPrefixOperatorExpression(IObject value)
+    private static Maybe<IObject> EvalMinusPrefixOperatorExpression(IObject value)
     {
         if (value is IntegerObject integer)
             return new IntegerObject { Value = -integer.Value };
@@ -308,14 +308,14 @@ public class Interpreter
 
 
 
-    private Result<IObject> EvalInfixExpression(InfixExpression infix, EnvironmentStore env)
+    private Maybe<IObject> EvalInfixExpression(InfixExpression infix, EnvironmentStore env)
     {
         var left = Eval(infix.Left, env);
-        if (!left.IsSuccess)
+        if (left.HasError)
             return left;
 
         var right = Eval(infix.Right, env);
-        if (!right.IsSuccess)
+        if (right.HasError)
             return right;
 
         if (left.Value is IntegerObject leftInt && right.Value is IntegerObject rightInt)
@@ -330,7 +330,7 @@ public class Interpreter
         return new Exception($"type mismatch: {left.Value.Type} {infix.Operator} {right.Value.Type}");
     }
 
-    private Result<IObject> EvalIntegerInfixExpression(string @operator, IntegerObject leftInt, IntegerObject rightInt)
+    private Maybe<IObject> EvalIntegerInfixExpression(string @operator, IntegerObject leftInt, IntegerObject rightInt)
     {
         return @operator switch
         {
@@ -348,7 +348,7 @@ public class Interpreter
         };
     }
 
-    private Result<IObject> EvalStringInfixExpression(string @operator, StringObject leftStr, StringObject rightStr)
+    private Maybe<IObject> EvalStringInfixExpression(string @operator, StringObject leftStr, StringObject rightStr)
     {
         return @operator switch
         {
@@ -363,7 +363,7 @@ public class Interpreter
         };
     }
 
-    private Result<IObject> EvalBooleanInfixExpression(string @operator, BooleanObject leftBool, BooleanObject rightBool)
+    private Maybe<IObject> EvalBooleanInfixExpression(string @operator, BooleanObject leftBool, BooleanObject rightBool)
     {
         return @operator switch
         {
@@ -374,7 +374,7 @@ public class Interpreter
         };
     }
 
-    private static Result<IObject> BuiltIn_Len(IObject[] args)
+    private static Maybe<IObject> BuiltIn_Len(IObject[] args)
     {
         if (args.Length != 1)
             return new Exception($"wrong number of arguments. got={args.Length}, want=1");
@@ -388,59 +388,59 @@ public class Interpreter
         };
     }
 
-    private static Result<IObject> BuiltIn_First(IObject[] args)
+    private static Maybe<IObject> BuiltIn_First(IObject[] args)
     {
         if (args.Length != 1)
             return new Exception($"wrong number of arguments. got={args.Length}, want=1");
 
         return args[0] switch
         {
-            ArrayObject arg0 => Result<IObject>.Success(arg0.Elements.Length == 0 ? NullObject.Value : arg0.Elements[0]),
+            ArrayObject arg0 => Maybe<IObject>.Success(arg0.Elements.Length == 0 ? NullObject.Value : arg0.Elements[0]),
 
             _ => new Exception($"Expected {ObjectType.ARRAY} but got {args[0].Type}")
         };
     }
 
-    private static Result<IObject> BuiltIn_Last(IObject[] args)
+    private static Maybe<IObject> BuiltIn_Last(IObject[] args)
     {
         if (args.Length != 1)
             return new Exception($"wrong number of arguments. got={args.Length}, want=1");
 
         return args[0] switch
         {
-            ArrayObject arg0 => Result<IObject>.Success(arg0.Elements.Length == 0 ? NullObject.Value : arg0.Elements[arg0.Elements.Length - 1]),
+            ArrayObject arg0 => Maybe<IObject>.Success(arg0.Elements.Length == 0 ? NullObject.Value : arg0.Elements[arg0.Elements.Length - 1]),
 
             _ => new Exception($"Expected {ObjectType.ARRAY} but got {args[0].Type}")
         };
     }
 
-    private static Result<IObject> BuiltIn_Rest(IObject[] args)
+    private static Maybe<IObject> BuiltIn_Rest(IObject[] args)
     {
         if (args.Length != 1)
             return new Exception($"wrong number of arguments. got={args.Length}, want=1");
 
         return args[0] switch
         {
-            ArrayObject arg0 => Result<IObject>.Success(arg0.Elements.Length == 0 ? NullObject.Value : new ArrayObject(arg0.Elements.Skip(1).ToArray())),
+            ArrayObject arg0 => Maybe<IObject>.Success(arg0.Elements.Length == 0 ? NullObject.Value : new ArrayObject(arg0.Elements.Skip(1).ToArray())),
 
             _ => new Exception($"Expected {ObjectType.ARRAY} but got {args[0].Type}")
         };
     }
 
-    private static Result<IObject> BuiltIn_Push(IObject[] args)
+    private static Maybe<IObject> BuiltIn_Push(IObject[] args)
     {
         if (args.Length != 2)
             return new Exception($"wrong number of arguments. got={args.Length}, want=2");
 
         return args[0] switch
         {
-            ArrayObject arg0 => Result<IObject>.Success(new ArrayObject(arg0.Elements.Concat(new[] { args[1] }).ToArray())),
+            ArrayObject arg0 => Maybe<IObject>.Success(new ArrayObject(arg0.Elements.Concat(new[] { args[1] }).ToArray())),
 
             _ => new Exception($"Expected {ObjectType.ARRAY} but got {args[0].Type}")
         };
     }
 
-    private static Result<IObject> BuiltIn_Puts(IObject[] args)
+    private static Maybe<IObject> BuiltIn_Puts(IObject[] args)
     {
         foreach (var arg in args)
         {
@@ -450,7 +450,7 @@ public class Interpreter
         return NullObject.Value;
     }
 
-    private static Result<IObject> BuiltIn_Gets(IObject[] args)
+    private static Maybe<IObject> BuiltIn_Gets(IObject[] args)
     {
         if (args.Length != 0)
             return new Exception($"wrong number of arguments. got={args.Length}, want=0");

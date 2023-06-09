@@ -12,11 +12,11 @@ public class EnvironmentStore
         _outer = outer;
     }
         
-    public Result<IObject> Get(string name)
+    public Maybe<IObject> Get(string name)
     {
         if (_store.TryGetValue(name, out var value))
         {
-            return Result<IObject>.Success(value);
+            return Maybe<IObject>.Success(value);
         }
 
         if (_outer != null)

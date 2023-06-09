@@ -18,7 +18,7 @@ public class Parser
         this.currentToken = Token.From(Tokens.Illegal, "", 0, 0, 0, 0);
     }
 
-    public Result<AstProgram> ParseProgram()
+    public Maybe<AstProgram> ParseProgram()
     {
         var program = new AstProgram();
 
@@ -30,7 +30,7 @@ public class Parser
         while (currentToken.Type != Tokens.EndOfFile)
         {
             var statement = ParseStatement();
-            if (statement.IsSuccess)
+            if (statement.HasValue)
             {
                 program.Statements.Add(statement.Value);
             }
@@ -48,7 +48,7 @@ public class Parser
             : program;
     }
 
-    private Result<IAstStatement> ParseStatement()
+    private Maybe<IAstStatement> ParseStatement()
     {
         return currentToken.Type switch
         {
@@ -59,24 +59,24 @@ public class Parser
         };
     }
 
-    private Result<IAstStatement> ParseLetStatement()
+    private Maybe<IAstStatement> ParseLetStatement()
     {
         var letToken = currentToken;
 
         var identifierToken = AdvanceTokenIf(Tokens.Identifier);
-        if (!identifierToken.IsSuccess)
+        if (identifierToken.HasError)
             return identifierToken.Error!;
 
         var identifier = new Identifier { Token = currentToken, Value = identifierToken.Value.Literal };
 
         var assignmentToken = AdvanceTokenIf(Tokens.Assign);
-        if (!assignmentToken.IsSuccess)
+        if (assignmentToken.HasError)
             return assignmentToken.Error!;
 
         AdvanceToken();
 
         var expression = ParseExpression();
-        if (!expression.IsSuccess)
+        if (expression.HasError)
             return expression.Error!;
 
 
@@ -85,14 +85,14 @@ public class Parser
         return new LetStatement { Token = letToken, Identifier = identifier, Expression = expression.Value };
     }
 
-    private Result<IAstStatement> ParseReturnStatement()
+    private Maybe<IAstStatement> ParseReturnStatement()
     {
         var returnToken = currentToken;
 
         AdvanceToken();
 
         var expression = ParseExpression();
-        if (!expression.IsSuccess)
+        if (expression.HasError)
             return expression.Error!;
 
         AdvanceTokenIf(Tokens.Semicolon);
@@ -100,10 +100,10 @@ public class Parser
         return new ReturnStatement { Token = returnToken, ReturnValue = expression.Value };
     }
 
-    private Result<IAstStatement> ParseExpressionStatement()
+    private Maybe<IAstStatement> ParseExpressionStatement()
     {
         var expression = ParseExpression(Precedence.Lowest);
-        if (!expression.IsSuccess)
+        if (expression.HasError)
             return expression.Error!;
 
         var statement = new ExpressionStatement
@@ -118,9 +118,9 @@ public class Parser
     }
 
 
-    private Result<IExpression> ParseExpression(Precedence precedence = Precedence.Lowest)
+    private Maybe<IExpression> ParseExpression(Precedence precedence = Precedence.Lowest)
     {
-        Func<Result<IExpression>>? prefixFunction = currentToken.Type switch
+        Func<Maybe<IExpression>>? prefixFunction = currentToken.Type switch
         {
             Tokens.Identifier => this.ParseIdentifier,
             Tokens.Integer => this.ParseIntegerLiteral,
@@ -141,12 +141,12 @@ public class Parser
             return new NotSupportedException($"No prefix parse function for token type {currentToken.Type}.");
 
         var leftExpression = prefixFunction();
-        if (!leftExpression.IsSuccess)
+        if (leftExpression.HasError)
             return leftExpression;
 
         while (PeekToken.Type != Tokens.Semicolon && precedence < OperatorPrecedence(PeekToken.Type))
         {
-            Func<IExpression, Result<IExpression>>? infixFunction = PeekToken.Type switch
+            Func<IExpression, Maybe<IExpression>>? infixFunction = PeekToken.Type switch
             {
                 Tokens.Plus => this.ParseInfixExpression,
                 Tokens.Minus => this.ParseInfixExpression,
@@ -171,19 +171,19 @@ public class Parser
         return leftExpression;
     }
 
-    private Result<IExpression> ParsePrefixExpression()
+    private Maybe<IExpression> ParsePrefixExpression()
     {
         var operatorToken = currentToken;
         AdvanceToken();
 
         var right = ParseExpression(Precedence.Prefix);
-        if (!right.IsSuccess)
+        if (right.HasError)
             return right;
 
         return new PrefixExpression { Token = operatorToken, Operator = operatorToken.Literal, Right = right.Value };
     }
 
-    private Result<IExpression> ParseInfixExpression(IExpression left)
+    private Maybe<IExpression> ParseInfixExpression(IExpression left)
     {
         var operatorToken = currentToken;
         var precedence = OperatorPrecedence(currentToken.Type);
@@ -191,18 +191,18 @@ public class Parser
         AdvanceToken();
 
         var right = ParseExpression(precedence);
-        if (!right.IsSuccess)
+        if (right.HasError)
             return right;
 
         return new InfixExpression { Token = operatorToken, Operator = operatorToken.Literal, Left = left, Right = right.Value };
     }
 
-    private Result<IExpression> ParseCallExpression(IExpression function)
+    private Maybe<IExpression> ParseCallExpression(IExpression function)
     {
         var callToken = currentToken;
 
         var arguments = ParseCallArguments();
-        if (!arguments.IsSuccess)
+        if (arguments.HasError)
             return arguments.Error!;
 
         return new CallExpression
@@ -213,67 +213,67 @@ public class Parser
         };
     }
 
-    private Result<IExpression[]> ParseCallArguments()
+    private Maybe<IExpression[]> ParseCallArguments()
     {
-        if (AdvanceTokenIf(Tokens.RParen).IsSuccess)
+        if (AdvanceTokenIf(Tokens.RParen).HasValue)
             return Array.Empty<IExpression>();
 
         AdvanceToken();
 
         var argument = ParseExpression();
-        if (!argument.IsSuccess)
+        if (argument.HasError)
             return argument.Error!;
 
         var arguments = new List<IExpression> { argument.Value };
 
-        while (AdvanceTokenIf(Tokens.Comma).IsSuccess)
+        while (AdvanceTokenIf(Tokens.Comma).HasValue)
         {
             AdvanceToken();
 
             argument = ParseExpression();
-            if (!argument.IsSuccess)
+            if (argument.HasError)
                 return argument.Error!;
 
             arguments.Add(argument.Value);
         }
 
         var rparen = AdvanceTokenIf(Tokens.RParen);
-        if (!rparen.IsSuccess)
+        if (rparen.HasError)
             return rparen.Error!;
 
         return arguments.ToArray();
     }
 
 
-    private Result<IExpression> ParseArrayLiteral()
+    private Maybe<IExpression> ParseArrayLiteral()
     {
         var arrayToken = currentToken;
 
         var values = new List<IExpression>();
 
-        if (!AdvanceTokenIf(Tokens.RBracket).IsSuccess)
+        if (!AdvanceTokenIf(Tokens.RBracket).HasValue)
         {
             AdvanceToken();
 
             var value = ParseExpression();
-            if (!value.IsSuccess)
+            if (value.HasError)
                 return value.Error!;
 
             values.Add(value.Value);
 
-            while (AdvanceTokenIf(Tokens.Comma).IsSuccess)
+            while (AdvanceTokenIf(Tokens.Comma).HasValue)
             {
                 AdvanceToken();
 
                 value = ParseExpression();
-                if (!value.IsSuccess)
+                if (value.HasError)
                     return value.Error!;
 
                 values.Add(value.Value);
             }
 
             var rbracket = AdvanceTokenIf(Tokens.RBracket);
-            if (!rbracket.IsSuccess)
+            if (rbracket.HasError)
                 return rbracket.Error!;
         }
 
@@ -285,70 +285,70 @@ public class Parser
     }
 
 
-    private Result<IExpression> ParseHashLiteral()
+    private Maybe<IExpression> ParseHashLiteral()
     {
         var hashLiteral = new HashLiteral(currentToken);
 
-        if (!AdvanceTokenIf(Tokens.RSquirly).IsSuccess)
+        if (!AdvanceTokenIf(Tokens.RSquirly).HasValue)
         {
             AdvanceToken();
 
             var pair = ParseHashPair();
-            if (!pair.IsSuccess)
+            if (pair.HasError)
                 return pair.Error!;
 
             hashLiteral.Pairs.Add(pair.Value.key, pair.Value.value);
 
-            while (AdvanceTokenIf(Tokens.Comma).IsSuccess)
+            while (AdvanceTokenIf(Tokens.Comma).HasValue)
             {
                 AdvanceToken();
 
                 pair = ParseHashPair();
-                if (!pair.IsSuccess)
+                if (pair.HasError)
                     return pair.Error!;
 
                 hashLiteral.Pairs.Add(pair.Value.key, pair.Value.value);
             }
 
             var rsquirly = AdvanceTokenIf(Tokens.RSquirly);
-            if (!rsquirly.IsSuccess)
+            if (rsquirly.HasError)
                 return rsquirly.Error!;
         }
 
         return hashLiteral;
     }
 
-    private Result<(IExpression key, IExpression value)> ParseHashPair()
+    private Maybe<(IExpression key, IExpression value)> ParseHashPair()
     {
         var key = ParseExpression();
-        if (!key.IsSuccess)
+        if (key.HasError)
             return key.Error!;
 
         var colon = AdvanceTokenIf(Tokens.Colon);
-        if (!colon.IsSuccess)
+        if (colon.HasError)
             return colon.Error!;
 
         AdvanceToken();
 
         var value = ParseExpression();
-        if (!value.IsSuccess)
+        if (value.HasError)
             return value.Error!;
 
         return (key.Value, value.Value);
     }
 
 
-    private Result<IExpression> ParseIndexExpression(IExpression array)
+    private Maybe<IExpression> ParseIndexExpression(IExpression array)
     {
         var indexToken = currentToken;
 
         AdvanceToken();
         var index = ParseExpression();
-        if (!index.IsSuccess)
+        if (index.HasError)
             return index;
 
         var rparen = AdvanceTokenIf(Tokens.RBracket);
-        if (!rparen.IsSuccess)
+        if (rparen.HasError)
             return rparen.Error!;
 
         return new IndexExpression
@@ -359,41 +359,41 @@ public class Parser
         };
     }
 
-    private Result<IExpression> ParseGroupedExpression()
+    private Maybe<IExpression> ParseGroupedExpression()
     {
         AdvanceToken();
         var exp = ParseExpression();
-        if (!exp.IsSuccess)
+        if (exp.HasError)
             return exp;
 
         var rparen = AdvanceTokenIf(Tokens.RParen);
-        if (!rparen.IsSuccess)
+        if (rparen.HasError)
             return rparen.Error!;
 
         return exp;
     }
 
 
-    private Result<IExpression> ParseIfExpression()
+    private Maybe<IExpression> ParseIfExpression()
     {
         var ifToken = currentToken;
 
         var lparen = AdvanceTokenIf(Tokens.LParen);
-        if (!lparen.IsSuccess)
+        if (lparen.HasError)
             return lparen.Error!;
 
         AdvanceToken();
 
         var condition = ParseExpression();
-        if (!condition.IsSuccess)
+        if (condition.HasError)
             return condition.Error!;
 
         var rparen = AdvanceTokenIf(Tokens.RParen);
-        if (!rparen.IsSuccess)
+        if (rparen.HasError)
             return rparen.Error!;
 
         var lbrace = AdvanceTokenIf(Tokens.LSquirly);
-        if (!lbrace.IsSuccess)
+        if (lbrace.HasError)
             return lbrace.Error!;
 
         var consequence = ParseBlockStatement();
@@ -401,14 +401,14 @@ public class Parser
         BlockStatement? alternative = null;
 
         var elseStatement = AdvanceTokenIf(Tokens.Else);
-        if (elseStatement.IsSuccess)
+        if (elseStatement.HasValue)
         {
             lbrace = AdvanceTokenIf(Tokens.LSquirly);
-            if (!lbrace.IsSuccess)
+            if (lbrace.HasError)
                 return lbrace.Error!;
 
             var block = ParseBlockStatement();
-            if (!block.IsSuccess)
+            if (block.HasError)
                 return block.Error!;
 
             alternative = block.Value;
@@ -423,24 +423,24 @@ public class Parser
         };
     }
 
-    private Result<IExpression> ParseFnExpression()
+    private Maybe<IExpression> ParseFnExpression()
     {
         var fnToken = currentToken;
 
         var lparen = AdvanceTokenIf(Tokens.LParen);
-        if (!lparen.IsSuccess)
+        if (lparen.HasError)
             return lparen.Error!;
 
         var parameters = ParseFunctionParameters();
-        if (!parameters.IsSuccess)
+        if (parameters.HasError)
             return parameters.Error!;
 
         var lbrace = AdvanceTokenIf(Tokens.LSquirly);
-        if (!lbrace.IsSuccess)
+        if (lbrace.HasError)
             return lbrace.Error!;
 
         var body = ParseBlockStatement();
-        if (!body.IsSuccess)
+        if (body.HasError)
             return body.Error!;
 
         return new FnExpression
@@ -450,44 +450,44 @@ public class Parser
             Body = body.Value
         };
     }
-    private Result<Identifier[]> ParseFunctionParameters()
+    private Maybe<Identifier[]> ParseFunctionParameters()
     {
         var rparen = AdvanceTokenIf(Tokens.RParen);
-        if (rparen.IsSuccess)
+        if (rparen.HasValue)
             return Array.Empty<Identifier>();
 
         AdvanceToken();
 
         var identifier = ParseIdentifier();
-        if (!identifier.IsSuccess)
+        if (identifier.HasError)
             return identifier.Error!;
 
         var identifiers = new List<Identifier> { (Identifier)identifier.Value };
 
-        while (AdvanceTokenIf(Tokens.Comma).IsSuccess)
+        while (AdvanceTokenIf(Tokens.Comma).HasValue)
         {
             AdvanceToken();
 
             identifier = ParseIdentifier();
-            if (!identifier.IsSuccess)
+            if (identifier.HasError)
                 return identifier.Error!;
 
             identifiers.Add((Identifier)identifier.Value);
         }
 
         rparen = AdvanceTokenIf(Tokens.RParen);
-        if (!rparen.IsSuccess)
+        if (rparen.HasError)
             return rparen.Error!;
 
         return identifiers.ToArray();
     }
 
-    private Result<IExpression> ParseIdentifier()
+    private Maybe<IExpression> ParseIdentifier()
     {
         return new Identifier { Token = currentToken, Value = currentToken.Literal };
     }
 
-    private Result<IExpression> ParseIntegerLiteral()
+    private Maybe<IExpression> ParseIntegerLiteral()
     {
         if (!long.TryParse(currentToken.Literal, out long value))
             return new ArgumentOutOfRangeException($"Integer out of range {ExceptionLocatorString(currentToken)}");
@@ -495,7 +495,7 @@ public class Parser
         return new IntegerLiteral { Token = currentToken, Value = value };
     }
 
-    private Result<IExpression> ParseStringLiteral()
+    private Maybe<IExpression> ParseStringLiteral()
     {
         if (!currentToken.Literal.EndsWith("\""))
             return new Exception($"String literal must be closed correctly {ExceptionLocatorString(currentToken)}");
@@ -503,7 +503,7 @@ public class Parser
         return new StringLiteral { Token = currentToken, Value = currentToken.Literal[1..(currentToken.Literal.Length - 1)] };
     }
 
-    private Result<IExpression> ParseBooleanLiteral()
+    private Maybe<IExpression> ParseBooleanLiteral()
     {
         if (!bool.TryParse(currentToken.Literal, out bool value))
             return new ArgumentOutOfRangeException($"Boolean out of range {ExceptionLocatorString(currentToken)}");
@@ -511,7 +511,7 @@ public class Parser
         return new BooleanLiteral { Token = currentToken, Value = value };
     }
 
-    private Result<BlockStatement> ParseBlockStatement()
+    private Maybe<BlockStatement> ParseBlockStatement()
     {
         var block = new BlockStatement
         {
@@ -524,7 +524,7 @@ public class Parser
         while (currentToken.Type != Tokens.RSquirly && currentToken.Type != Tokens.EndOfFile)
         {
             var statement = ParseStatement();
-            if (!statement.IsSuccess)
+            if (statement.HasError)
                 return statement.Error!;
 
             block.Statements.Add(statement.Value);
@@ -535,7 +535,7 @@ public class Parser
     }
 
 
-    private Result<Token> AdvanceTokenIf(Tokens identifier)
+    private Maybe<Token> AdvanceTokenIf(Tokens identifier)
     {
         if (PeekToken.Type != identifier)
             return new Exception($"Expected '{identifier}' but found '{PeekToken.Type}' {ExceptionLocatorString(PeekToken)}.");
