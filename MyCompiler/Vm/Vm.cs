@@ -41,33 +41,45 @@ public class Vm
                     break;
 
                 case Opcode.OpAdd:
-                    var right = (IntegerObject)Pop();
-                    var left = (IntegerObject)Pop();
-
-                    var result = left.Value + right.Value;
-                    Push(new IntegerObject(result));
+                    {
+                        var right = (IntegerObject)Pop();
+                        var left = (IntegerObject)Pop();
+                        var result = left.Value + right.Value;
+                        Push(new IntegerObject(result));
+                    }
                     break;
-                //    case Opcode.OpSub:
-                //        right = Pop();
-                //        left = Pop();
-                //        result = left.Sub(right);
-                //        Push(result);
-                //        break;
-                //    case Opcode.OpMul:
-                //        right = Pop();
-                //        left = Pop();
-                //        result = left.Mul(right);
-                //        Push(result);
-                //        break;
-                //    case Opcode.OpDiv:
-                //        right = Pop();
-                //        left = Pop();
-                //        result = left.Div(right);
-                //        Push(result);
-                //        break;
+
+                case Opcode.OpSub:
+                    {
+                        var right = (IntegerObject)Pop();
+                        var left = (IntegerObject)Pop();
+                        var result = left.Value - right.Value;
+                        Push(new IntegerObject(result));
+                    }
+                    break;
+
+                case Opcode.OpMul:
+                    {
+                        var right = (IntegerObject)Pop();
+                        var left = (IntegerObject)Pop();
+                        var result = left.Value * right.Value;
+                        Push(new IntegerObject(result));
+                    }
+                    break;
+
+                case Opcode.OpDiv:
+                    {
+                        var right = (IntegerObject)Pop();
+                        var left = (IntegerObject)Pop();
+                        var result = left.Value / right.Value;
+                        Push(new IntegerObject(result));
+                    }
+                    break;
+
                 case Opcode.OpPop:
                     Pop();
                     break;
+
                 default:
                     return new Exception($"unknown opcode {op}");
             }

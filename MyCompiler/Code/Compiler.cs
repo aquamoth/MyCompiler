@@ -46,6 +46,15 @@ public class Compiler
                         case "+":
                             Emit(Opcode.OpAdd);
                             break;
+                        case "-":
+                            Emit(Opcode.OpSub);
+                            break;
+                        case "*":
+                            Emit(Opcode.OpMul);
+                            break;
+                        case "/":
+                            Emit(Opcode.OpDiv);
+                            break;
                         default:
                             return new Exception($"unknown operator: {infixExpression.Operator}");
                     }

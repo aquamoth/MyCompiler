@@ -65,6 +65,45 @@ public class Compiler_
                         new IntegerObject { Value = 2 }
                     }
                 },
+                {
+                    "1 - 2",
+                    Disassemble(
+                        Code.Code.Make(Opcode.OpConstant, 0).Value,
+                        Code.Code.Make(Opcode.OpConstant, 1).Value,
+                        Code.Code.Make(Opcode.OpSub).Value,
+                        Code.Code.Make(Opcode.OpPop).Value
+                    ),
+                    new object[]{
+                        new IntegerObject { Value = 1 },
+                        new IntegerObject { Value = 2 }
+                    }
+                },
+                {
+                    "1 * 2",
+                    Disassemble(
+                        Code.Code.Make(Opcode.OpConstant, 0).Value,
+                        Code.Code.Make(Opcode.OpConstant, 1).Value,
+                        Code.Code.Make(Opcode.OpMul).Value,
+                        Code.Code.Make(Opcode.OpPop).Value
+                    ),
+                    new object[]{
+                        new IntegerObject { Value = 1 },
+                        new IntegerObject { Value = 2 }
+                    }
+                },
+                {
+                    "2 / 1",
+                    Disassemble(
+                        Code.Code.Make(Opcode.OpConstant, 0).Value,
+                        Code.Code.Make(Opcode.OpConstant, 1).Value,
+                        Code.Code.Make(Opcode.OpDiv).Value,
+                        Code.Code.Make(Opcode.OpPop).Value
+                    ),
+                    new object[]{
+                        new IntegerObject { Value = 2 },
+                        new IntegerObject { Value = 1 }
+                    }
+                },
             };
         }
     }

@@ -22,6 +22,10 @@ namespace MyCompiler.Tests
                 {
                     {Opcode.OpConstant, new[]{ 65534 }, new byte[] { (byte)Opcode.OpConstant, 0xFF, 0xFE } },
                     {Opcode.OpAdd, Array.Empty<int>(), new byte[]{ (byte)Opcode.OpAdd } },
+                    {Opcode.OpSub, Array.Empty<int>(), new byte[]{ (byte)Opcode.OpSub } },
+                    {Opcode.OpMul, Array.Empty<int>(), new byte[]{ (byte)Opcode.OpMul } },
+                    {Opcode.OpDiv, Array.Empty<int>(), new byte[]{ (byte)Opcode.OpDiv } },
+                    {Opcode.OpPop, Array.Empty<int>(), new byte[]{ (byte)Opcode.OpPop } },
                 };
             }
         }

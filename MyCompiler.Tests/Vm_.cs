@@ -37,7 +37,16 @@ public class Vm_
             {
                 {"1", new IntegerObject(1) },
                 {"2", new IntegerObject(2) },
-                { "1 + 2", new IntegerObject(3) }
+                { "1 + 2", new IntegerObject(3) },
+                { "1 - 2", new IntegerObject(-1) },
+                { "1 * 2", new IntegerObject(2) },
+                { "4 / 2", new IntegerObject(2) },
+                { "50 / 2 * 2 + 10 - 5", new IntegerObject(55) },
+                { "5 + 5 + 5 + 5 - 10", new IntegerObject(10) },
+                { "2 * 2 * 2 * 2 * 2", new IntegerObject(32) },
+                { "5 * 2 + 10", new IntegerObject(20) },
+                { "5 + 2 * 10", new IntegerObject(25) },
+                { "5 * (2 + 10)", new IntegerObject(60) }
             };
         }
     }
