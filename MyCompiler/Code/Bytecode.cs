@@ -1,7 +1,9 @@
-﻿namespace MyCompiler.Code;
+﻿using MyCompiler.Entities;
+
+namespace MyCompiler.Code;
 
 public struct Bytecode
 {
     public byte[] Instructions { get; init; }
-    public object[] Constants { get; init; }
+    public IObject[] Constants { get; init; }
 }

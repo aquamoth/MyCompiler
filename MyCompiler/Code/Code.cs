@@ -1,4 +1,5 @@
 ﻿using MyCompiler.Helpers;
+using System.Buffers.Binary;
 using System.Text;
 
 namespace MyCompiler.Code;
@@ -41,8 +42,7 @@ public static class Code
             switch (width)
             {
                 case 2:
-                    instruction[offset] = (byte)(operand >> 8);
-                    instruction[offset + 1] = (byte)operand;
+                    BinaryPrimitives.WriteUInt16BigEndian(instruction.AsSpan()[1..], (ushort)operand);
                     break;
             }
             offset += width;
@@ -92,7 +92,7 @@ public static class Code
     {
         return span.Length switch
         {
-            2 => (ushort)((span[0] << 8) | span[1]),
+            2 => BinaryPrimitives.ReadUInt16BigEndian(span),
             _ => new Exception("Unhandled operand width"),
         };
     }

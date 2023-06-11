@@ -5,7 +5,7 @@ namespace MyCompiler.Code;
 public class Compiler
 {
     private List<byte> Instructions = new();
-    private List<object> Constants = new();
+    private List<IObject> Constants = new();
 
     public bool Compile(IAstNode node)
     {

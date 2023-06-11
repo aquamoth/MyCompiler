@@ -41,6 +41,15 @@ public class IntegerObject : IObject, IHashable, IEquatable<IntegerObject>
     {
         return other != null && other.Value == this.Value;
     }
+
+    public IntegerObject()
+    {
+    }
+
+    public IntegerObject(long value)
+    {
+        Value = value;
+    }
 }
 
 [DebuggerDisplay("{Value,nq}")]
