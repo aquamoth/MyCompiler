@@ -1,6 +1,8 @@
 ﻿// See https://aka.ms/new-console-template for more information
 using MyCompiler;
+using MyCompiler.Code;
 using MyCompiler.Entities;
+using MyCompiler.Vm;
 using System.Text;
 
 var env = EnvironmentStore.New();
@@ -38,16 +40,18 @@ if (args.Length == 0)
             source = sb.ToString();
         }
 
-        Execute(source, env);
+        //ExecuteInInterpreter(source, env);
+        ExecuteInVm(source);
     }
 }
 else
 {
     var source = await File.ReadAllTextAsync(args[0]);
-    Execute(source, env);
+    //ExecuteInInterpreter(source, env);
+    ExecuteInVm(source);
 }
 
-void Execute(string source, EnvironmentStore env)
+void ExecuteInInterpreter(string source, EnvironmentStore env)
 {
     var tokens = Lexer.ParseTokens(source);
     var parser = new Parser(tokens);
@@ -71,6 +75,42 @@ void Execute(string source, EnvironmentStore env)
     if (!string.IsNullOrEmpty(output))
     {
         Console.WriteLine(output);
+    }
+}
+
+void ExecuteInVm(string source)
+{
+    var tokens = Lexer.ParseTokens(source);
+    var parser = new Parser(tokens);
+    var program = parser.ParseProgram();
+    if (program.HasError)
+    {
+        PrintParserError(program.Error!);
+        return;
+    }
+
+    var compiler = new Compiler();
+    var compilation = compiler.Compile(program.Value);
+    if (compilation.HasError)
+    {
+        Console.WriteLine($"Woops! Compilation failed:");
+        Console.WriteLine($"\t{compilation.Error!.Message}");
+        return;
+    }
+
+    var machine = new Vm(compiler.Bytecode());
+    var runtime = machine.Run();
+    if (runtime.HasError)
+    {
+        Console.WriteLine($"Woops! Executing bytecode failed:");
+        Console.WriteLine($"\t{runtime.Error!.Message}");
+        return;
+    }
+
+    var stackTop = machine.StackTop();
+    if (stackTop.HasValue)
+    {
+        Console.WriteLine(stackTop.Value.Inspect());
     }
 }
 

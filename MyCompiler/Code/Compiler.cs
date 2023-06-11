@@ -45,7 +45,7 @@ public class Compiler
                             Emit(Opcode.OpAdd);
                             break;
                         default:
-                            throw new Exception($"unknown operator: {infixExpression.Operator}");
+                            return new Exception($"unknown operator: {infixExpression.Operator}");
                     }
                 }
                 break;

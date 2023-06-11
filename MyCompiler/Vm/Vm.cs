@@ -25,7 +25,7 @@ public class Vm
 
     }
 
-    public void Run()
+    public Maybe Run()
     {
         var ip = 0;
         while (ip < instructions.Length)
@@ -74,6 +74,8 @@ public class Vm
 
             ip++;
         }
+
+        return Maybe.Ok;
     }
 
     private void Push(IObject constant)
