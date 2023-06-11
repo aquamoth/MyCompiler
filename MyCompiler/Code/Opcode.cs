@@ -3,5 +3,6 @@
 public enum Opcode : byte
 {
     OpConstant = 0x00,
-    OpAdd = 0x01,
+    OpAdd,
+    OpPop
 }

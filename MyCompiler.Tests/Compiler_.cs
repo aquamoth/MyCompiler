@@ -1,5 +1,7 @@
 ﻿using MyCompiler.Code;
 using MyCompiler.Entities;
+using MyCompiler.Helpers;
+using System.Text;
 using Xunit.Abstractions;
 
 namespace MyCompiler.Tests;
@@ -38,12 +40,26 @@ public class Compiler_
             return new()
             {
                 {
+                    "1;2",
+                    Disassemble(
+                        Code.Code.Make(Opcode.OpConstant, 0).Value,
+                        Code.Code.Make(Opcode.OpPop).Value,
+                        Code.Code.Make(Opcode.OpConstant, 1).Value,
+                        Code.Code.Make(Opcode.OpPop).Value
+                    ),
+                    new object[]{
+                        new IntegerObject { Value = 1 },
+                        new IntegerObject { Value = 2 }
+                    }
+                },
+                {
                     "1 + 2",
-                    """
-                        0000 OpConstant 0
-                        0003 OpConstant 1
-                        0006 OpAdd
-                        """,
+                    Disassemble(
+                        Code.Code.Make(Opcode.OpConstant, 0).Value,
+                        Code.Code.Make(Opcode.OpConstant, 1).Value,
+                        Code.Code.Make(Opcode.OpAdd).Value,
+                        Code.Code.Make(Opcode.OpPop).Value
+                    ),
                     new object[]{
                         new IntegerObject { Value = 1 },
                         new IntegerObject { Value = 2 }
@@ -52,6 +68,8 @@ public class Compiler_
             };
         }
     }
+
+    private static string Disassemble(params byte[][] operations) => Code.Code.Disassemble(operations.SelectMany(x => x).ToArray()).Value;
 
     private Helpers.Maybe<AstProgram> Parse(string Input)
     {

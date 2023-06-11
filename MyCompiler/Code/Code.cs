@@ -12,7 +12,8 @@ public static class Code
     {
         definitions = new[] {
             new Definition { Opcode = Opcode.OpConstant, Name = nameof(Opcode.OpConstant), OperandWidths = new[] { 2 } },
-            new Definition { Opcode = Opcode.OpAdd, Name = nameof(Opcode.OpAdd), OperandWidths = Array.Empty<int>() }
+            new Definition { Opcode = Opcode.OpAdd, Name = nameof(Opcode.OpAdd), OperandWidths = Array.Empty<int>() },
+            new Definition { Opcode = Opcode.OpPop, Name = nameof(Opcode.OpPop), OperandWidths = Array.Empty<int>() }
         }.ToDictionary(x => x.Opcode);
     }
 

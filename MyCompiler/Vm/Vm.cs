@@ -47,29 +47,29 @@ public class Vm
                     var result = left.Value + right.Value;
                     Push(new IntegerObject(result));
                     break;
-                    //    case Opcode.OpSub:
-                    //        right = Pop();
-                    //        left = Pop();
-                    //        result = left.Sub(right);
-                    //        Push(result);
-                    //        break;
-                    //    case Opcode.OpMul:
-                    //        right = Pop();
-                    //        left = Pop();
-                    //        result = left.Mul(right);
-                    //        Push(result);
-                    //        break;
-                    //    case Opcode.OpDiv:
-                    //        right = Pop();
-                    //        left = Pop();
-                    //        result = left.Div(right);
-                    //        Push(result);
-                    //        break;
-                    //    case Opcode.OpPop:
-                    //        Pop();
-                    //        break;
-                    //    default:
-                    //        throw new Exception($"unknown opcode {op}");
+                //    case Opcode.OpSub:
+                //        right = Pop();
+                //        left = Pop();
+                //        result = left.Sub(right);
+                //        Push(result);
+                //        break;
+                //    case Opcode.OpMul:
+                //        right = Pop();
+                //        left = Pop();
+                //        result = left.Mul(right);
+                //        Push(result);
+                //        break;
+                //    case Opcode.OpDiv:
+                //        right = Pop();
+                //        left = Pop();
+                //        result = left.Div(right);
+                //        Push(result);
+                //        break;
+                case Opcode.OpPop:
+                    Pop();
+                    break;
+                default:
+                    return new Exception($"unknown opcode {op}");
             }
 
             ip++;
@@ -90,11 +90,8 @@ public class Vm
         return stack[sp];
     }
 
-    public Maybe<IObject> StackTop()
+    public IObject LastPoppedStackElem()
     {
-        if (sp == 0)
-            return new Exception("Stack is empty");
-
-        return Maybe<IObject>.From(stack[sp - 1]);
+        return stack[sp];
     }
 }

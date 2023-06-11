@@ -26,10 +26,8 @@ public class Vm_
         var vm = new Vm.Vm(compiler.Bytecode());
         vm.Run();
 
-        var stackTop = vm.StackTop();
-        Assert.True(stackTop.HasValue);
-
-        Assert.Equal(expectedStackTop, stackTop.Value);
+        var stackElement = vm.LastPoppedStackElem();
+        Assert.Equal(expectedStackTop, stackElement);
     }
     public static TheoryData<string, IObject> Runs_integer_arithmetic_VALUES
     {

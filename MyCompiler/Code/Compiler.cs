@@ -26,6 +26,8 @@ public class Compiler
                     var result = Compile(expressionStatement.Expression);
                     if (result.HasError)
                         return result;
+
+                    Emit(Opcode.OpPop);
                 }
                 break;
 

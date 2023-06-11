@@ -107,11 +107,8 @@ void ExecuteInVm(string source)
         return;
     }
 
-    var stackTop = machine.StackTop();
-    if (stackTop.HasValue)
-    {
-        Console.WriteLine(stackTop.Value.Inspect());
-    }
+    var lastPopped = machine.LastPoppedStackElem();
+    Console.WriteLine(lastPopped.Inspect());
 }
 
 void PrintParserError(Exception error)
