@@ -20,8 +20,8 @@ public class Vm_
         var program = Parse(source);
 
         var compiler = new Compiler();
-        var success = compiler.Compile(program.Value);
-        Assert.True(success);
+        var compilation = compiler.Compile(program.Value);
+        Assert.False(compilation.HasError);
 
         var vm = new Vm.Vm(compiler.Bytecode());
         vm.Run();
@@ -39,24 +39,10 @@ public class Vm_
             {
                 {"1", new IntegerObject(1) },
                 {"2", new IntegerObject(2) },
-                { "1 + 2", new IntegerObject(2) } // TODO: FIXME
+                { "1 + 2", new IntegerObject(3) }
             };
         }
     }
-
-    //[Fact]
-    //public void Runs_()
-    //{
-    //    var compiler = new Compiler();
-    //    var program = Parse("1 + 2");
-    //    var success = compiler.Compile(program.Value);
-    //    Assert.True(success);
-    //    var bytecode = compiler.Bytecode();
-    //    var vm = new Vm(bytecode);
-    //    vm.Run();
-    //    var stackTop = vm.StackTop();
-    //    Assert.Equal(1, stackTop.Type);
-    //}
 
     private Helpers.Maybe<AstProgram> Parse(string Input)
     {

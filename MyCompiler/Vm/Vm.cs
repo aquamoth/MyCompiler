@@ -39,12 +39,14 @@ public class Vm
                     ip += 2;
                     Push(constants[constIndex]);
                     break;
-                    //    case Opcode.OpAdd:
-                    //        var right = Pop();
-                    //        var left = Pop();
-                    //        var result = left.Add(right);
-                    //        Push(result);
-                    //        break;
+
+                case Opcode.OpAdd:
+                    var right = (IntegerObject)Pop();
+                    var left = (IntegerObject)Pop();
+
+                    var result = left.Value + right.Value;
+                    Push(new IntegerObject(result));
+                    break;
                     //    case Opcode.OpSub:
                     //        right = Pop();
                     //        left = Pop();
@@ -78,6 +80,12 @@ public class Vm
     {
         stack[sp] = constant;
         sp++;
+    }
+
+    private IObject Pop()
+    {
+        --sp;
+        return stack[sp];
     }
 
     public Maybe<IObject> StackTop()

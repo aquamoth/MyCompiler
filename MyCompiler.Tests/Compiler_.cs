@@ -20,10 +20,11 @@ public class Compiler_
         var compiler = new Compiler();
         var program = Parse(input);
 
-        var success = compiler.Compile(program.Value);
-        Assert.True(success);
+        var compilation = compiler.Compile(program.Value);
+        Assert.False(compilation.HasError);
 
         var bytecode = compiler.Bytecode();
+
         var actualInstructions = Code.Code.Disassemble(bytecode.Instructions);
         Assert.True(actualInstructions.HasValue);
 
@@ -34,8 +35,6 @@ public class Compiler_
     {
         get
         {
-            //var op0 = Code.Code.Make(Opcode.OpConstant, new[] { 0 }).Value;
-            //var op1 = Code.Code.Make(Opcode.OpConstant, new[] { 1 }).Value;
             return new()
             {
                 {
@@ -43,6 +42,7 @@ public class Compiler_
                     """
                         0000 OpConstant 0
                         0003 OpConstant 1
+                        0006 OpAdd
                         """,
                     new object[]{
                         new IntegerObject { Value = 1 },

@@ -34,3 +34,28 @@ public readonly struct Maybe<T>
 
     public static implicit operator Maybe<T>(Exception ex) => new(ex);
 }
+
+public class Maybe
+{
+    private readonly Exception? error;
+
+    public bool HasError { get; init; }
+
+    public Exception? Error => HasError ? error : null;
+
+    private Maybe()
+    {
+        this.HasError = false;
+        this.error = default;
+    }
+
+    private Maybe(Exception error)
+    {
+        this.HasError = true;
+        this.error = error;
+    }
+
+    public static Maybe Ok => new();
+
+    public static implicit operator Maybe(Exception ex) => new(ex);
+}

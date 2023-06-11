@@ -1,39 +1,67 @@
 ﻿using MyCompiler.Code;
-using System.Linq;
-using Xunit.Abstractions;
+using MyCompiler.Entities;
 
 namespace MyCompiler.Tests
 {
     public class Code_
     {
         [Theory]
-        [InlineData(Opcode.OpConstant, 65534)]
-        public void Compiles_constants_to_IL(Opcode opcode, int operand)
+        [MemberData(nameof(Makes_Opcodes_into_Bytecodes_VALUES))]
+        public void Makes_Opcodes_into_Bytecodes(Opcode opcode, int[] operands, byte[] bytecode)
         {
-            var instruction = Code.Code.Make(opcode, operand);
+            var instruction = Code.Code.Make(opcode, operands);
             Assert.True(instruction.HasValue);
 
-            Assert.Equal(new byte[] { 0x00, 0xFF, 0xFE }, instruction.Value);
+            Assert.Equal(bytecode, instruction.Value);
+        }
+        public static TheoryData<Opcode, int[], byte[]> Makes_Opcodes_into_Bytecodes_VALUES
+        {
+            get
+            {
+                return new()
+                {
+                    {Opcode.OpConstant, new[]{ 65534 }, new byte[] { (byte)Opcode.OpConstant, 0xFF, 0xFE } },
+                    {Opcode.OpAdd, Array.Empty<int>(), new byte[]{ (byte)Opcode.OpAdd } },
+                };
+            }
         }
 
-        [Fact]
-        public void Disassembles_IL_code()
+        [Theory]
+        [MemberData(nameof(Makes_and_disassembles_code_VALUES))]
+        public void Makes_and_disassembles_code(byte[] instructions, string expected)
         {
-            var instructions = Code.Code.Make(Opcode.OpConstant, 1).Value
-                .Concat(Code.Code.Make(Opcode.OpConstant, 2).Value)
-                .Concat(Code.Code.Make(Opcode.OpConstant, 65535).Value)
-                .ToArray();
-         
             var disassembled = Code.Code.Disassemble(instructions);
             Assert.True(disassembled.HasValue);
-
-            var expected = """
-                0000 OpConstant 1
-                0003 OpConstant 2
-                0006 OpConstant 65535
-                """;
-
             Assert.Equal(expected, disassembled.Value);
         }
+        public static TheoryData<byte[], string> Makes_and_disassembles_code_VALUES => new()
+            {
+                {
+                    new[]
+                    {
+                        Code.Code.Make(Opcode.OpConstant, 1).Value,
+                        Code.Code.Make(Opcode.OpConstant, 2).Value,
+                        Code.Code.Make(Opcode.OpConstant, 65535).Value
+                    }.SelectMany(x=>x).ToArray(),
+                    """
+                    0000 OpConstant 1
+                    0003 OpConstant 2
+                    0006 OpConstant 65535
+                    """
+                },
+                {
+                    new[]
+                    {
+                        Code.Code.Make(Opcode.OpAdd).Value,
+                        Code.Code.Make(Opcode.OpConstant, 2).Value,
+                        Code.Code.Make(Opcode.OpConstant, 65535).Value
+                    }.SelectMany(x=>x).ToArray(),
+                    """
+                    0000 OpAdd
+                    0001 OpConstant 2
+                    0004 OpConstant 65535
+                    """
+                }
+            };
     }
 }
