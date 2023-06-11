@@ -1,5 +1,6 @@
 ﻿using MyCompiler.Helpers;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 
 namespace MyCompiler.Entities;
@@ -29,12 +30,17 @@ public interface IHashable
 }
 
 [DebuggerDisplay("{Value,nq}")]
-public class IntegerObject : IObject, IHashable
+public class IntegerObject : IObject, IHashable, IEquatable<IntegerObject>
 {
     public ObjectType Type { get; init; } = ObjectType.INTEGER;
     public long Value { get; init; }
     public string Inspect() => Value.ToString();
     public HashKey HashKey() => new(this.Type, this.Value);
+
+    public bool Equals(IntegerObject? other)
+    {
+        return other != null && other.Value == this.Value;
+    }
 }
 
 [DebuggerDisplay("{Value,nq}")]
