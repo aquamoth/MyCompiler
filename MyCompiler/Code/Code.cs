@@ -28,6 +28,9 @@ public static class Code
             Define(Opcode.OpGreaterThan),
             Define(Opcode.OpMinus),
             Define(Opcode.OpBang),
+
+            Define(Opcode.OpJumpNotTruthy, 2),
+            Define(Opcode.OpJump, 2),
         }.ToDictionary(x => x.Opcode);
     }
 

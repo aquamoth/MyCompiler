@@ -20,4 +20,7 @@ public enum Opcode : byte
     
     OpMinus,
     OpBang,
+
+    OpJumpNotTruthy,
+    OpJump,
 }
