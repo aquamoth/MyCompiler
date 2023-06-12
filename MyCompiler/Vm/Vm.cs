@@ -35,9 +35,11 @@ public class Vm
             switch (op)
             {
                 case Opcode.OpConstant:
-                    var constIndex = BinaryPrimitives.ReadUInt16BigEndian(instructions.AsSpan()[(ip + 1)..]);
-                    ip += 2;
-                    Push(constants[constIndex]);
+                    {
+                        var constIndex = BinaryPrimitives.ReadUInt16BigEndian(instructions.AsSpan()[(ip + 1)..]);
+                        ip += 2;
+                        Push(constants[constIndex]);
+                    }
                     break;
 
                 case Opcode.OpTrue:
@@ -114,6 +116,24 @@ public class Vm
                     Pop();
                     break;
 
+                case Opcode.OpJumpNotTruthy:
+                    {
+                        var pos = BinaryPrimitives.ReadUInt16BigEndian(instructions.AsSpan()[(ip + 1)..]);
+                        ip += 2;
+
+                        var condition = Pop();
+                        if (!IsTruthy(condition))
+                            ip = pos - 1;
+                    }
+                    break;
+
+                case Opcode.OpJump:
+                    {
+                        var pos = BinaryPrimitives.ReadUInt16BigEndian(instructions.AsSpan()[(ip + 1)..]);
+                        ip = pos - 1;
+                    }
+                    break;
+
                 default:
                     return new Exception($"unknown opcode {op}");
             }
@@ -122,6 +142,15 @@ public class Vm
         }
 
         return Maybe.Ok;
+    }
+
+    private static bool IsTruthy(IObject condition)
+    {
+        return condition switch
+        {
+            BooleanObject boolean => boolean.Value,
+            _ => true
+        };
     }
 
     private Maybe ExecuteComparison(Opcode op)
@@ -176,14 +205,13 @@ public class Vm
         }
     }
 
-    private Maybe Push(IObject constant)
+    private void Push(IObject constant)
     {
         if (sp == StackSize)
-            return new Exception("stack overflow");
+            throw new Exception("stack overflow");
 
         stack[sp] = constant;
         sp++;
-        return Maybe.Ok;
     }
 
     private IObject Pop()
