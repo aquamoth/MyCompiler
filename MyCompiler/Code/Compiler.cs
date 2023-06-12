@@ -118,9 +118,9 @@ public class Compiler
         if (condition.HasError)
             return condition;
 
-        var jumpNotTruthyPos = Emit(Opcode.OpJumpNotTruthy, 9999);
-        if (jumpNotTruthyPos.HasError)
-            return jumpNotTruthyPos.Error!;
+        var jumpNotTruthyPosition = Emit(Opcode.OpJumpNotTruthy, 9999);
+        if (jumpNotTruthyPosition.HasError)
+            return jumpNotTruthyPosition.Error!;
 
         var consequence = Compile(ifExpression.Consequence);
         if (consequence.HasError)
@@ -129,9 +129,39 @@ public class Compiler
         if (lastInstruction.Opcode == Opcode.OpPop)
             RemoveLastPop();
 
-        ushort newJumpTarget = (ushort)Instructions.Count;
-        var newInstruction = Code.Make(Opcode.OpJumpNotTruthy, newJumpTarget).Value;
-        ReplaceInstruction(jumpNotTruthyPos.Value, newInstruction);
+        int afterConsequencePosition;
+        if (ifExpression.Alternative == null)
+        {
+            afterConsequencePosition = Instructions.Count;
+        }
+        else
+        {
+            var jumpFromConsequencePosition = Emit(Opcode.OpJump, 9998);
+            if (jumpFromConsequencePosition.HasError)
+                return jumpFromConsequencePosition.Error!;
+
+            afterConsequencePosition = Instructions.Count;
+
+            var alternative = Compile(ifExpression.Alternative);
+            if (alternative.HasError)
+                return alternative.Error!;
+
+            if (lastInstruction.Opcode == Opcode.OpPop)
+                RemoveLastPop();
+
+            int afterAlternativePosition = Instructions.Count;
+
+            ReplaceInstruction(
+                jumpFromConsequencePosition.Value,
+                Code.Make(Opcode.OpJump, afterAlternativePosition).Value
+            );
+        }
+
+        ReplaceInstruction(
+            jumpNotTruthyPosition.Value, 
+            Code.Make(Opcode.OpJumpNotTruthy, afterConsequencePosition).Value
+        );
+
 
         return Maybe.Ok;
     }
