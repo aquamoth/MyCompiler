@@ -32,6 +32,9 @@ public static class Code
 
             Define(Opcode.OpJumpNotTruthy, 2),
             Define(Opcode.OpJump, 2),
+
+            Define(Opcode.OpGetGlobal, 2),
+            Define(Opcode.OpSetGlobal, 2),
         }.ToDictionary(x => x.Opcode);
     }
 
@@ -62,6 +65,8 @@ public static class Code
                 case 2:
                     BinaryPrimitives.WriteUInt16BigEndian(instruction.AsSpan()[1..], (ushort)operand);
                     break;
+                default:
+                    return new Exception("Unhandled operand width");
             }
             offset += width;
         }
@@ -158,5 +163,5 @@ public static class Code
     }
 
     private static Definition Define(Opcode opcode, params int[] operandWidths) 
-        => new Definition { Opcode = opcode, Name = opcode.ToString(), OperandWidths = operandWidths };
+        => new Definition(opcode, opcode.ToString(), operandWidths);
 }

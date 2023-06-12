@@ -1,15 +1,7 @@
 ﻿using MyCompiler.Entities;
 using MyCompiler.Helpers;
-using System.Buffers.Binary;
-using System.Runtime;
 
 namespace MyCompiler.Code;
-
-readonly struct EmittedInstruction
-{
-    public readonly Opcode Opcode { get; init; }
-    public readonly int Position { get; init; }
-}
 
 public class Compiler
 {
@@ -18,6 +10,8 @@ public class Compiler
 
     EmittedInstruction lastInstruction = default;
     EmittedInstruction prevInstruction = default;
+
+    private readonly SymbolTable symbolTable = new();
 
     public Maybe Compile(IAstNode node)
     {
@@ -93,12 +87,32 @@ public class Compiler
             //    case ReturnNode returnNode:
             //        CompileReturn(returnNode);
             //        break;
-            //    case LetNode letNode:
-            //        CompileLet(letNode);
-            //        break;
-            //    case IdentifierNode identifierNode:
-            //        CompileIdentifier(identifierNode);
-            //        break;
+            case LetStatement letStatement:
+                {
+                    var result = Compile(letStatement.Expression);
+                    if (result.HasError)
+                        return result;
+
+                    var symbol = symbolTable.Define(letStatement.Identifier.Name);
+                    if (symbol.HasError)
+                        return symbol.Error!;
+                    
+                    var emitted = Emit(Opcode.OpSetGlobal, symbol.Value.Index);
+                    if (emitted.HasError)
+                        return emitted.Error!;
+                }
+                break;
+            case Identifier identifier:
+                {
+                    var symbol = symbolTable.Resolve(identifier.Name);
+                    if (symbol.HasError)
+                        return symbol.Error!;
+
+                    var emitted = Emit(Opcode.OpGetGlobal, symbol.Value.Index);
+                    if (emitted.HasError)
+                        return emitted.Error!;
+                }
+                break;
             //    case FunctionNode functionNode:
             //        CompileFunction(functionNode);
             //        break;
@@ -267,7 +281,7 @@ public class Compiler
     private void SetLastInstruction(Opcode opcode, int pos)
     {
         prevInstruction = lastInstruction;
-        lastInstruction = new EmittedInstruction { Opcode = opcode, Position = pos };
+        lastInstruction = new EmittedInstruction(opcode, pos);
     }
 
     private int AddInstruction(byte[] ins)
@@ -283,12 +297,5 @@ public class Compiler
         return this.Constants.Count - 1;
     }
 
-    public Bytecode Bytecode()
-    {
-        return new Bytecode
-        {
-            Instructions = this.Instructions.ToArray(),
-            Constants = this.Constants.ToArray()
-        };
-    }
+    public Bytecode Bytecode() => new(Instructions.ToArray(), Constants.ToArray());
 }

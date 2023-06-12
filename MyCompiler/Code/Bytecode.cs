@@ -2,8 +2,6 @@
 
 namespace MyCompiler.Code;
 
-public struct Bytecode
+public record struct Bytecode(byte[] Instructions, IObject[] Constants)
 {
-    public byte[] Instructions { get; init; }
-    public IObject[] Constants { get; init; }
 }

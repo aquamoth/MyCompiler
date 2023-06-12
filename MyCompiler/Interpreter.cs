@@ -88,7 +88,7 @@ public class Interpreter
         var env = EnvironmentStore.NewEnclosed(fn.Env);
         foreach (var (param, value) in fn.Parameters.Zip(args))
         {
-            env.Set(param.Value, value!);
+            env.Set(param.Name, value!);
         }
 
         return env;
@@ -117,11 +117,11 @@ public class Interpreter
 
     private Maybe<IObject> EvalIdentifier(Identifier identifier, EnvironmentStore env)
     {
-        var result = env.Get(identifier.Value);
+        var result = env.Get(identifier.Name);
         if (result.HasValue)
             return result;
 
-        return builtin.Get(identifier.Value);
+        return builtin.Get(identifier.Name);
     }
 
     private Maybe<IObject> EvalLetStatement(LetStatement let, EnvironmentStore env)
@@ -130,7 +130,7 @@ public class Interpreter
         if (value.HasError)
             return value.Error!;
 
-        env.Set(let.Identifier.Value, value.Value);
+        env.Set(let.Identifier.Name, value.Value);
 
         return NullObject.Value;
     }

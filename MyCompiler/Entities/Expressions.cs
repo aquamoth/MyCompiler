@@ -11,9 +11,9 @@ public interface IExpression : IAstNode
 public readonly struct Identifier : IExpression
 {
     public Token Token { get; init; }
-    public string Value { get; init; }
+    public string Name { get; init; }
 
-    public override string ToString() => $"{Value}";
+    public override string ToString() => $"{Name}";
 }
 
 [DebuggerDisplay("IntegerLiteral {Value,nq}")]

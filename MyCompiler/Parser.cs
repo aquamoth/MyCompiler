@@ -67,7 +67,7 @@ public class Parser
         if (identifierToken.HasError)
             return identifierToken.Error!;
 
-        var identifier = new Identifier { Token = currentToken, Value = identifierToken.Value.Literal };
+        var identifier = new Identifier { Token = currentToken, Name = identifierToken.Value.Literal };
 
         var assignmentToken = AdvanceTokenIf(Tokens.Assign);
         if (assignmentToken.HasError)
@@ -484,7 +484,7 @@ public class Parser
 
     private Maybe<IExpression> ParseIdentifier()
     {
-        return new Identifier { Token = currentToken, Value = currentToken.Literal };
+        return new Identifier { Token = currentToken, Name = currentToken.Literal };
     }
 
     private Maybe<IExpression> ParseIntegerLiteral()

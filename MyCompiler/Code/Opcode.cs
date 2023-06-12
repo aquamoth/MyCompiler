@@ -24,4 +24,7 @@ public enum Opcode : byte
 
     OpJumpNotTruthy,
     OpJump,
+
+    OpGetGlobal,
+    OpSetGlobal,
 }
