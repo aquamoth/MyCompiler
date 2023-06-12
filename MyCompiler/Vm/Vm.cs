@@ -7,22 +7,27 @@ namespace MyCompiler.Vm;
 
 public class Vm
 {
-    const int StackSize = 2048;
+    const int STACK_SIZE = 2048;
+    public const int GLOBALS_SIZE = 65536;
 
-    readonly IObject[] constants;
     readonly byte[] instructions;
-
+    readonly IObject[] constants;
+    readonly IObject[] globals;
     readonly IObject[] stack;
     int sp;
 
-    public Vm(Bytecode bytecode)
+    public Vm(Bytecode bytecode, IObject[] globals)
     {
         this.instructions = bytecode.Instructions;
         this.constants = bytecode.Constants;
+        this.globals = globals;
 
-        stack = new IObject[StackSize];
+        stack = new IObject[STACK_SIZE];
         sp = 0;
+    }
 
+    public Vm(Bytecode bytecode) : this(bytecode, new IObject[GLOBALS_SIZE])
+    {
     }
 
     public Maybe Run()
@@ -135,6 +140,24 @@ public class Vm
                     }
                     break;
 
+                case Opcode.OpSetGlobal:
+                    {
+                        var globalIndex = BinaryPrimitives.ReadUInt16BigEndian(instructions.AsSpan()[(ip + 1)..]);
+                        ip += 2;
+
+                        globals[globalIndex] = Pop();
+                    }
+                    break;
+
+                case Opcode.OpGetGlobal:
+                    {
+                        var globalIndex = BinaryPrimitives.ReadUInt16BigEndian(instructions.AsSpan()[(ip + 1)..]);
+                        ip += 2;
+
+                        Push(globals[globalIndex]);
+                    }
+                    break;
+
                 default:
                     return new Exception($"unknown opcode {op}");
             }
@@ -222,7 +245,7 @@ public class Vm
 
     private void Push(IObject constant)
     {
-        if (sp == StackSize)
+        if (sp == STACK_SIZE)
             throw new Exception("stack overflow");
 
         stack[sp] = constant;

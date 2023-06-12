@@ -15,6 +15,10 @@ Console.WriteLine(" - This is useful for pasting in large blocks of code.");
 Console.WriteLine(" - End the multi-line parsing by typing \"\"\" at the start of a line again.");
 Console.WriteLine("Press ENTER on an empty line to quit the REPL.");
 
+var constants = new List<IObject>();
+var globals = new IObject[Vm.GLOBALS_SIZE];
+var symbolTable = new SymbolTable();
+
 if (args.Length == 0)
 {
     while (true)
@@ -89,7 +93,7 @@ void ExecuteInVm(string source)
         return;
     }
 
-    var compiler = new Compiler();
+    var compiler = new Compiler(symbolTable, constants);
     var compilation = compiler.Compile(program.Value);
     if (compilation.HasError)
     {
@@ -98,7 +102,7 @@ void ExecuteInVm(string source)
         return;
     }
 
-    var machine = new Vm(compiler.Bytecode());
+    var machine = new Vm(compiler.Bytecode(), globals);
     var runtime = machine.Run();
     if (runtime.HasError)
     {

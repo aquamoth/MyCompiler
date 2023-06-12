@@ -5,13 +5,25 @@ namespace MyCompiler.Code;
 
 public class Compiler
 {
-    private List<byte> Instructions = new();
-    private List<IObject> Constants = new();
+    private readonly List<byte> _instructions = new();
+    private readonly SymbolTable _symbolTable;
+    private readonly List<IObject> _constants;
 
-    EmittedInstruction lastInstruction = default;
-    EmittedInstruction prevInstruction = default;
+    EmittedInstruction _lastInstruction = default;
+    EmittedInstruction _prevInstruction = default;
 
-    private readonly SymbolTable symbolTable = new();
+
+    public Compiler()
+    {
+        _symbolTable = new();
+        _constants = new();
+    }
+
+    public Compiler(SymbolTable symbolTable, List<IObject> constants)
+    {
+        _symbolTable = symbolTable;
+        _constants = constants;
+    }
 
     public Maybe Compile(IAstNode node)
     {
@@ -93,7 +105,7 @@ public class Compiler
                     if (result.HasError)
                         return result;
 
-                    var symbol = symbolTable.Define(letStatement.Identifier.Name);
+                    var symbol = _symbolTable.Define(letStatement.Identifier.Name);
                     if (symbol.HasError)
                         return symbol.Error!;
                     
@@ -104,7 +116,7 @@ public class Compiler
                 break;
             case Identifier identifier:
                 {
-                    var symbol = symbolTable.Resolve(identifier.Name);
+                    var symbol = _symbolTable.Resolve(identifier.Name);
                     if (symbol.HasError)
                         return symbol.Error!;
 
@@ -140,14 +152,14 @@ public class Compiler
         if (consequence.HasError)
             return consequence.Error!;
 
-        if (lastInstruction.Opcode == Opcode.OpPop)
+        if (_lastInstruction.Opcode == Opcode.OpPop)
             RemoveLastPop();
 
         var jumpFromConsequencePosition = Emit(Opcode.OpJump, 9998);
         if (jumpFromConsequencePosition.HasError)
             return jumpFromConsequencePosition.Error!;
 
-        var afterConsequencePosition = Instructions.Count;
+        var afterConsequencePosition = _instructions.Count;
         ReplaceInstruction(
             jumpNotTruthyPosition.Value, 
             Code.Make(Opcode.OpJumpNotTruthy, afterConsequencePosition).Value
@@ -163,11 +175,11 @@ public class Compiler
             if (alternative.HasError)
                 return alternative.Error!;
 
-            if (lastInstruction.Opcode == Opcode.OpPop)
+            if (_lastInstruction.Opcode == Opcode.OpPop)
                 RemoveLastPop();
         }
 
-        int afterAlternativePosition = Instructions.Count;
+        int afterAlternativePosition = _instructions.Count;
         ReplaceInstruction(
             jumpFromConsequencePosition.Value,
             Code.Make(Opcode.OpJump, afterAlternativePosition).Value
@@ -180,13 +192,13 @@ public class Compiler
     private void ReplaceInstruction(int position, Span<byte> newInstruction)
     {
         for (var i = 0; i < newInstruction.Length; i++)
-            Instructions[position + i] = newInstruction[i];
+            _instructions[position + i] = newInstruction[i];
     }
 
     private void RemoveLastPop()
     {
-        Instructions.RemoveAt(Instructions.Count - 1);
-        lastInstruction = prevInstruction;
+        _instructions.RemoveAt(_instructions.Count - 1);
+        _lastInstruction = _prevInstruction;
     }
 
     private Maybe CompileInfixExpression(InfixExpression infixExpression)
@@ -280,22 +292,22 @@ public class Compiler
 
     private void SetLastInstruction(Opcode opcode, int pos)
     {
-        prevInstruction = lastInstruction;
-        lastInstruction = new EmittedInstruction(opcode, pos);
+        _prevInstruction = _lastInstruction;
+        _lastInstruction = new EmittedInstruction(opcode, pos);
     }
 
     private int AddInstruction(byte[] ins)
     {
-        var posNewInstruction = this.Instructions.Count;
-        this.Instructions.AddRange(ins);
+        var posNewInstruction = this._instructions.Count;
+        this._instructions.AddRange(ins);
         return posNewInstruction;
     }
 
     private int AddConstant(IntegerObject integer)
     {
-        this.Constants.Add(integer);
-        return this.Constants.Count - 1;
+        this._constants.Add(integer);
+        return this._constants.Count - 1;
     }
 
-    public Bytecode Bytecode() => new(Instructions.ToArray(), Constants.ToArray());
+    public Bytecode Bytecode() => new(_instructions.ToArray(), _constants.ToArray());
 }
