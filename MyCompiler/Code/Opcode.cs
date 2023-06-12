@@ -8,4 +8,9 @@ public enum Opcode : byte
     OpMul,
     OpDiv,
     OpPop,
+    OpTrue,
+    OpFalse,
+    OpEqual,
+    OpNotEqual,
+    OpGreaterThan,
 }

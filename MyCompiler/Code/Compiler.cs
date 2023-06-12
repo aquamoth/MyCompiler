@@ -1,5 +1,6 @@
 ﻿using MyCompiler.Entities;
 using MyCompiler.Helpers;
+using System.Runtime;
 
 namespace MyCompiler.Code;
 
@@ -32,6 +33,20 @@ public class Compiler
                 break;
 
             case InfixExpression infixExpression:
+
+                if (infixExpression.Operator == "<")
+                {
+                    var result = Compile(infixExpression.Right);
+                    if (result.HasError)
+                        return result;
+
+                    result = Compile(infixExpression.Left);
+                    if (result.HasError)
+                        return result;
+
+                    Emit(Opcode.OpGreaterThan);
+                }
+                else
                 {
                     var result = Compile(infixExpression.Left);
                     if (result.HasError)
@@ -55,6 +70,17 @@ public class Compiler
                         case "/":
                             Emit(Opcode.OpDiv);
                             break;
+
+                        case ">":
+                            Emit(Opcode.OpGreaterThan);
+                            break;
+                        case "==":
+                            Emit(Opcode.OpEqual);
+                            break;
+                        case "!=":
+                            Emit(Opcode.OpNotEqual);
+                            break;
+
                         default:
                             return new Exception($"unknown operator: {infixExpression.Operator}");
                     }
@@ -70,9 +96,9 @@ public class Compiler
                     Emit(Opcode.OpConstant, constantIndex);
                 }
                 break;
-            //    case BooleanNode booleanNode:
-            //        CompileBoolean(booleanNode);
-            //        break;
+            case BooleanLiteral booleanLiteral:
+                Emit(booleanLiteral.Value ? Opcode.OpTrue : Opcode.OpFalse);
+                break;
             //    case PrefixNode prefixNode:
             //        CompilePrefix(prefixNode);
             //        break;

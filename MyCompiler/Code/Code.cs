@@ -11,12 +11,21 @@ public static class Code
     static Code()
     {
         definitions = new[] {
-            new Definition { Opcode = Opcode.OpConstant, Name = nameof(Opcode.OpConstant), OperandWidths = new[] { 2 } },
-            new Definition { Opcode = Opcode.OpAdd, Name = nameof(Opcode.OpAdd), OperandWidths = Array.Empty<int>() },
-            new Definition { Opcode = Opcode.OpSub, Name = nameof(Opcode.OpSub), OperandWidths = Array.Empty<int>() },
-            new Definition { Opcode = Opcode.OpMul, Name = nameof(Opcode.OpMul), OperandWidths = Array.Empty<int>() },
-            new Definition { Opcode = Opcode.OpDiv, Name = nameof(Opcode.OpDiv), OperandWidths = Array.Empty<int>() },
-            new Definition { Opcode = Opcode.OpPop, Name = nameof(Opcode.OpPop), OperandWidths = Array.Empty<int>() }
+            Define(Opcode.OpConstant, 2),
+            
+            Define(Opcode.OpAdd),
+            Define(Opcode.OpSub),
+            Define(Opcode.OpMul),
+            Define(Opcode.OpDiv),
+            
+            Define(Opcode.OpPop),
+            
+            Define(Opcode.OpTrue),
+            Define(Opcode.OpFalse),
+            
+            Define(Opcode.OpEqual),
+            Define(Opcode.OpNotEqual),
+            Define(Opcode.OpGreaterThan),
         }.ToDictionary(x => x.Opcode);
     }
 
@@ -141,4 +150,7 @@ public static class Code
             _ => new Exception("Unhandled operand width"),
         };
     }
+
+    private static Definition Define(Opcode opcode, params int[] operandWidths) 
+        => new Definition { Opcode = opcode, Name = opcode.ToString(), OperandWidths = operandWidths };
 }

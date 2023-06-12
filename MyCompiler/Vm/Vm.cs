@@ -40,6 +40,14 @@ public class Vm
                     Push(constants[constIndex]);
                     break;
 
+                case Opcode.OpTrue:
+                    Push(BooleanObject.True);
+                    break;
+
+                case Opcode.OpFalse:
+                    Push(BooleanObject.False);
+                    break;
+
                 case Opcode.OpAdd:
                     {
                         var right = (IntegerObject)Pop();
@@ -76,6 +84,16 @@ public class Vm
                     }
                     break;
 
+                case Opcode.OpEqual:
+                case Opcode.OpNotEqual:
+                case Opcode.OpGreaterThan:
+                    {
+                        var result = ExecuteComparison(op);
+                        if (result.HasError)
+                            return result.Error!;
+                    }
+                    break;
+
                 case Opcode.OpPop:
                     Pop();
                     break;
@@ -90,14 +108,73 @@ public class Vm
         return Maybe.Ok;
     }
 
-    private void Push(IObject constant)
+    private Maybe ExecuteComparison(Opcode op)
     {
+        var right = Pop();
+        var left = Pop();
+
+        if (left is IntegerObject leftInt && right is IntegerObject rightInt)
+            return ExecuteIntegerComparison(op, leftInt.Value, rightInt.Value);
+
+        if (left is BooleanObject leftBool && right is BooleanObject rightBool)
+            return ExecuteBooleanComparison(op, leftBool.Value, rightBool.Value);
+
+        return new Exception($"type mismatch: {left.Type} {op} {right.Type}");
+    }
+
+    private Maybe ExecuteIntegerComparison(Opcode op, long left, long right)
+    {
+        switch (op)
+        {
+            case Opcode.OpEqual:
+                Push(left == right ? BooleanObject.True : BooleanObject.False);
+                return Maybe.Ok;
+
+            case Opcode.OpNotEqual:
+                Push(left != right ? BooleanObject.True : BooleanObject.False);
+                return Maybe.Ok;
+
+            case Opcode.OpGreaterThan:
+                Push(left > right ? BooleanObject.True : BooleanObject.False);
+                return Maybe.Ok;
+
+            default:
+                return new Exception($"unsupported integer comparison: {op}");
+        }
+    }
+
+    private Maybe ExecuteBooleanComparison(Opcode op, bool left, bool right)
+    {
+        switch (op)
+        {
+            case Opcode.OpEqual:
+                Push(left == right ? BooleanObject.True : BooleanObject.False);
+                return Maybe.Ok;
+
+            case Opcode.OpNotEqual:
+                Push(left != right ? BooleanObject.True : BooleanObject.False);
+                return Maybe.Ok;
+
+            default:
+                return new Exception($"unsupported boolean comparison: {op}");
+        }
+    }
+
+    private Maybe Push(IObject constant)
+    {
+        if (sp == StackSize)
+            return new Exception("stack overflow");
+
         stack[sp] = constant;
         sp++;
+        return Maybe.Ok;
     }
 
     private IObject Pop()
     {
+        if (sp == 0)
+            throw new Exception("stack underflow");
+
         --sp;
         return stack[sp];
     }
