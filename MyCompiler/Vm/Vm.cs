@@ -42,6 +42,10 @@ public class Vm
                     }
                     break;
 
+                case Opcode.OpNull:
+                    Push(NullObject.Value); 
+                    break;
+
                 case Opcode.OpTrue:
                     Push(BooleanObject.True);
                     break;

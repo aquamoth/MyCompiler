@@ -13,6 +13,7 @@ public enum Opcode : byte
     
     OpTrue,
     OpFalse,
+    OpNull,
     
     OpEqual,
     OpNotEqual,

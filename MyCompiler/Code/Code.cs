@@ -22,6 +22,7 @@ public static class Code
             
             Define(Opcode.OpTrue),
             Define(Opcode.OpFalse),
+            Define(Opcode.OpNull),
             
             Define(Opcode.OpEqual),
             Define(Opcode.OpNotEqual),
