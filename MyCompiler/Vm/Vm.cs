@@ -94,6 +94,22 @@ public class Vm
                     }
                     break;
 
+                case Opcode.OpMinus:
+                    {
+                        var right = Pop();
+                        if (right is not IntegerObject rightInt)
+                            return new Exception($"unsupported type for negation: {op}{right.Type}");
+                        Push(new IntegerObject(-rightInt.Value));
+                    }
+                    break;
+
+                case Opcode.OpBang:
+                    {
+                        var right = Pop();
+                        Push(right == BooleanObject.False ? BooleanObject.True : BooleanObject.False);
+                    }
+                    break;
+
                 case Opcode.OpPop:
                     Pop();
                     break;

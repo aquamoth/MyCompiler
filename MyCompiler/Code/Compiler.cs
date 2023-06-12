@@ -99,9 +99,23 @@ public class Compiler
             case BooleanLiteral booleanLiteral:
                 Emit(booleanLiteral.Value ? Opcode.OpTrue : Opcode.OpFalse);
                 break;
-            //    case PrefixNode prefixNode:
-            //        CompilePrefix(prefixNode);
-            //        break;
+            case PrefixExpression prefixExpression:
+                {
+                    var right = Compile(prefixExpression.Right);
+                    if (right.HasError)
+                        return right;
+
+                    switch (prefixExpression.Operator)
+                    {
+                        case "-":
+                            Emit(Opcode.OpMinus);
+                            break;
+                        case "!":
+                            Emit(Opcode.OpBang);
+                            break;
+                    }
+                }
+                break;
             //    case IfNode ifNode:
             //        CompileIf(ifNode);
             //        break;

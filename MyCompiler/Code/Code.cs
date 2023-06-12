@@ -26,6 +26,8 @@ public static class Code
             Define(Opcode.OpEqual),
             Define(Opcode.OpNotEqual),
             Define(Opcode.OpGreaterThan),
+            Define(Opcode.OpMinus),
+            Define(Opcode.OpBang),
         }.ToDictionary(x => x.Opcode);
     }
 
