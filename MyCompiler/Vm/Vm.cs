@@ -102,18 +102,15 @@ public class Vm
 
                 case Opcode.OpMinus:
                     {
-                        var right = Pop();
-                        if (right is not IntegerObject rightInt)
-                            return new Exception($"unsupported type for negation: {op}{right.Type}");
-                        Push(new IntegerObject(-rightInt.Value));
+                        var operand = Pop();
+                        if (operand is not IntegerObject integer)
+                            return new Exception($"unsupported type for negation: {op}{operand.Type}");
+                        Push(new IntegerObject(-integer.Value));
                     }
                     break;
 
                 case Opcode.OpBang:
-                    {
-                        var right = Pop();
-                        Push(right == BooleanObject.False ? BooleanObject.True : BooleanObject.False);
-                    }
+                    ExecuteBangOperator();
                     break;
 
                 case Opcode.OpPop:
@@ -148,11 +145,25 @@ public class Vm
         return Maybe.Ok;
     }
 
-    private static bool IsTruthy(IObject condition)
+    private void ExecuteBangOperator()
     {
-        return condition switch
+        var operand = Pop();
+        var result = operand switch
+        {
+            NullObject => BooleanObject.True,
+            BooleanObject boolean => boolean.Value ? BooleanObject.False : BooleanObject.True,
+            _ => BooleanObject.False
+        };
+
+        Push(result);
+    }
+
+    private static bool IsTruthy(IObject operand)
+    {
+        return operand switch
         {
             BooleanObject boolean => boolean.Value,
+            NullObject => false,
             _ => true
         };
     }
