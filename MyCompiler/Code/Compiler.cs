@@ -100,6 +100,14 @@ public class Compiler
                 }
                 break;
 
+            case HashLiteral hashLiteral:
+                {
+                    var result = CompileHashLiteral(hashLiteral);
+                    if (result.HasError)
+                        return result;
+                }
+                break;
+
             case BlockStatement blockStatement:
                 foreach (var statement in blockStatement.Statements)
                 {
@@ -121,7 +129,7 @@ public class Compiler
                     var symbol = _symbolTable.Define(letStatement.Identifier.Name);
                     if (symbol.HasError)
                         return symbol;
-                    
+
                     var emitted = Emit(Opcode.OpSetGlobal, symbol.Value.Index);
                     if (emitted.HasError)
                         return emitted;
@@ -163,6 +171,22 @@ public class Compiler
         return Emit(Opcode.OpArray, arrayExpression.Elements.Length);
     }
 
+    private Maybe CompileHashLiteral(HashLiteral hashLiteral)
+    {
+        foreach (var pair in hashLiteral.Pairs)
+        {
+            var result = Compile(pair.Key);
+            if (result.HasError)
+                return result;
+
+            result = Compile(pair.Value);
+            if (result.HasError)
+                return result;
+        }
+
+        return Emit(Opcode.OpHash, hashLiteral.Pairs.Count * 2);
+    }
+
     private Maybe CompileIfExpression(IfExpression ifExpression)
     {
         var condition = Compile(ifExpression.Condition);
@@ -186,7 +210,7 @@ public class Compiler
 
         var afterConsequencePosition = _instructions.Count;
         ReplaceInstruction(
-            jumpNotTruthyPosition.Value, 
+            jumpNotTruthyPosition.Value,
             Code.Make(Opcode.OpJumpNotTruthy, afterConsequencePosition).Value
         );
 

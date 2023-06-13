@@ -24,7 +24,7 @@ public interface IObject
     string Inspect();
 }
 
-public interface IHashable
+public interface IHashable : IObject
 {
     HashKey HashKey();
 }
@@ -128,12 +128,35 @@ public record BuiltIn(Func<IObject[], Maybe<IObject>> Fn) : IObject
 }
 
 //[DebuggerDisplay("{Value,nq}")]
-public class HashObject : IObject
+public class HashObject : IObject, IEquatable<HashObject>
 {
+    public HashObject()
+    {
+
+    }
+
+    public HashObject(params (IHashable key, IObject value)[] values)
+    {
+        foreach (var value in values)
+        {
+            Pairs.Add(value.key.HashKey(), new HashPair(value.key, value.value));
+        }
+    }
     public ObjectType Type { get; init; } = ObjectType.HASH;
     public IDictionary<HashKey, HashPair> Pairs { get; init; } = new Dictionary<HashKey, HashPair>();
 
+    public bool Equals(HashObject? other)
+    {
+        if (other is null) return false;
+        return Pairs.Count == other.Pairs.Count 
+            && Pairs.All(p => other.Pairs.TryGetValue(p.Key, out var otherValue) 
+                                && p.Value.Equals(otherValue)
+                        );
+    }
+
     public string Inspect() => $"{{ {string.Join(", ", Pairs.Values.Select(p => $"{p.Key.Inspect()}: {p.Value.Inspect()}"))} }}";
+
+    public override string ToString() => Inspect();
 }
 
 public readonly record struct HashPair(IObject Key, IObject Value);

@@ -182,6 +182,24 @@ public class Vm
                     }
                     break;
 
+                case Opcode.OpHash:
+                    {
+                        var size = BinaryPrimitives.ReadUInt16BigEndian(instructions.AsSpan()[(ip + 1)..]) / 2;
+                        ip += 2;
+
+                        var hash = new List<(IHashable, IObject)>();
+                        for (var i = 0; i < size; i++)
+                        {
+                            var value = Pop();
+                            var key = Pop();
+                            if (key is not IHashable hashable)
+                                return new Exception($"unusable as hash key: {key.Type}");
+
+                            hash.Insert(0, (hashable, value));
+                        }
+                        Push(new HashObject(hash.ToArray()));
+                    }
+                    break;
                 default:
                     return new Exception($"unknown opcode {op}");
             }

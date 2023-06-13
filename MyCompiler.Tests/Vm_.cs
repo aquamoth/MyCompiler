@@ -20,6 +20,7 @@ public class Vm_
     [MemberData(nameof(Runs_bytecode_GLOBALS))]
     [MemberData(nameof(Runs_bytecode_STRINGS))]
     [MemberData(nameof(Runs_bytecode_ARRAYS))]
+    [MemberData(nameof(Runs_bytecode_HASHES))]
     public void Runs_bytecode(string source, IObject expectedStackTop)
     {
         var program = Parse(source);
@@ -177,6 +178,33 @@ public class Vm_
                 {
                     "[1 + 2, 3 * 4, 5 + 6]",
                     new ArrayObject(new[]{ 3,12,11}.Select(x=>new IntegerObject(x)).Cast<IObject>().ToArray())
+                },
+            };
+        }
+    }
+    public static TheoryData<string, IObject> Runs_bytecode_HASHES
+    {
+        get
+        {
+            return new()
+            {
+                {
+                    "{}",
+                    new HashObject()
+                },
+                {
+                    "{1: 2, 2: 3}",
+                    new HashObject(
+                        (new IntegerObject(1), new IntegerObject(2)),
+                        (new IntegerObject(2), new IntegerObject(3))
+                    )
+                },
+                {
+                    "{1 + 1: 2 * 2, 3 + 3: 4 * 4}",
+                    new HashObject(
+                        (new IntegerObject(2), new IntegerObject(4)),
+                        (new IntegerObject(6), new IntegerObject(16))
+                    )
                 },
             };
         }

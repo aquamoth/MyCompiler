@@ -13,6 +13,7 @@ public static class Code
         definitions = new[] {
             Define(Opcode.OpConstant, 2),
             Define(Opcode.OpArray, 2),
+            Define(Opcode.OpHash, 2),
             
             Define(Opcode.OpAdd),
             Define(Opcode.OpSub),

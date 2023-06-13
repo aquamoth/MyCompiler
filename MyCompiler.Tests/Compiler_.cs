@@ -22,6 +22,7 @@ public class Compiler_
     [MemberData(nameof(Compiles_source_to_bytecode_GLOBALS))]
     [MemberData(nameof(Compiles_source_to_bytecode_STRINGS))]
     [MemberData(nameof(Compiles_source_to_bytecode_ARRAYS))]
+    [MemberData(nameof(Compiles_source_to_bytecode_HASHES))]
     public void Compiles_source_to_bytecode(string input, string expectedInstructions, object[] expectedConstants)
     {
         var compiler = new Compiler();
@@ -396,6 +397,63 @@ public class Compiler_
                         Code.Code.Make(Opcode.OpConstant, 5),
                         Code.Code.Make(Opcode.OpMul),
                         Code.Code.Make(Opcode.OpArray, 3),
+                        Code.Code.Make(Opcode.OpPop)
+                    ),
+                    new object[]{
+                        new IntegerObject(1),
+                        new IntegerObject(2),
+                        new IntegerObject(3),
+                        new IntegerObject(4),
+                        new IntegerObject(5),
+                        new IntegerObject(6)
+                    }
+                },
+            };
+    public static TheoryData<string, string, object[]> Compiles_source_to_bytecode_HASHES
+        => new()
+            {
+                {
+                    "{}",
+                    Disassemble(
+                        Code.Code.Make(Opcode.OpHash, 0),
+                        Code.Code.Make(Opcode.OpPop)
+                    ),
+                    new object[]{
+                    }
+                },
+                {
+                    "{1: 2, 3: 4, 5: 6}",
+                    Disassemble(
+                        Code.Code.Make(Opcode.OpConstant, 0),
+                        Code.Code.Make(Opcode.OpConstant, 1),
+                        Code.Code.Make(Opcode.OpConstant, 2),
+                        Code.Code.Make(Opcode.OpConstant, 3),
+                        Code.Code.Make(Opcode.OpConstant, 4),
+                        Code.Code.Make(Opcode.OpConstant, 5),
+                        Code.Code.Make(Opcode.OpHash, 6),
+                        Code.Code.Make(Opcode.OpPop)
+                    ),
+                    new object[]{
+                        new IntegerObject(1),
+                        new IntegerObject(2),
+                        new IntegerObject(3),
+                        new IntegerObject(4),
+                        new IntegerObject(5),
+                        new IntegerObject(6)
+                    }
+                },
+                {
+                    "{1: 2 + 3, 4: 5 * 6}",
+                    Disassemble(
+                        Code.Code.Make(Opcode.OpConstant, 0),
+                        Code.Code.Make(Opcode.OpConstant, 1),
+                        Code.Code.Make(Opcode.OpConstant, 2),
+                        Code.Code.Make(Opcode.OpAdd),
+                        Code.Code.Make(Opcode.OpConstant, 3),
+                        Code.Code.Make(Opcode.OpConstant, 4),
+                        Code.Code.Make(Opcode.OpConstant, 5),
+                        Code.Code.Make(Opcode.OpMul),
+                        Code.Code.Make(Opcode.OpHash, 4),
                         Code.Code.Make(Opcode.OpPop)
                     ),
                     new object[]{
