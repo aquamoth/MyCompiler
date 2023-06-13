@@ -18,6 +18,7 @@ public class Vm_
     [MemberData(nameof(Runs_bytecode_BOOLEANS))]
     [MemberData(nameof(Runs_bytecode_CONDITIONALS))]
     [MemberData(nameof(Runs_bytecode_GLOBALS))]
+    [MemberData(nameof(Runs_bytecode_STRINGS))]
     public void Runs_bytecode(string source, IObject expectedStackTop)
     {
         var program = Parse(source);
@@ -128,6 +129,33 @@ public class Vm_
                 {"let one = 1; one;", new IntegerObject(1)},
                 {"let one = 1; let two = 2; one + two;", new IntegerObject(3)},
                 {"let one = 1; let two = one + one; one + two;", new IntegerObject(3)},
+            };
+        }
+    }
+    public static TheoryData<string, IObject> Runs_bytecode_STRINGS
+    {
+        get
+        {
+            return new()
+            {
+                {
+                    """
+                    "monkey"
+                    """, 
+                    new StringObject("monkey") 
+                },
+                {
+                    """
+                    "mon" + "key"
+                    """,
+                    new StringObject("monkey")
+                },
+                {
+                    """
+                    "mon" + "key" + "banana"
+                    """,
+                    new StringObject("monkeybanana")
+                },
             };
         }
     }

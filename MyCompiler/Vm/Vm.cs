@@ -48,7 +48,7 @@ public class Vm
                     break;
 
                 case Opcode.OpNull:
-                    Push(NullObject.Value); 
+                    Push(NullObject.Value);
                     break;
 
                 case Opcode.OpTrue:
@@ -61,10 +61,22 @@ public class Vm
 
                 case Opcode.OpAdd:
                     {
-                        var right = (IntegerObject)Pop();
-                        var left = (IntegerObject)Pop();
-                        var result = left.Value + right.Value;
-                        Push(new IntegerObject(result));
+                        var right = Pop();
+                        var left = Pop();
+
+                        if (left is IntegerObject leftInt && right is IntegerObject rightInt)
+                        {
+                            Push(new IntegerObject(leftInt.Value + rightInt.Value));
+                        }
+                        else if (left is StringObject leftString && right is StringObject rightString)
+                        {
+                            Push(new StringObject(leftString.Value + rightString.Value));
+                        }
+                        else
+                        {
+                            return new Exception($"unable to add types {left.Type} + {right.Type}");
+                        }
+
                     }
                     break;
 
