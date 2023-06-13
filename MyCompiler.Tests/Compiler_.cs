@@ -21,6 +21,7 @@ public class Compiler_
     [MemberData(nameof(Compiles_source_to_bytecode_CONDITIONALS))]
     [MemberData(nameof(Compiles_source_to_bytecode_GLOBALS))]
     [MemberData(nameof(Compiles_source_to_bytecode_STRINGS))]
+    [MemberData(nameof(Compiles_source_to_bytecode_ARRAYS))]
     public void Compiles_source_to_bytecode(string input, string expectedInstructions, object[] expectedConstants)
     {
         var compiler = new Compiler();
@@ -352,6 +353,58 @@ public class Compiler_
                         new StringObject("mon"),
                         new StringObject("key"),
                         new StringObject("banana")
+                    }
+                },
+            };
+    public static TheoryData<string, string, object[]> Compiles_source_to_bytecode_ARRAYS
+        => new()
+            {
+                {
+                    "[]",
+                    Disassemble(
+                        Code.Code.Make(Opcode.OpArray, 0),
+                        Code.Code.Make(Opcode.OpPop)
+                    ),
+                    new object[]{
+                    }
+                },
+                {
+                    "[1, 2, 3]",
+                    Disassemble(
+                        Code.Code.Make(Opcode.OpConstant, 0),
+                        Code.Code.Make(Opcode.OpConstant, 1),
+                        Code.Code.Make(Opcode.OpConstant, 2),
+                        Code.Code.Make(Opcode.OpArray, 3),
+                        Code.Code.Make(Opcode.OpPop)
+                    ),
+                    new object[]{
+                        new IntegerObject(1),
+                        new IntegerObject(2),
+                        new IntegerObject(3)
+                    }
+                },
+                {
+                    "[1 + 2, 3 - 4, 5 * 6]",
+                    Disassemble(
+                        Code.Code.Make(Opcode.OpConstant, 0),
+                        Code.Code.Make(Opcode.OpConstant, 1),
+                        Code.Code.Make(Opcode.OpAdd),
+                        Code.Code.Make(Opcode.OpConstant, 2),
+                        Code.Code.Make(Opcode.OpConstant, 3),
+                        Code.Code.Make(Opcode.OpSub),
+                        Code.Code.Make(Opcode.OpConstant, 4),
+                        Code.Code.Make(Opcode.OpConstant, 5),
+                        Code.Code.Make(Opcode.OpMul),
+                        Code.Code.Make(Opcode.OpArray, 3),
+                        Code.Code.Make(Opcode.OpPop)
+                    ),
+                    new object[]{
+                        new IntegerObject(1),
+                        new IntegerObject(2),
+                        new IntegerObject(3),
+                        new IntegerObject(4),
+                        new IntegerObject(5),
+                        new IntegerObject(6)
                     }
                 },
             };

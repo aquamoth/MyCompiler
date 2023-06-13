@@ -56,9 +56,6 @@ public class Compiler
                 }
                 break;
 
-            //    case StatementNode statementNode:
-            //        CompileStatement(statementNode);
-            //        break;
             case IntegerLiteral integerLiteral:
                 {
                     var integer = new IntegerObject(integerLiteral.Value);
@@ -95,6 +92,14 @@ public class Compiler
                 }
                 break;
 
+            case ArrayExpression arrayExpression:
+                {
+                    var result = CompileArrayExpression(arrayExpression);
+                    if (result.HasError)
+                        return result;
+                }
+                break;
+
             case BlockStatement blockStatement:
                 foreach (var statement in blockStatement.Statements)
                 {
@@ -115,22 +120,22 @@ public class Compiler
 
                     var symbol = _symbolTable.Define(letStatement.Identifier.Name);
                     if (symbol.HasError)
-                        return symbol.Error!;
+                        return symbol;
                     
                     var emitted = Emit(Opcode.OpSetGlobal, symbol.Value.Index);
                     if (emitted.HasError)
-                        return emitted.Error!;
+                        return emitted;
                 }
                 break;
             case Identifier identifier:
                 {
                     var symbol = _symbolTable.Resolve(identifier.Name);
                     if (symbol.HasError)
-                        return symbol.Error!;
+                        return symbol;
 
                     var emitted = Emit(Opcode.OpGetGlobal, symbol.Value.Index);
                     if (emitted.HasError)
-                        return emitted.Error!;
+                        return emitted;
                 }
                 break;
             //    case FunctionNode functionNode:
@@ -146,6 +151,18 @@ public class Compiler
         return Maybe.Ok;
     }
 
+    private Maybe CompileArrayExpression(ArrayExpression arrayExpression)
+    {
+        foreach (var element in arrayExpression.Elements)
+        {
+            var result = Compile(element);
+            if (result.HasError)
+                return result;
+        }
+
+        return Emit(Opcode.OpArray, arrayExpression.Elements.Length);
+    }
+
     private Maybe CompileIfExpression(IfExpression ifExpression)
     {
         var condition = Compile(ifExpression.Condition);
@@ -154,18 +171,18 @@ public class Compiler
 
         var jumpNotTruthyPosition = Emit(Opcode.OpJumpNotTruthy, 9999);
         if (jumpNotTruthyPosition.HasError)
-            return jumpNotTruthyPosition.Error!;
+            return jumpNotTruthyPosition;
 
         var consequence = Compile(ifExpression.Consequence);
         if (consequence.HasError)
-            return consequence.Error!;
+            return consequence;
 
         if (_lastInstruction.Opcode == Opcode.OpPop)
             RemoveLastPop();
 
         var jumpFromConsequencePosition = Emit(Opcode.OpJump, 9998);
         if (jumpFromConsequencePosition.HasError)
-            return jumpFromConsequencePosition.Error!;
+            return jumpFromConsequencePosition;
 
         var afterConsequencePosition = _instructions.Count;
         ReplaceInstruction(
@@ -181,7 +198,7 @@ public class Compiler
         {
             var alternative = Compile(ifExpression.Alternative);
             if (alternative.HasError)
-                return alternative.Error!;
+                return alternative;
 
             if (_lastInstruction.Opcode == Opcode.OpPop)
                 RemoveLastPop();

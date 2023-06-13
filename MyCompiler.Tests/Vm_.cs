@@ -19,6 +19,7 @@ public class Vm_
     [MemberData(nameof(Runs_bytecode_CONDITIONALS))]
     [MemberData(nameof(Runs_bytecode_GLOBALS))]
     [MemberData(nameof(Runs_bytecode_STRINGS))]
+    [MemberData(nameof(Runs_bytecode_ARRAYS))]
     public void Runs_bytecode(string source, IObject expectedStackTop)
     {
         var program = Parse(source);
@@ -141,8 +142,8 @@ public class Vm_
                 {
                     """
                     "monkey"
-                    """, 
-                    new StringObject("monkey") 
+                    """,
+                    new StringObject("monkey")
                 },
                 {
                     """
@@ -155,6 +156,27 @@ public class Vm_
                     "mon" + "key" + "banana"
                     """,
                     new StringObject("monkeybanana")
+                },
+            };
+        }
+    }
+    public static TheoryData<string, IObject> Runs_bytecode_ARRAYS
+    {
+        get
+        {
+            return new()
+            {
+                {
+                    "[]",
+                    new ArrayObject(Array.Empty<IObject>())
+                },
+                {
+                    "[1, 2, 3]",
+                    new ArrayObject(new[]{ 1,2,3}.Select(x=>new IntegerObject(x)).Cast<IObject>().ToArray())
+                },
+                {
+                    "[1 + 2, 3 * 4, 5 + 6]",
+                    new ArrayObject(new[]{ 3,12,11}.Select(x=>new IntegerObject(x)).Cast<IObject>().ToArray())
                 },
             };
         }

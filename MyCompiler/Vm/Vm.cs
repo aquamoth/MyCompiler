@@ -113,7 +113,7 @@ public class Vm
                     {
                         var result = ExecuteComparison(op);
                         if (result.HasError)
-                            return result.Error!;
+                            return result;
                     }
                     break;
 
@@ -167,6 +167,18 @@ public class Vm
                         ip += 2;
 
                         Push(globals[globalIndex]);
+                    }
+                    break;
+
+                case Opcode.OpArray:
+                    {
+                        var size = BinaryPrimitives.ReadUInt16BigEndian(instructions.AsSpan()[(ip + 1)..]);
+                        ip += 2;
+
+                        var array = new IObject[size];
+                        for (var i = size - 1; i >= 0; i--)
+                            array[i] = Pop();
+                        Push(new ArrayObject(array));
                     }
                     break;
 

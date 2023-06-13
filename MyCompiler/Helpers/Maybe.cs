@@ -1,4 +1,6 @@
-﻿namespace MyCompiler.Helpers;
+﻿using System.Runtime.CompilerServices;
+
+namespace MyCompiler.Helpers;
 
 public readonly struct Maybe<T>
 {
@@ -33,6 +35,7 @@ public readonly struct Maybe<T>
     //public static explicit operator T(Maybe<T> result) => result.Value;
 
     public static implicit operator Maybe<T>(Exception ex) => new(ex);
+    public static implicit operator Maybe(Maybe<T> maybe) => maybe.HasError ? maybe.Error! : Maybe.Ok;
 }
 
 public class Maybe

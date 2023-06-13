@@ -60,11 +60,17 @@ public record StringObject(string Value) : IObject, IHashable
 }
 
 [DebuggerDisplay("[{Elements,nq}]")]
-public record ArrayObject(IObject[] Elements) : IObject
+public sealed record ArrayObject(IObject[] Elements) : IObject
 {
     public ObjectType Type { get; init; } = ObjectType.ARRAY;
 
     public string Inspect() => $"[{string.Join(",", Elements.Select(e => e.Inspect()))}]";
+
+    public bool Equals(ArrayObject? obj) => obj is not null && Elements.SequenceEqual(obj.Elements);
+
+    public override int GetHashCode() => HashCode.Combine(Elements);
+
+    public override string ToString() => Inspect();
 }
 
 [DebuggerDisplay("{Value,nq}")]
