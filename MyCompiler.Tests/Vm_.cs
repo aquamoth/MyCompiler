@@ -14,22 +14,26 @@ public class Vm_
     }
 
     [Theory]
-    [MemberData(nameof(Runs_integer_arithmetic_VALUES))]
-    public void Runs_integer_arithmetic(string source, IObject expectedStackTop)
+    [MemberData(nameof(Runs_bytecode_INTEGERS))]
+    [MemberData(nameof(Runs_bytecode_BOOLEANS))]
+    [MemberData(nameof(Runs_bytecode_CONDITIONALS))]
+    [MemberData(nameof(Runs_bytecode_GLOBALS))]
+    public void Runs_bytecode(string source, IObject expectedStackTop)
     {
         var program = Parse(source);
 
         var compiler = new Compiler();
         var compilation = compiler.Compile(program.Value);
-        Assert.False(compilation.HasError);
+        Assert.False(compilation.HasError, compilation.Error?.Message);
 
         var vm = new Vm.Vm(compiler.Bytecode());
-        vm.Run();
+        var computation = vm.Run();
+        Assert.False(computation.HasError, computation.Error?.Message);
 
         var stackElement = vm.LastPoppedStackElem();
         Assert.Equal(expectedStackTop, stackElement);
     }
-    public static TheoryData<string, IObject> Runs_integer_arithmetic_VALUES
+    public static TheoryData<string, IObject> Runs_bytecode_INTEGERS
     {
         get
         {
@@ -37,6 +41,7 @@ public class Vm_
             {
                 {"1", new IntegerObject(1) },
                 {"2", new IntegerObject(2) },
+
                 { "1 + 2", new IntegerObject(3) },
                 { "1 - 2", new IntegerObject(-1) },
                 { "1 * 2", new IntegerObject(2) },
@@ -46,7 +51,83 @@ public class Vm_
                 { "2 * 2 * 2 * 2 * 2", new IntegerObject(32) },
                 { "5 * 2 + 10", new IntegerObject(20) },
                 { "5 + 2 * 10", new IntegerObject(25) },
-                { "5 * (2 + 10)", new IntegerObject(60) }
+                { "5 * (2 + 10)", new IntegerObject(60) },
+
+                { "-5", new IntegerObject(-5) },
+                { "-10", new IntegerObject(-10) },
+                { "-50 + 100 + -50", new IntegerObject(0) },
+                { "(5 + 10 * 2 + 15 / 3) * 2 + -10", new IntegerObject(50) }
+            };
+        }
+    }
+    public static TheoryData<string, IObject> Runs_bytecode_BOOLEANS
+    {
+        get
+        {
+            return new()
+            {
+                {"true", BooleanObject.True },
+                {"false", BooleanObject.False},
+
+                {"1 < 2", BooleanObject.True},
+                {"1 > 2", BooleanObject.False},
+                {"1 < 1", BooleanObject.False},
+                {"1 > 1", BooleanObject.False},
+                {"1 == 1", BooleanObject.True},
+                {"1 != 1", BooleanObject.False},
+                {"1 == 2", BooleanObject.False},
+                {"1 != 2", BooleanObject.True},
+
+                {"true == true", BooleanObject.True},
+                {"false == false", BooleanObject.True},
+                {"true == false", BooleanObject.False},
+                {"true != false", BooleanObject.True},
+                {"false != true", BooleanObject.True},
+
+                {"(1 < 2) == true", BooleanObject.True},
+                {"(1 < 2) == false", BooleanObject.False},
+                {"(1 > 2) == true", BooleanObject.False},
+                {"(1 > 2) == false", BooleanObject.True},
+
+                {"!true", BooleanObject.False},
+                {"!false", BooleanObject.True},
+                {"!5", BooleanObject.False},
+                {"!!true", BooleanObject.True},
+                {"!!false", BooleanObject.False},
+                {"!!5", BooleanObject.True},
+
+                //{"!(if (false) { 5; })", BooleanObject.True},{"(1 > 2) == false", BooleanObject.True},
+            };
+        }
+    }
+    public static TheoryData<string, IObject> Runs_bytecode_CONDITIONALS
+    {
+        get
+        {
+            return new()
+            {
+                {"if (true) { 10 }", new IntegerObject(10)},
+                {"if (true) { 10 } else { 20 }", new IntegerObject(10)},
+                {"if (false) { 10 } else { 20 }", new IntegerObject(20)},
+                {"if (1) { 10 }", new IntegerObject(10)},
+                {"if (1 < 2) { 10 }", new IntegerObject(10)},
+                {"if (1 < 2) { 10 } else { 20 }", new IntegerObject(10)},
+                {"if (1 > 2) { 10 } else { 20 }", new IntegerObject(20)},
+                {"if (1 > 2) { 10 }", NullObject.Value},
+                {"!(if (false) { 5; })", BooleanObject.True},
+                {"if((if (false) { 10 })) { 10 } else { 20 }", new IntegerObject(20)},
+            };
+        }
+    }
+    public static TheoryData<string, IObject> Runs_bytecode_GLOBALS
+    {
+        get
+        {
+            return new()
+            {
+                {"let one = 1; one;", new IntegerObject(1)},
+                {"let one = 1; let two = 2; one + two;", new IntegerObject(3)},
+                {"let one = 1; let two = one + one; one + two;", new IntegerObject(3)},
             };
         }
     }

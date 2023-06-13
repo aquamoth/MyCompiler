@@ -24,7 +24,7 @@ namespace MyCompiler.Tests
                 s =>
                 {
                     var rs = Assert.IsType<LetStatement>(s);
-                    Assert.Equal(identifier, rs.Identifier.Value);
+                    Assert.Equal(identifier, rs.Identifier.Name);
                     Assert.Equal(expression, rs.Expression.ToString());
                 }
             );
@@ -61,7 +61,7 @@ namespace MyCompiler.Tests
                 {
                     var es = Assert.IsType<ExpressionStatement>(s);
                     var id = Assert.IsType<Identifier>(es.Expression);
-                    Assert.Equal("foobar", id.Value);
+                    Assert.Equal("foobar", id.Name);
                 },
                 s =>
                 {
@@ -180,7 +180,7 @@ namespace MyCompiler.Tests
 
                     Assert.Equal(expectedParams.Length, rs.Parameters.Length);
                     foreach(var (expected, actual) in expectedParams.Zip(rs.Parameters))
-                        Assert.Equal(expected, actual.Value);
+                        Assert.Equal(expected, actual.Name);
 
                     Assert.Equal(expectedBody, rs.Body.ToString());
                 }

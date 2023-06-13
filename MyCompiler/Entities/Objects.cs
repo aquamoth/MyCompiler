@@ -30,33 +30,19 @@ public interface IHashable
 }
 
 [DebuggerDisplay("{Value,nq}")]
-public class IntegerObject : IObject, IHashable, IEquatable<IntegerObject>
+public record IntegerObject(long Value) : IObject, IHashable
 {
     public ObjectType Type { get; init; } = ObjectType.INTEGER;
-    public long Value { get; init; }
+
     public string Inspect() => Value.ToString();
     public HashKey HashKey() => new(this.Type, this.Value);
-
-    public bool Equals(IntegerObject? other)
-    {
-        return other != null && other.Value == this.Value;
-    }
-
-    public IntegerObject()
-    {
-    }
-
-    public IntegerObject(long value)
-    {
-        Value = value;
-    }
 }
 
 [DebuggerDisplay("{Value,nq}")]
-public class StringObject : IObject, IHashable
+public record StringObject(string Value) : IObject, IHashable
 {
     public ObjectType Type { get; init; } = ObjectType.STRING;
-    public string Value { get; init; }
+
     public string Inspect() => $"\"{Value}\"";
 
     public HashKey HashKey()
@@ -74,21 +60,12 @@ public class StringObject : IObject, IHashable
 }
 
 [DebuggerDisplay("[{Elements,nq}]")]
-public class ArrayObject : IObject
+public record ArrayObject(IObject[] Elements) : IObject
 {
     public ObjectType Type { get; init; } = ObjectType.ARRAY;
-    public IObject[] Elements { get; init; }
+
     public string Inspect() => $"[{string.Join(",", Elements.Select(e => e.Inspect()))}]";
-
-    public ArrayObject(IObject[] elements)
-    {
-        Elements = elements;
-    }
 }
-
-
-
-
 
 [DebuggerDisplay("{Value,nq}")]
 public class BooleanObject : IObject, IHashable
@@ -121,46 +98,25 @@ public class NullObject : IObject
 }
 
 [DebuggerDisplay("return {Value,nq}")]
-public class ReturnValue : IObject
+public record ReturnValue(IObject Value) : IObject
 {
-    public ReturnValue(IObject value)
-    {
-        Value = value;
-    }
-
     public ObjectType Type { get; init; } = ObjectType.RETURN_VALUE;
-    public IObject Value { get; init; }
+
     public string Inspect() => Value.ToString();
 }
 
 //[DebuggerDisplay("{Value,nq}")]
-public class FunctionObject : IObject
+public record FunctionObject(Identifier[] Parameters, BlockStatement Body, EnvironmentStore Env) : IObject
 {
     public ObjectType Type { get; init; } = ObjectType.FUNCTION;
-    public Identifier[] Parameters { get; init; }
-    public BlockStatement Body { get; init; }
-    public EnvironmentStore Env { get; init; }
-
-    public FunctionObject(Identifier[] parameters, BlockStatement body, EnvironmentStore env)
-    {
-        Parameters = parameters;
-        Body = body;
-        Env = env;
-    }
 
     public string Inspect() => $"fn({string.Join(", ", Parameters)}) {{\n{Body}\n}}";
 }
 
 //[DebuggerDisplay("{Value,nq}")]
-public class BuiltIn : IObject
+public record BuiltIn(Func<IObject[], Maybe<IObject>> Fn) : IObject
 {
     public ObjectType Type { get; init; } = ObjectType.BUILTIN;
-    public Func<IObject[], Maybe<IObject>> Fn { get; init; }
-
-    public BuiltIn(Func<IObject[], Maybe<IObject>> fn)
-    {
-        Fn = fn;
-    }
 
     public string Inspect() => $"builtin function";
 }
@@ -174,34 +130,6 @@ public class HashObject : IObject
     public string Inspect() => $"{{ {string.Join(", ", Pairs.Values.Select(p => $"{p.Key.Inspect()}: {p.Value.Inspect()}"))} }}";
 }
 
-public readonly struct HashPair
-{
-    public IObject Key { get; init; }
-    public IObject Value { get; init; }
+public readonly record struct HashPair(IObject Key, IObject Value);
 
-    public HashPair(IObject key, IObject value)
-    {
-        Key = key;
-        Value = value;
-    }
-}
-
-
-
-
-public readonly struct HashKey : IEquatable<HashKey>
-{
-    private readonly ObjectType type;
-    private readonly long hashCode;
-
-    public HashKey(ObjectType type, long hashCode)
-    {
-        this.type = type;
-        this.hashCode = hashCode;
-    }
-
-    public bool Equals(HashKey other)
-    {
-        return this.type == other.type && this.hashCode == other.hashCode;
-    }
-}
+public readonly record struct HashKey(ObjectType Type, long HashCode);

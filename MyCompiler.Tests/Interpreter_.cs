@@ -175,7 +175,7 @@ namespace MyCompiler.Tests
         {
             var fnObject = AssertInterpret<FunctionObject>("fn(x) { x + 2; };");
             Assert.Collection(fnObject.Parameters,
-                p => Assert.Equal("x", p.Value)
+                p => Assert.Equal("x", p.Name)
             );
 
             Assert.Equal("((x+2))", fnObject.Body.ToString());

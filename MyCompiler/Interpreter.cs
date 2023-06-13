@@ -28,7 +28,7 @@ public class Interpreter
         {
             AstProgram program => EvalProgram(program.Statements, env),
             ExpressionStatement expression => Eval(expression.Expression, env),
-            IntegerLiteral integer => new IntegerObject { Value = integer.Value },
+            IntegerLiteral integer => new IntegerObject(integer.Value),
             BooleanLiteral boolean => ToBooleanObject(boolean.Value),
             //NullLiteral _ => NullObject.Value,
             PrefixExpression prefix => EvalPrefixExpression(prefix, env),
@@ -40,7 +40,7 @@ public class Interpreter
             Identifier identifier => EvalIdentifier(identifier, env),
             FnExpression fn => EvalFunction(fn, env),
             CallExpression call => EvalCall(call, env),
-            StringLiteral str => new StringObject { Value = str.Value },
+            StringLiteral str => new StringObject(str.Value),
             ArrayExpression array => EvalArrayExpression(array, env),
             IndexExpression index => EvalIndexExpression(index, env),
             HashLiteral hash => EvalHashLiteral(hash, env),
@@ -301,7 +301,7 @@ public class Interpreter
     private static Maybe<IObject> EvalMinusPrefixOperatorExpression(IObject value)
     {
         if (value is IntegerObject integer)
-            return new IntegerObject { Value = -integer.Value };
+            return new IntegerObject(-integer.Value);
 
         return new Exception($"unknown operator: -{value.Type}");
     }
@@ -334,10 +334,10 @@ public class Interpreter
     {
         return @operator switch
         {
-            "+" => new IntegerObject { Value = leftInt.Value + rightInt.Value },
-            "-" => new IntegerObject { Value = leftInt.Value - rightInt.Value },
-            "*" => new IntegerObject { Value = leftInt.Value * rightInt.Value },
-            "/" => new IntegerObject { Value = leftInt.Value / rightInt.Value },
+            "+" => new IntegerObject(leftInt.Value + rightInt.Value),
+            "-" => new IntegerObject(leftInt.Value - rightInt.Value),
+            "*" => new IntegerObject(leftInt.Value * rightInt.Value),
+            "/" => new IntegerObject(leftInt.Value / rightInt.Value),
 
             "<" => ToBooleanObject(leftInt.Value < rightInt.Value),
             ">" => ToBooleanObject(leftInt.Value > rightInt.Value),
@@ -352,7 +352,7 @@ public class Interpreter
     {
         return @operator switch
         {
-            "+" => new StringObject { Value = leftStr.Value + rightStr.Value },
+            "+" => new StringObject(leftStr.Value + rightStr.Value),
 
             "<" => ToBooleanObject(leftStr.Value.CompareTo(rightStr.Value) == -1),
             ">" => ToBooleanObject(leftStr.Value.CompareTo(rightStr.Value) == 1),
@@ -381,8 +381,8 @@ public class Interpreter
 
         return args[0] switch
         {
-            StringObject arg0 => new IntegerObject { Value = arg0.Value.Length },
-            ArrayObject arg0 => new IntegerObject { Value = arg0.Elements.Length },
+            StringObject arg0 => new IntegerObject(arg0.Value.Length),
+            ArrayObject arg0 => new IntegerObject(arg0.Elements.Length),
 
             _ => new Exception($"Expected {ObjectType.STRING} or {ObjectType.ARRAY} but got {args[0].Type}")
         };
@@ -467,7 +467,7 @@ public class Interpreter
         if (s == null)
             return new Exception("Received no string from console input");
 
-        return new StringObject { Value = s };
+        return new StringObject(s);
     }
 
 

@@ -61,8 +61,16 @@ public class Compiler
             //        break;
             case IntegerLiteral integerLiteral:
                 {
-                    var integer = new IntegerObject { Value = integerLiteral.Value };
+                    var integer = new IntegerObject(integerLiteral.Value);
                     var constantIndex = AddConstant(integer);
+                    Emit(Opcode.OpConstant, constantIndex);
+                }
+                break;
+
+            case StringLiteral stringLiteral:
+                {
+                    var str = new StringObject(stringLiteral.Value);
+                    var constantIndex = AddConstant(str);
                     Emit(Opcode.OpConstant, constantIndex);
                 }
                 break;
@@ -303,7 +311,7 @@ public class Compiler
         return posNewInstruction;
     }
 
-    private int AddConstant(IntegerObject integer)
+    private int AddConstant(IObject integer)
     {
         this._constants.Add(integer);
         return this._constants.Count - 1;
