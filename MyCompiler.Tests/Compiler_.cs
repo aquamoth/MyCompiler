@@ -25,6 +25,7 @@ public class Compiler_
     {
         var compiler = new Compiler();
         var program = Parse(input);
+        Assert.True(program.HasValue, program.Error?.Message);
 
         var compilation = compiler.Compile(program.Value);
         Assert.False(compilation.HasError, compilation.Error?.Message);
@@ -333,6 +334,24 @@ public class Compiler_
                     new object[]{
                         new StringObject("mon"),
                         new StringObject("key")
+                    }
+                },
+                {
+                    """
+                    "mon" + "key" + "banana"
+                    """,
+                    Disassemble(
+                        Code.Code.Make(Opcode.OpConstant, 0),
+                        Code.Code.Make(Opcode.OpConstant, 1),
+                        Code.Code.Make(Opcode.OpAdd),
+                        Code.Code.Make(Opcode.OpConstant, 2),
+                        Code.Code.Make(Opcode.OpAdd),
+                        Code.Code.Make(Opcode.OpPop)
+                    ),
+                    new object[]{
+                        new StringObject("mon"),
+                        new StringObject("key"),
+                        new StringObject("banana")
                     }
                 },
             };
