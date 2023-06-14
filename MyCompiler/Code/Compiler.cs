@@ -23,6 +23,7 @@ public class Compiler
     {
         _symbolTable = symbolTable;
         _constants = constants;
+        Scopes.Push(new CompilationScope());
     }
 
     public Maybe Compile(IAstNode node)
@@ -185,7 +186,7 @@ public class Compiler
 
     private Maybe CompileFunction(FnLiteral fnLiteral)
     {
-        EnterScope();
+        EnterScope(); 
         var compiled = Compile(fnLiteral.Body);
         if (compiled.HasError)
             return compiled;
