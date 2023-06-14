@@ -38,7 +38,7 @@ public class Interpreter
             ReturnStatement @return => EvalReturnStatement(@return, env),
             LetStatement let => EvalLetStatement(let, env),
             Identifier identifier => EvalIdentifier(identifier, env),
-            FnExpression fn => EvalFunction(fn, env),
+            FnLiteral fn => EvalFunction(fn, env),
             CallExpression call => EvalCall(call, env),
             StringLiteral str => new StringObject(str.Value),
             ArrayExpression array => EvalArrayExpression(array, env),
@@ -110,7 +110,7 @@ public class Interpreter
         return results.ToArray();
     }
 
-    private Maybe<IObject> EvalFunction(FnExpression fn, EnvironmentStore env)
+    private Maybe<IObject> EvalFunction(FnLiteral fn, EnvironmentStore env)
     {
         return new FunctionObject(fn.Parameters, fn.Body, env);
     }

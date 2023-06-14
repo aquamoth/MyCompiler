@@ -443,7 +443,7 @@ public class Parser
         if (body.HasError)
             return body.Error!;
 
-        return new FnExpression
+        return new FnLiteral
         {
             Token = fnToken,
             Parameters = parameters.Value,

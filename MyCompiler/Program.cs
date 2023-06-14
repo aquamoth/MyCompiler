@@ -5,6 +5,10 @@ using MyCompiler.Entities;
 using MyCompiler.Vm;
 using System.Text;
 
+using System.Runtime.CompilerServices;
+[assembly: InternalsVisibleTo("MyCompiler.Tests")]
+
+
 var env = EnvironmentStore.New();
 var interpreter = new Interpreter();
 

@@ -13,6 +13,7 @@ public enum ObjectType
     NULL,
     RETURN_VALUE,
     FUNCTION,
+    COMPILED_FUNCTION,
     BUILTIN,
     ARRAY,
     HASH
@@ -162,3 +163,10 @@ public class HashObject : IObject, IEquatable<HashObject>
 public readonly record struct HashPair(IObject Key, IObject Value);
 
 public readonly record struct HashKey(ObjectType Type, long HashCode);
+
+
+record CompiledFunction(byte[] Instructions) : IObject
+{
+    public ObjectType Type { get; init; } = ObjectType.COMPILED_FUNCTION;
+    public string Inspect() => $"CompiledFunction";
+}

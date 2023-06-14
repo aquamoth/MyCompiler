@@ -38,6 +38,11 @@ public static class Code
 
             Define(Opcode.OpGetGlobal, 2),
             Define(Opcode.OpSetGlobal, 2),
+
+            Define (Opcode.OpCall),
+            Define (Opcode.OpReturnValue),
+            Define (Opcode.OpReturn)
+
         }.ToDictionary(x => x.Opcode);
     }
 

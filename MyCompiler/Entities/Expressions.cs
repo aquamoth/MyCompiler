@@ -76,7 +76,7 @@ public readonly struct IfExpression : IExpression
 }
 
 [DebuggerDisplay("fn({Parameters,nq}) {Body,nq}")]
-public readonly struct FnExpression : IExpression
+public readonly struct FnLiteral : IExpression
 {
     public Token Token { get; init; }
     public Identifier[] Parameters { get; init; }

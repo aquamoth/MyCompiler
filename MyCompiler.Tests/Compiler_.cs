@@ -24,6 +24,7 @@ public class Compiler_
     [MemberData(nameof(Compiles_source_to_bytecode_ARRAYS))]
     [MemberData(nameof(Compiles_source_to_bytecode_HASHES))]
     [MemberData(nameof(Compiles_source_to_bytecode_INDEXES))]
+    [MemberData(nameof(Compiles_source_to_bytecode_FUNCTIONS))]
     public void Compiles_source_to_bytecode(string input, string expectedInstructions, object[] expectedConstants)
     {
         var compiler = new Compiler();
@@ -511,7 +512,27 @@ public class Compiler_
                     }
                 },
             };
-
+    public static TheoryData<string, string, object[]> Compiles_source_to_bytecode_FUNCTIONS
+        => new()
+            {
+                {
+                    "fn() { return 5 + 10 }",
+                    Disassemble(
+                        Code.Code.Make(Opcode.OpConstant, 2),
+                        Code.Code.Make(Opcode.OpPop)
+                    ),
+                    new object[]{
+                        new IntegerObject(5),
+                        new IntegerObject(10),
+                        Assemble(
+                            Code.Code.Make(Opcode.OpConstant, 0),
+                            Code.Code.Make(Opcode.OpConstant, 1),
+                            Code.Code.Make(Opcode.OpAdd),
+                            Code.Code.Make(Opcode.OpReturnValue)
+                        )
+                    }
+                },
+            };
 
     [Fact]
     public void Symbol_defines_symbols()
@@ -538,8 +559,36 @@ public class Compiler_
         Assert.Equal(new Symbol("b", Symbol.GLOBAL_SCOPE, 1), b);
     }
 
+    [Fact]
+    public void Compiler_scopes()
+    {
+        var compiler = new Compiler();
+        Assert.Equal(0, compiler.ScopeIndex);
+
+        compiler.Emit(Opcode.OpMul);
+
+        compiler.EnterScope();
+        Assert.Equal(1, compiler.ScopeIndex);
+
+        compiler.Emit(Opcode.OpSub);
+        Assert.Equal(1, compiler.CurrentScope.Instructions.Count);
+        Assert.Equal(Opcode.OpSub, compiler.CurrentScope.LastInstruction.Opcode);
+
+        compiler.LeaveScope();
+        Assert.Equal(0, compiler.ScopeIndex);
+
+        compiler.Emit(Opcode.OpAdd);
+        Assert.Equal(2, compiler.CurrentScope.Instructions.Count);
+
+        Assert.Equal(Opcode.OpAdd, compiler.CurrentScope.LastInstruction.Opcode);
+        Assert.Equal(Opcode.OpMul, compiler.CurrentScope.PrevInstruction.Opcode);
+    }
+
     private static string Disassemble(params Maybe<byte[]>[] operations)
         => Code.Code.Disassemble(operations.SelectMany(x => x.Value).ToArray()).Value;
+
+    private static byte[] Assemble(params Maybe<byte[]>[] operations) 
+        => operations.SelectMany(x => x.Value).ToArray();
 
     private Helpers.Maybe<AstProgram> Parse(string Input)
     {
