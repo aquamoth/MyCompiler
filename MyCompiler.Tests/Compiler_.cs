@@ -524,11 +524,13 @@ public class Compiler_
                     new object[]{
                         new IntegerObject(5),
                         new IntegerObject(10),
-                        Assemble(
-                            Code.Code.Make(Opcode.OpConstant, 0),
-                            Code.Code.Make(Opcode.OpConstant, 1),
-                            Code.Code.Make(Opcode.OpAdd),
-                            Code.Code.Make(Opcode.OpReturnValue)
+                        new CompiledFunction(
+                            Assemble(
+                                Code.Code.Make(Opcode.OpConstant, 0),
+                                Code.Code.Make(Opcode.OpConstant, 1),
+                                Code.Code.Make(Opcode.OpAdd),
+                                Code.Code.Make(Opcode.OpReturnValue)
+                            )
                         )
                     }
                 },

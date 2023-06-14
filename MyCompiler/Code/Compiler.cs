@@ -154,14 +154,27 @@ public class Compiler
                 break;
 
             case FnLiteral fnLiteral:
-                CompileFunction(fnLiteral);
+                {
+                    var result = CompileFunction(fnLiteral);
+                    if (result.HasError)
+                        return result;
+                }
+                break;
+
+            case ReturnStatement returnStatement:
+                {
+                    var result = Compile(returnStatement.ReturnValue);
+                    if (result.HasError)
+                        return result;
+
+                    var emitted = Emit(Opcode.OpReturnValue);
+                    if (emitted.HasError)
+                        return emitted;
+                }
                 break;
 
             //    case CallNode callNode:
             //        CompileCall(callNode);
-            //        break;
-            //    case ReturnNode returnNode:
-            //        CompileReturn(returnNode);
             //        break;
             default:
                 return new Exception($"unknown node type: {node.GetType()}");
@@ -170,9 +183,16 @@ public class Compiler
         return Maybe.Ok;
     }
 
-    private void CompileFunction(FnLiteral fnLiteral)
+    private Maybe CompileFunction(FnLiteral fnLiteral)
     {
+        EnterScope();
+        var compiled = Compile(fnLiteral.Body);
+        if (compiled.HasError)
+            return compiled;
 
+        var instructions = LeaveScope();
+        var fn = new CompiledFunction(instructions);
+        return Emit(Opcode.OpConstant, AddConstant(fn));
     }
 
     private Maybe CompileIndexExpression(IndexExpression indexExpression)
@@ -373,8 +393,9 @@ public class Compiler
         Scopes.Push(new CompilationScope());
     }
 
-    internal void LeaveScope()
+    internal byte[] LeaveScope()
     {
         var oldScope = Scopes.Pop();
+        return oldScope.Instructions.ToArray();
     }
 }

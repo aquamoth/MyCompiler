@@ -165,8 +165,14 @@ public readonly record struct HashPair(IObject Key, IObject Value);
 public readonly record struct HashKey(ObjectType Type, long HashCode);
 
 
-record CompiledFunction(byte[] Instructions) : IObject
+record CompiledFunction(byte[] Instructions) : IObject, IEquatable<CompiledFunction>
 {
     public ObjectType Type { get; init; } = ObjectType.COMPILED_FUNCTION;
     public string Inspect() => $"CompiledFunction";
+
+    public virtual bool Equals(CompiledFunction? other)
+    {
+        if (other is null) return false;
+        return Instructions.SequenceEqual(other.Instructions);
+    }
 }
