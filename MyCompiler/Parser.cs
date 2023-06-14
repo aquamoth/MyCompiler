@@ -355,7 +355,7 @@ public class Parser
         {
             Token = indexToken,
             Left = array,
-            Right = index.Value
+            Index = index.Value
         };
     }
 

@@ -108,6 +108,14 @@ public class Compiler
                 }
                 break;
 
+                case IndexExpression indexExpression:
+                {
+                    var result = CompileIndexExpression(indexExpression);
+                    if (result.HasError)
+                        return result;
+                }
+                break;
+
             case BlockStatement blockStatement:
                 foreach (var statement in blockStatement.Statements)
                 {
@@ -155,6 +163,23 @@ public class Compiler
             default:
                 return new Exception($"unknown node type: {node.GetType()}");
         }
+
+        return Maybe.Ok;
+    }
+
+    private Maybe CompileIndexExpression(IndexExpression indexExpression)
+    {
+        var result = Compile(indexExpression.Left);
+        if (result.HasError)
+            return result;
+
+        result = Compile(indexExpression.Index);
+        if (result.HasError)
+            return result;
+
+        var emitted = Emit(Opcode.OpIndex);
+        if (emitted.HasError)
+            return emitted;
 
         return Maybe.Ok;
     }

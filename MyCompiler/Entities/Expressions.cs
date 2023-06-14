@@ -110,9 +110,9 @@ public readonly struct IndexExpression : IExpression
 {
     public Token Token { get; init; }
     public IExpression Left { get; init; }
-    public IExpression Right { get; init; }
+    public IExpression Index { get; init; }
 
-    public override string ToString() => $"({Left}[{Right}])";
+    public override string ToString() => $"({Left}[{Index}])";
 }
 
 //[DebuggerDisplay("{{{Pairs,nq}}}")]

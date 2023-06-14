@@ -23,6 +23,7 @@ public class Compiler_
     [MemberData(nameof(Compiles_source_to_bytecode_STRINGS))]
     [MemberData(nameof(Compiles_source_to_bytecode_ARRAYS))]
     [MemberData(nameof(Compiles_source_to_bytecode_HASHES))]
+    [MemberData(nameof(Compiles_source_to_bytecode_INDEXES))]
     public void Compiles_source_to_bytecode(string input, string expectedInstructions, object[] expectedConstants)
     {
         var compiler = new Compiler();
@@ -463,6 +464,50 @@ public class Compiler_
                         new IntegerObject(4),
                         new IntegerObject(5),
                         new IntegerObject(6)
+                    }
+                },
+            };
+    public static TheoryData<string, string, object[]> Compiles_source_to_bytecode_INDEXES
+        => new()
+            {
+                {
+                    "[1, 2, 3][1 + 1]",
+                    Disassemble(
+                        Code.Code.Make(Opcode.OpConstant, 0),
+                        Code.Code.Make(Opcode.OpConstant, 1),
+                        Code.Code.Make(Opcode.OpConstant, 2),
+                        Code.Code.Make(Opcode.OpArray, 3),
+                        Code.Code.Make(Opcode.OpConstant, 3),
+                        Code.Code.Make(Opcode.OpConstant, 4),
+                        Code.Code.Make(Opcode.OpAdd),
+                        Code.Code.Make(Opcode.OpIndex),
+                        Code.Code.Make(Opcode.OpPop)
+                    ),
+                    new object[]{
+                        new IntegerObject(1),
+                        new IntegerObject(2),
+                        new IntegerObject(3),
+                        new IntegerObject(1),
+                        new IntegerObject(1)
+                    }
+                },
+                {
+                    "{1: 2}[2 - 1]",
+                    Disassemble(
+                        Code.Code.Make(Opcode.OpConstant, 0),
+                        Code.Code.Make(Opcode.OpConstant, 1),
+                        Code.Code.Make(Opcode.OpHash, 2),
+                        Code.Code.Make(Opcode.OpConstant, 2),
+                        Code.Code.Make(Opcode.OpConstant, 3),
+                        Code.Code.Make(Opcode.OpSub),
+                        Code.Code.Make(Opcode.OpIndex),
+                        Code.Code.Make(Opcode.OpPop)
+                    ),
+                    new object[]{
+                        new IntegerObject(1),
+                        new IntegerObject(2),
+                        new IntegerObject(2),
+                        new IntegerObject(1)
                     }
                 },
             };

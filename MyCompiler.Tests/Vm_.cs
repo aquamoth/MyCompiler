@@ -21,6 +21,7 @@ public class Vm_
     [MemberData(nameof(Runs_bytecode_STRINGS))]
     [MemberData(nameof(Runs_bytecode_ARRAYS))]
     [MemberData(nameof(Runs_bytecode_HASHES))]
+    [MemberData(nameof(Runs_bytecode_INDEXES))]
     public void Runs_bytecode(string source, IObject expectedStackTop)
     {
         var program = Parse(source);
@@ -206,6 +207,25 @@ public class Vm_
                         (new IntegerObject(6), new IntegerObject(16))
                     )
                 },
+            };
+        }
+    }
+    public static TheoryData<string, IObject> Runs_bytecode_INDEXES
+    {
+        get
+        {
+            return new()
+            {
+                { "[1, 2, 3][1]", new IntegerObject(2) },
+                { "[1, 2, 3][0 + 2]", new IntegerObject(3) },
+                { "[[1, 1, 1]][0][0]", new IntegerObject(1) },
+                { "[][0]", NullObject.Value },
+                { "[1, 2, 3][99]", NullObject.Value },
+                { "[1][-1]", NullObject.Value },
+                { "{1: 1, 2: 2}[1]", new IntegerObject(1) },
+                { "{1: 1, 2: 2}[2]", new IntegerObject(2) },
+                { "{1: 1}[0]", NullObject.Value },
+                { "{}[0]", NullObject.Value },
             };
         }
     }

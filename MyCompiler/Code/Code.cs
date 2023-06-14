@@ -14,6 +14,7 @@ public static class Code
             Define(Opcode.OpConstant, 2),
             Define(Opcode.OpArray, 2),
             Define(Opcode.OpHash, 2),
+            Define(Opcode.OpIndex),
             
             Define(Opcode.OpAdd),
             Define(Opcode.OpSub),

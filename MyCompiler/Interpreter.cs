@@ -192,27 +192,27 @@ public class Interpreter
         {
             case ArrayObject array:
                 {
-                    var right = Eval(indexExpr.Right, env);
+                    var right = Eval(indexExpr.Index, env);
                     if (right.HasError)
                         return right;
 
                     if (right.Value is not IntegerObject index)
-                        return new Exception($"index value {right.Value.Type} is not supported {Parser.ExceptionLocatorString(indexExpr.Right.Token)}");
+                        return new Exception($"index value {right.Value.Type} is not supported {Parser.ExceptionLocatorString(indexExpr.Index.Token)}");
 
                     if (index.Value < 0 || index.Value >= array.Elements.Length)
-                        return new Exception($"index {index.Value} is out of range {Parser.ExceptionLocatorString(indexExpr.Right.Token)}");
+                        return new Exception($"index {index.Value} is out of range {Parser.ExceptionLocatorString(indexExpr.Index.Token)}");
 
                     return Maybe<IObject>.From(array.Elements[index.Value]);
                 }
 
             case HashObject hash:
                 {
-                    var right = Eval(indexExpr.Right, env);
+                    var right = Eval(indexExpr.Index, env);
                     if (right.HasError)
                         return right;
 
                     if (right.Value is not IHashable hashable)
-                        return new Exception($"unusable as hash key: {right.Value.Type} {Parser.ExceptionLocatorString(indexExpr.Right.Token)}");
+                        return new Exception($"unusable as hash key: {right.Value.Type} {Parser.ExceptionLocatorString(indexExpr.Index.Token)}");
 
                     if (hash.Pairs.TryGetValue(hashable.HashKey(), out var hashPair))
                         return Maybe<IObject>.From(hashPair.Value);

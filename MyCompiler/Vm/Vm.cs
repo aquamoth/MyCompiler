@@ -200,6 +200,30 @@ public class Vm
                         Push(new HashObject(hash.ToArray()));
                     }
                     break;
+
+                case Opcode.OpIndex:
+                    {
+                        var index = Pop();
+                        var left = Pop();
+                        if (left is ArrayObject array && index is IntegerObject integer)
+                        {
+                            var result = ExecuteArrayIndex(array, integer.Value);
+                            if (result.HasError)
+                                return result;
+                        }
+                        else if (left is HashObject hash && index is IHashable hashKey)
+                        {
+                            var result = ExecuteHashKey(hash, hashKey);
+                            if (result.HasError)
+                                return result;
+                        }
+                        else
+                        {
+                            return new Exception($"index operator not supported: {left.Type}[{index.Type}]");
+                        }
+                    }
+                    break;
+
                 default:
                     return new Exception($"unknown opcode {op}");
             }
@@ -207,6 +231,33 @@ public class Vm
             ip++;
         }
 
+        return Maybe.Ok;
+    }
+
+    private Maybe ExecuteHashKey(HashObject hash, IHashable index)
+    {
+        if (hash.Pairs.TryGetValue(index.HashKey(), out var hashPair))
+        {
+            Push(hashPair.Value);
+        }
+        else
+        {
+            Push(NullObject.Value);
+        }
+
+        return Maybe.Ok;
+    }
+
+    private Maybe ExecuteArrayIndex(ArrayObject array, long value)
+    {
+        if (value < 0 || value >= array.Elements.Length)
+        {
+            Push(NullObject.Value);
+            return Maybe.Ok;
+        }
+
+        var element = array.Elements[value];
+        Push(element);
         return Maybe.Ok;
     }
 
