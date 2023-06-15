@@ -22,6 +22,7 @@ public class Vm_
     [MemberData(nameof(Runs_bytecode_ARRAYS))]
     [MemberData(nameof(Runs_bytecode_HASHES))]
     [MemberData(nameof(Runs_bytecode_INDEXES))]
+    //[MemberData(nameof(Runs_bytecode_CALLS))]
     public void Runs_bytecode(string source, IObject expectedStackTop)
     {
         var program = Parse(source);
@@ -226,6 +227,17 @@ public class Vm_
                 { "{1: 1, 2: 2}[2]", new IntegerObject(2) },
                 { "{1: 1}[0]", NullObject.Value },
                 { "{}[0]", NullObject.Value },
+            };
+        }
+    }
+    public static TheoryData<string, IObject> Runs_bytecode_CALLS
+    {
+        get
+        {
+            Assert.Fail("CALLS not tested");
+            return new()
+            {
+                { "let one = fn() { 5 }", new IntegerObject(2) },
             };
         }
     }

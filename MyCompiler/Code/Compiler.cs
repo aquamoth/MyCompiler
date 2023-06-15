@@ -174,9 +174,16 @@ public class Compiler
                 }
                 break;
 
-            //    case CallNode callNode:
-            //        CompileCall(callNode);
-            //        break;
+            case CallExpression callExpression:
+                {
+                    var result = Compile(callExpression.Function);
+                    if (result.HasError)
+                        return result;
+
+                    Emit(Opcode.OpCall);
+                }
+                break;
+
             default:
                 return new Exception($"unknown node type: {node.GetType()}");
         }

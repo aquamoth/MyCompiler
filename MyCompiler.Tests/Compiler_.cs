@@ -25,6 +25,7 @@ public class Compiler_
     [MemberData(nameof(Compiles_source_to_bytecode_HASHES))]
     [MemberData(nameof(Compiles_source_to_bytecode_INDEXES))]
     [MemberData(nameof(Compiles_source_to_bytecode_FUNCTIONS))]
+    [MemberData(nameof(Compiles_source_to_bytecode_CALLS))]
     public void Compiles_source_to_bytecode(string input, string expectedInstructions, object[] expectedConstants)
     {
         var compiler = new Compiler();
@@ -584,6 +585,46 @@ public class Compiler_
                                 Code.Code.Make(Opcode.OpReturn)
                             )
                         )
+                    }
+                },
+            };
+    public static TheoryData<string, string, object[]> Compiles_source_to_bytecode_CALLS
+        => new()
+            {
+                {
+                    "fn() { 24 }();",
+                    Disassemble(
+                        Code.Code.Make(Opcode.OpConstant, 1),
+                        Code.Code.Make(Opcode.OpCall),
+                        Code.Code.Make(Opcode.OpPop)
+                    ),
+                    new object[]{
+                        new IntegerObject(24),
+                        new CompiledFunction(
+                            Assemble(
+                                Code.Code.Make(Opcode.OpConstant, 0),
+                                Code.Code.Make(Opcode.OpReturnValue)
+                            )
+                        ),
+                    }
+                },
+                {
+                    "let noArgs = fn() { 24 }; noArgs();",
+                    Disassemble(
+                        Code.Code.Make(Opcode.OpConstant, 1),
+                        Code.Code.Make(Opcode.OpSetGlobal),
+                        Code.Code.Make(Opcode.OpGetGlobal),
+                        Code.Code.Make(Opcode.OpCall),
+                        Code.Code.Make(Opcode.OpPop)
+                    ),
+                    new object[]{
+                        new IntegerObject(24),
+                        new CompiledFunction(
+                            Assemble(
+                                Code.Code.Make(Opcode.OpConstant, 0),
+                                Code.Code.Make(Opcode.OpReturnValue)
+                            )
+                        ),
                     }
                 },
             };

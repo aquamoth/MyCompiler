@@ -1,24 +1,30 @@
 ﻿using MyCompiler.Code;
 using MyCompiler.Entities;
 using MyCompiler.Helpers;
-using System.Buffers.Binary;
 
 namespace MyCompiler.Vm;
 
 public class Vm
 {
+    const int MAX_FRAMES = 1024;
     const int STACK_SIZE = 2048;
     public const int GLOBALS_SIZE = 65536;
 
-    readonly byte[] instructions;
+
     readonly IObject[] constants;
     readonly IObject[] globals;
     readonly IObject[] stack;
     int sp;
 
+    readonly Stack<Frame> frames;
+
     public Vm(Bytecode bytecode, IObject[] globals)
     {
-        this.instructions = bytecode.Instructions;
+        var mainFn = new CompiledFunction(bytecode.Instructions);
+
+        frames = new Stack<Frame>(MAX_FRAMES);
+        frames.Push(new Frame(mainFn));
+
         this.constants = bytecode.Constants;
         this.globals = globals;
 
@@ -30,19 +36,17 @@ public class Vm
     {
     }
 
+    Frame CurrentFrame => frames.Peek();
+
     public Maybe Run()
     {
-        var ip = 0;
-        while (ip < instructions.Length)
+        while (CurrentFrame.TryReadInstruction(out var op))
         {
-            var op = (Opcode)instructions[ip];
-
             switch (op)
             {
                 case Opcode.OpConstant:
                     {
-                        var constIndex = BinaryPrimitives.ReadUInt16BigEndian(instructions.AsSpan()[(ip + 1)..]);
-                        ip += 2;
+                        var constIndex = CurrentFrame.ReadConstant();
                         Push(constants[constIndex]);
                     }
                     break;
@@ -136,44 +140,38 @@ public class Vm
 
                 case Opcode.OpJumpNotTruthy:
                     {
-                        var pos = BinaryPrimitives.ReadUInt16BigEndian(instructions.AsSpan()[(ip + 1)..]);
-                        ip += 2;
+                        var pos = CurrentFrame.ReadConstant();
 
                         var condition = Pop();
                         if (!IsTruthy(condition))
-                            ip = pos - 1;
+                            CurrentFrame.Jump(pos - 1);
                     }
                     break;
 
                 case Opcode.OpJump:
                     {
-                        var pos = BinaryPrimitives.ReadUInt16BigEndian(instructions.AsSpan()[(ip + 1)..]);
-                        ip = pos - 1;
+                        var pos = CurrentFrame.ReadConstant();
+                        CurrentFrame.Jump(pos - 1);
                     }
                     break;
 
                 case Opcode.OpSetGlobal:
                     {
-                        var globalIndex = BinaryPrimitives.ReadUInt16BigEndian(instructions.AsSpan()[(ip + 1)..]);
-                        ip += 2;
-
+                        var globalIndex = CurrentFrame.ReadConstant();
                         globals[globalIndex] = Pop();
                     }
                     break;
 
                 case Opcode.OpGetGlobal:
                     {
-                        var globalIndex = BinaryPrimitives.ReadUInt16BigEndian(instructions.AsSpan()[(ip + 1)..]);
-                        ip += 2;
-
+                        var globalIndex = CurrentFrame.ReadConstant();
                         Push(globals[globalIndex]);
                     }
                     break;
 
                 case Opcode.OpArray:
                     {
-                        var size = BinaryPrimitives.ReadUInt16BigEndian(instructions.AsSpan()[(ip + 1)..]);
-                        ip += 2;
+                        var size = CurrentFrame.ReadConstant();
 
                         var array = new IObject[size];
                         for (var i = size - 1; i >= 0; i--)
@@ -184,8 +182,7 @@ public class Vm
 
                 case Opcode.OpHash:
                     {
-                        var size = BinaryPrimitives.ReadUInt16BigEndian(instructions.AsSpan()[(ip + 1)..]) / 2;
-                        ip += 2;
+                        var size = CurrentFrame.ReadConstant() / 2;
 
                         var hash = new List<(IHashable, IObject)>();
                         for (var i = 0; i < size; i++)
@@ -227,8 +224,6 @@ public class Vm
                 default:
                     return new Exception($"unknown opcode {op}");
             }
-
-            ip++;
         }
 
         return Maybe.Ok;
