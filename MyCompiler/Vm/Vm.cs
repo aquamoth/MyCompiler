@@ -221,6 +221,32 @@ public class Vm
                     }
                     break;
 
+                case Opcode.OpCall:
+                    {
+                        var fn = Pop();
+                        if(fn is not CompiledFunction callable)
+                            return new Exception($"calling non-function and non-built-in: {fn.Type}");
+
+                        frames.Push(new Frame(callable));
+                    }
+                    break;
+
+                case Opcode.OpReturnValue:
+                    {
+                        var returnValue = Pop();
+                        var frame = frames.Pop();
+                        //if (frames.Count == 0)
+                        //    return returnValue;
+                        Push(returnValue);
+                    }
+                    break;
+
+                case Opcode.OpReturn:
+                    {
+                        var frame = frames.Pop();
+                        Push(NullObject.Value);
+                    }
+                    break;
                 default:
                     return new Exception($"unknown opcode {op}");
             }

@@ -22,7 +22,7 @@ public class Vm_
     [MemberData(nameof(Runs_bytecode_ARRAYS))]
     [MemberData(nameof(Runs_bytecode_HASHES))]
     [MemberData(nameof(Runs_bytecode_INDEXES))]
-    //[MemberData(nameof(Runs_bytecode_CALLS))]
+    [MemberData(nameof(Runs_bytecode_CALLS))]
     public void Runs_bytecode(string source, IObject expectedStackTop)
     {
         var program = Parse(source);
@@ -234,10 +234,16 @@ public class Vm_
     {
         get
         {
-            Assert.Fail("CALLS not tested");
             return new()
             {
-                { "let one = fn() { 5 }", new IntegerObject(2) },
+                { "let fivePlusTen = fn() { 5 + 10; }; fivePlusTen();", new IntegerObject(15) },
+                { "let one = fn() { 1; }; let two = fn(){2}; one() + two()", new IntegerObject(3) },
+                { "let a = fn() { 1 }; let b = fn(){ a() + 1 }; let c = fn(){b() + 1}; c();", new IntegerObject(3) },
+                { "let earlyExit = fn() { return 99; 100; }; earlyExit();", new IntegerObject(99) },
+                { "let earlyExit = fn() { return 99; return 100; }; earlyExit();", new IntegerObject(99) },
+                { "let noReturn = fn() { }; noReturn();", NullObject.Value },
+                { "let noReturn = fn() { }; let noReturnTwo = fn() { noReturn();}; noReturn(); noReturnTwo();", NullObject.Value },
+                { "let returnsOne = fn() {1}; let returnsOneReturner = fn() {returnsOne}; returnsOneReturner()()", new IntegerObject(1)},
             };
         }
     }
