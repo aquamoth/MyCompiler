@@ -149,8 +149,8 @@ public class HashObject : IObject, IEquatable<HashObject>
     public bool Equals(HashObject? other)
     {
         if (other is null) return false;
-        return Pairs.Count == other.Pairs.Count 
-            && Pairs.All(p => other.Pairs.TryGetValue(p.Key, out var otherValue) 
+        return Pairs.Count == other.Pairs.Count
+            && Pairs.All(p => other.Pairs.TryGetValue(p.Key, out var otherValue)
                                 && p.Value.Equals(otherValue)
                         );
     }
@@ -168,7 +168,9 @@ public readonly record struct HashKey(ObjectType Type, long HashCode);
 record CompiledFunction(byte[] Instructions) : IObject, IEquatable<CompiledFunction>
 {
     public ObjectType Type { get; init; } = ObjectType.COMPILED_FUNCTION;
-    public string Inspect() => $"CompiledFunction";
+    public string Inspect() => $"CompiledFunction({string.Join(", ", Instructions.Select(x => x))})";
+
+    public override string ToString() => Inspect();
 
     public virtual bool Equals(CompiledFunction? other)
     {

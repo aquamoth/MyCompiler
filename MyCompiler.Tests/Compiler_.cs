@@ -534,6 +534,58 @@ public class Compiler_
                         )
                     }
                 },
+                {
+                    "fn() { 5 + 10 }",
+                    Disassemble(
+                        Code.Code.Make(Opcode.OpConstant, 2),
+                        Code.Code.Make(Opcode.OpPop)
+                    ),
+                    new object[]{
+                        new IntegerObject(5),
+                        new IntegerObject(10),
+                        new CompiledFunction(
+                            Assemble(
+                                Code.Code.Make(Opcode.OpConstant, 0),
+                                Code.Code.Make(Opcode.OpConstant, 1),
+                                Code.Code.Make(Opcode.OpAdd),
+                                Code.Code.Make(Opcode.OpReturnValue)
+                            )
+                        )
+                    }
+                },
+                {
+                    "fn() { 1; 2 }",
+                    Disassemble(
+                        Code.Code.Make(Opcode.OpConstant, 2),
+                        Code.Code.Make(Opcode.OpPop)
+                    ),
+                    new object[]{
+                        new IntegerObject(1),
+                        new IntegerObject(2),
+                        new CompiledFunction(
+                            Assemble(
+                                Code.Code.Make(Opcode.OpConstant, 0),
+                                Code.Code.Make(Opcode.OpPop),
+                                Code.Code.Make(Opcode.OpConstant, 1),
+                                Code.Code.Make(Opcode.OpReturnValue)
+                            )
+                        )
+                    }
+                },
+                {
+                    "fn() { }",
+                    Disassemble(
+                        Code.Code.Make(Opcode.OpConstant, 0),
+                        Code.Code.Make(Opcode.OpPop)
+                    ),
+                    new object[]{
+                        new CompiledFunction(
+                            Assemble(
+                                Code.Code.Make(Opcode.OpReturn)
+                            )
+                        )
+                    }
+                },
             };
 
     [Fact]

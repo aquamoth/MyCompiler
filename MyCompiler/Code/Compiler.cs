@@ -186,12 +186,21 @@ public class Compiler
 
     private Maybe CompileFunction(FnLiteral fnLiteral)
     {
-        EnterScope(); 
+        EnterScope();
+
         var compiled = Compile(fnLiteral.Body);
         if (compiled.HasError)
             return compiled;
 
+        CurrentScope.ReplaceLastPopWithReturn();
+        
+        if (CurrentScope.LastInstruction.Opcode != Opcode.OpReturnValue)
+        {
+            Emit(Opcode.OpReturn);
+        }
+
         var instructions = LeaveScope();
+
         var fn = new CompiledFunction(instructions);
         return Emit(Opcode.OpConstant, AddConstant(fn));
     }

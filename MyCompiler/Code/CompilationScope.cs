@@ -20,6 +20,16 @@ record CompilationScope(List<byte> Instructions)
             Instructions[position + i] = newInstruction[i];
     }
 
+    public void ReplaceLastPopWithReturn()
+    {
+        if (LastInstruction.Opcode == Opcode.OpPop)
+        {
+            var lastPos = LastInstruction.Position;
+            ReplaceInstruction(lastPos, Code.Make(Opcode.OpReturnValue).Value);
+            LastInstruction = new EmittedInstruction(Opcode.OpReturnValue, lastPos);
+        }
+    }
+
     public void RemoveLastPop()
     {
         Instructions.RemoveAt(Instructions.Count - 1);
