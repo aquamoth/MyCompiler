@@ -5,7 +5,7 @@ namespace MyCompiler.Code;
 
 public class Compiler
 {
-    private readonly SymbolTable _symbolTable;
+    internal SymbolTable _symbolTable;
     private readonly List<IObject> _constants;
 
     private readonly Stack<CompilationScope> Scopes = new();
@@ -136,7 +136,11 @@ public class Compiler
                     if (symbol.HasError)
                         return symbol;
 
-                    var emitted = Emit(Opcode.OpSetGlobal, symbol.Value.Index);
+                    var opcode = symbol.Value.Scope == Symbol.LOCAL_SCOPE 
+                        ? Opcode.OpSetLocal 
+                        : Opcode.OpSetGlobal;
+
+                    var emitted = Emit(opcode, symbol.Value.Index);
                     if (emitted.HasError)
                         return emitted;
                 }
@@ -148,7 +152,11 @@ public class Compiler
                     if (symbol.HasError)
                         return symbol;
 
-                    var emitted = Emit(Opcode.OpGetGlobal, symbol.Value.Index);
+                    var opcode = symbol.Value.Scope == Symbol.LOCAL_SCOPE
+                        ? Opcode.OpGetLocal
+                        : Opcode.OpGetGlobal;
+
+                    var emitted = Emit(opcode, symbol.Value.Index);
                     if (emitted.HasError)
                         return emitted;
                 }
@@ -408,11 +416,13 @@ public class Compiler
     internal void EnterScope()
     {
         Scopes.Push(new CompilationScope());
+        _symbolTable = new SymbolTable(_symbolTable);
     }
 
     internal byte[] LeaveScope()
     {
         var oldScope = Scopes.Pop();
+        _symbolTable = _symbolTable.Outer ?? throw new Exception("Expected outer symbolTable when leaving scope");
         return oldScope.Instructions.ToArray();
     }
 }

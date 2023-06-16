@@ -4,12 +4,26 @@ namespace MyCompiler.Code;
 
 public class SymbolTable
 {
-    IDictionary<string, Symbol> store = new Dictionary<string, Symbol>();
-    int numDefinitions = 0;
+    public readonly SymbolTable? Outer;
+    internal readonly IDictionary<string, Symbol> store = new Dictionary<string, Symbol>();
+    private int numDefinitions = 0;
+
+    public SymbolTable() : this(null)
+    {
+    }
+
+    public SymbolTable(SymbolTable? outer)
+    {
+        this.Outer = outer;
+        this.store = new Dictionary<string, Symbol>();
+        this.numDefinitions = 0;
+    }
 
     public Maybe<Symbol> Define(string name)
     {
-        var symbol = new Symbol(name, Symbol.GLOBAL_SCOPE, numDefinitions);
+        var scope = Outer == null ? Symbol.GLOBAL_SCOPE : Symbol.LOCAL_SCOPE;
+
+        var symbol = new Symbol(name, scope, numDefinitions);
         if (!store.TryAdd(name, symbol))
             return new Exception($"symbol {name} already defined");
 
@@ -19,9 +33,12 @@ public class SymbolTable
 
     public Maybe<Symbol> Resolve(string name)
     {
-        if (!store.TryGetValue(name, out var symbol))
-            return new Exception($"unknown symbol {name}");
+        if (store.TryGetValue(name, out var symbol))
+            return symbol;
 
-        return symbol;
+        if (Outer != null)
+            return Outer.Resolve(name);
+
+        return new Exception($"unknown symbol {name}");
     }
 }

@@ -1,7 +1,6 @@
 ﻿using MyCompiler.Code;
 using MyCompiler.Entities;
 using MyCompiler.Helpers;
-using System.Text;
 using Xunit.Abstractions;
 
 namespace MyCompiler.Tests;
@@ -20,6 +19,7 @@ public class Compiler_
     [MemberData(nameof(Compiles_source_to_bytecode_BOOLEANS))]
     [MemberData(nameof(Compiles_source_to_bytecode_CONDITIONALS))]
     [MemberData(nameof(Compiles_source_to_bytecode_GLOBALS))]
+    [MemberData(nameof(Compiles_source_to_bytecode_LOCALS))]
     [MemberData(nameof(Compiles_source_to_bytecode_STRINGS))]
     [MemberData(nameof(Compiles_source_to_bytecode_ARRAYS))]
     [MemberData(nameof(Compiles_source_to_bytecode_HASHES))]
@@ -308,6 +308,53 @@ public class Compiler_
                 ),
                 new object[]{
                     new IntegerObject(1),
+                }
+            },
+        };
+    public static TheoryData<string, string, object[]> Compiles_source_to_bytecode_LOCALS
+    => new()
+        {
+            {
+                "fn(){ let num = 55; num }",
+                Disassemble(
+                    Code.Code.Make(Opcode.OpConstant, 1),
+                    Code.Code.Make(Opcode.OpPop)
+                ),
+                new object[]{
+                    new IntegerObject(55),
+                    new CompiledFunction(Assemble(
+                        Code.Code.Make(Opcode.OpConstant, 0),
+                        Code.Code.Make(Opcode.OpSetLocal, 0),
+                        Code.Code.Make(Opcode.OpGetLocal, 0),
+                        Code.Code.Make(Opcode.OpReturnValue)
+                    ))
+                }
+            },
+            {
+                """
+                fn() {
+                    let a = 55;
+                    let b = 77;
+                    a + b
+                }
+                """,
+                Disassemble(
+                    Code.Code.Make(Opcode.OpConstant, 2),
+                    Code.Code.Make(Opcode.OpPop)
+                ),
+                new object[]{
+                    new IntegerObject(55),
+                    new IntegerObject(77),
+                    new CompiledFunction(Assemble(
+                        Code.Code.Make(Opcode.OpConstant, 0),
+                        Code.Code.Make(Opcode.OpSetLocal, 0),
+                        Code.Code.Make(Opcode.OpConstant, 1),
+                        Code.Code.Make(Opcode.OpSetLocal, 1),
+                        Code.Code.Make(Opcode.OpGetLocal, 0),
+                        Code.Code.Make(Opcode.OpGetLocal, 1),
+                        Code.Code.Make(Opcode.OpAdd),
+                        Code.Code.Make(Opcode.OpReturnValue)
+                    ))
                 }
             },
         };
@@ -660,6 +707,8 @@ public class Compiler_
         var compiler = new Compiler();
         Assert.Equal(0, compiler.ScopeIndex);
 
+        var globalSymbolTable = compiler._symbolTable;
+
         compiler.Emit(Opcode.OpMul);
 
         compiler.EnterScope();
@@ -668,9 +717,12 @@ public class Compiler_
         compiler.Emit(Opcode.OpSub);
         Assert.Equal(1, compiler.CurrentScope.Instructions.Count);
         Assert.Equal(Opcode.OpSub, compiler.CurrentScope.LastInstruction.Opcode);
+        Assert.Equal(globalSymbolTable, compiler._symbolTable.Outer);
 
         compiler.LeaveScope();
         Assert.Equal(0, compiler.ScopeIndex);
+        Assert.Equal(globalSymbolTable, compiler._symbolTable);
+        Assert.Null(compiler._symbolTable.Outer);
 
         compiler.Emit(Opcode.OpAdd);
         Assert.Equal(2, compiler.CurrentScope.Instructions.Count);
