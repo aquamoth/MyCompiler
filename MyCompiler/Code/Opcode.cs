@@ -30,6 +30,8 @@ public enum Opcode : byte
 
     OpGetGlobal,
     OpSetGlobal,
+    OpGetLocal,
+    OpSetLocal,
 
     OpCall,
     OpReturnValue,

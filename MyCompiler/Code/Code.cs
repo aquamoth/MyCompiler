@@ -38,6 +38,8 @@ public static class Code
 
             Define(Opcode.OpGetGlobal, 2),
             Define(Opcode.OpSetGlobal, 2),
+            Define(Opcode.OpGetLocal, 1),
+            Define(Opcode.OpSetLocal, 1),
 
             Define (Opcode.OpCall),
             Define (Opcode.OpReturnValue),
@@ -49,7 +51,7 @@ public static class Code
     public static Maybe<Definition> Lookup(byte opcode)
     {
         if (!definitions.TryGetValue((Opcode)opcode, out var d))
-            return new Exception("Opcode not found in definition");
+            return new Exception($"Opcode {opcode} not found in definition");
 
         return d;
     }
@@ -70,11 +72,14 @@ public static class Code
             var width = definition.OperandWidths[i];
             switch (width)
             {
+                case 1:
+                    instruction[offset] = (byte)operand;
+                    break;
                 case 2:
                     BinaryPrimitives.WriteUInt16BigEndian(instruction.AsSpan()[1..], (ushort)operand);
                     break;
                 default:
-                    return new Exception("Unhandled operand width");
+                    return new Exception($"Unhandled operand width in Make(): {width}");
             }
             offset += width;
         }
@@ -165,8 +170,9 @@ public static class Code
     {
         return length switch
         {
+            1 => span[0],
             2 => BinaryPrimitives.ReadUInt16BigEndian(span),
-            _ => new Exception("Unhandled operand width"),
+            _ => new Exception($"Unhandled operand width in ReadOperand(): {length}"),
         };
     }
 
