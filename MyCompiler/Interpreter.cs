@@ -12,13 +12,13 @@ public class Interpreter
     public Interpreter(ILogger? logger = null)
     {
         builtin = EnvironmentStore.New();
-        builtin.Set("len", new BuiltIn(BuiltIn_Len));
-        builtin.Set("first", new BuiltIn(BuiltIn_First));
-        builtin.Set("last", new BuiltIn(BuiltIn_Last));
-        builtin.Set("rest", new BuiltIn(BuiltIn_Rest));
-        builtin.Set("push", new BuiltIn(BuiltIn_Push));
-        builtin.Set("puts", new BuiltIn(BuiltIn_Puts));
-        builtin.Set("gets", new BuiltIn(BuiltIn_Gets));
+        builtin.Set("len", BuiltIns.GetByName("len").Value);
+        builtin.Set("first", BuiltIns.GetByName("first").Value);
+        builtin.Set("last", BuiltIns.GetByName("last").Value);
+        builtin.Set("rest", BuiltIns.GetByName("rest").Value);
+        builtin.Set("push", BuiltIns.GetByName("push").Value);
+        builtin.Set("puts", BuiltIns.GetByName("puts").Value);
+        builtin.Set("gets", BuiltIns.GetByName("gets").Value);
         this.logger = logger;
     }
 
@@ -373,103 +373,6 @@ public class Interpreter
             _ => new Exception($"unknown operator: {leftBool.Type} {@operator} {rightBool.Type}")
         };
     }
-
-    private static Maybe<IObject> BuiltIn_Len(IObject[] args)
-    {
-        if (args.Length != 1)
-            return new Exception($"wrong number of arguments. got={args.Length}, want=1");
-
-        return args[0] switch
-        {
-            StringObject arg0 => new IntegerObject(arg0.Value.Length),
-            ArrayObject arg0 => new IntegerObject(arg0.Elements.Length),
-
-            _ => new Exception($"Expected {ObjectType.STRING} or {ObjectType.ARRAY} but got {args[0].Type}")
-        };
-    }
-
-    private static Maybe<IObject> BuiltIn_First(IObject[] args)
-    {
-        if (args.Length != 1)
-            return new Exception($"wrong number of arguments. got={args.Length}, want=1");
-
-        return args[0] switch
-        {
-            ArrayObject arg0 => Maybe<IObject>.From(
-                arg0.Elements.Length == 0 ? NullObject.Value : arg0.Elements[0]
-            ),
-
-            _ => new Exception($"Expected {ObjectType.ARRAY} but got {args[0].Type}")
-        };
-    }
-
-    private static Maybe<IObject> BuiltIn_Last(IObject[] args)
-    {
-        if (args.Length != 1)
-            return new Exception($"wrong number of arguments. got={args.Length}, want=1");
-
-        return args[0] switch
-        {
-            ArrayObject arg0 => Maybe<IObject>.From(
-                arg0.Elements.Length == 0 ? NullObject.Value : arg0.Elements[^1]
-            ),
-
-            _ => new Exception($"Expected {ObjectType.ARRAY} but got {args[0].Type}")
-        };
-    }
-
-    private static Maybe<IObject> BuiltIn_Rest(IObject[] args)
-    {
-        if (args.Length != 1)
-            return new Exception($"wrong number of arguments. got={args.Length}, want=1");
-
-        return args[0] switch
-        {
-            ArrayObject arg0 => Maybe<IObject>.From(
-                arg0.Elements.Length == 0 ? NullObject.Value : new ArrayObject(arg0.Elements[1..])
-            ),
-
-            _ => new Exception($"Expected {ObjectType.ARRAY} but got {args[0].Type}")
-        };
-    }
-
-    private static Maybe<IObject> BuiltIn_Push(IObject[] args)
-    {
-        if (args.Length != 2)
-            return new Exception($"wrong number of arguments. got={args.Length}, want=2");
-
-        return args[0] switch
-        {
-            ArrayObject arg0 => Maybe<IObject>.From(
-                new ArrayObject(arg0.Elements.Concat(new[] { args[1] }).ToArray())
-            ),
-
-            _ => new Exception($"Expected {ObjectType.ARRAY} but got {args[0].Type}")
-        };
-    }
-
-    private static Maybe<IObject> BuiltIn_Puts(IObject[] args)
-    {
-        foreach (var arg in args)
-        {
-            Console.WriteLine(arg.Inspect());
-        }
-
-        return NullObject.Value;
-    }
-
-    private static Maybe<IObject> BuiltIn_Gets(IObject[] args)
-    {
-        if (args.Length != 0)
-            return new Exception($"wrong number of arguments. got={args.Length}, want=0");
-
-        var s = Console.ReadLine();
-        if (s == null)
-            return new Exception("Received no string from console input");
-
-        return new StringObject(s);
-    }
-
 
     private static BooleanObject ToBooleanObject(bool value) => value ? BooleanObject.True : BooleanObject.False;
 

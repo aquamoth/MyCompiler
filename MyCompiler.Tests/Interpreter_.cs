@@ -198,7 +198,7 @@ namespace MyCompiler.Tests
         }
 
         [Theory]
-        [InlineData("len(1)", "Expected STRING or ARRAY but got INTEGER")]
+        [InlineData("len(1)", "argument to `len` not supported, got INTEGER")]
         [InlineData("len(\"one\", \"two\")", "wrong number of arguments. got=2, want=1")]
         public void Builtin_len_asserts(string source, string error)
         {
