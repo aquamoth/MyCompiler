@@ -237,7 +237,8 @@ public class Vm
 
                 case Opcode.OpCall:
                     {
-                        var fn = Pop();
+                        var args = CurrentFrame.ReadUInt8();
+                        var fn = Peek();
                         if (fn is not CompiledFunction callable)
                             return new Exception($"calling non-function and non-built-in: {fn.Type}");
 
@@ -251,7 +252,7 @@ public class Vm
                     {
                         var returnValue = Pop();
                         var frame = frames.Pop();
-                        this.sp = frame.BasePointer;
+                        this.sp = frame.BasePointer - 1;
                         //if (frames.Count == 0)
                         //    return returnValue;
                         Push(returnValue);
@@ -261,7 +262,7 @@ public class Vm
                 case Opcode.OpReturn:
                     {
                         var frame = frames.Pop();
-                        this.sp = frame.BasePointer;
+                        this.sp = frame.BasePointer - 1;
                         Push(NullObject.Value);
                     }
                     break;
@@ -382,6 +383,14 @@ public class Vm
 
         stack[sp] = constant;
         sp++;
+    }
+
+    private IObject Peek()
+    {
+        if (sp == 0)
+            throw new Exception("stack underflow during peek");
+
+        return stack[sp - 1];
     }
 
     private IObject Pop()

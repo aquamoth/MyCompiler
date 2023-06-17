@@ -176,7 +176,7 @@ namespace MyCompiler.Tests
                 s =>
                 {
                     var es = Assert.IsType<ExpressionStatement>(s);
-                    var rs = Assert.IsType<FnLiteral>(es.Expression);
+                    var rs = Assert.IsType<FunctionLiteral>(es.Expression);
 
                     Assert.Equal(expectedParams.Length, rs.Parameters.Length);
                     foreach(var (expected, actual) in expectedParams.Zip(rs.Parameters))

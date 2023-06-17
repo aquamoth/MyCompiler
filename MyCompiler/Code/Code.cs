@@ -41,7 +41,7 @@ public static class Code
             Define(Opcode.OpGetLocal, 1),
             Define(Opcode.OpSetLocal, 1),
 
-            Define (Opcode.OpCall),
+            Define (Opcode.OpCall, 1),
             Define (Opcode.OpReturnValue),
             Define (Opcode.OpReturn)
 

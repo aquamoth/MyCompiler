@@ -136,8 +136,8 @@ public class Compiler
                     if (symbol.HasError)
                         return symbol;
 
-                    var opcode = symbol.Value.Scope == Symbol.LOCAL_SCOPE 
-                        ? Opcode.OpSetLocal 
+                    var opcode = symbol.Value.Scope == Symbol.LOCAL_SCOPE
+                        ? Opcode.OpSetLocal
                         : Opcode.OpSetGlobal;
 
                     var emitted = Emit(opcode, symbol.Value.Index);
@@ -162,9 +162,9 @@ public class Compiler
                 }
                 break;
 
-            case FnLiteral fnLiteral:
+            case FunctionLiteral functionLiteral:
                 {
-                    var result = CompileFunction(fnLiteral);
+                    var result = CompileFunction(functionLiteral);
                     if (result.HasError)
                         return result;
                 }
@@ -188,7 +188,14 @@ public class Compiler
                     if (result.HasError)
                         return result;
 
-                    Emit(Opcode.OpCall);
+                    foreach (var argument in callExpression.Arguments)
+                    {
+                        result = Compile(argument);
+                        if (result.HasError)
+                            return result;
+                    }
+
+                    Emit(Opcode.OpCall, callExpression.Arguments.Length);
                 }
                 break;
 
@@ -199,16 +206,23 @@ public class Compiler
         return Maybe.Ok;
     }
 
-    private Maybe CompileFunction(FnLiteral fnLiteral)
+    private Maybe CompileFunction(FunctionLiteral functionLiteral)
     {
         EnterScope();
 
-        var compiled = Compile(fnLiteral.Body);
+        foreach (var p in functionLiteral.Parameters)
+        {
+            var symbol = _symbolTable.Define(p.Name);
+            if (symbol.HasError)
+                return symbol;
+        }
+
+        var compiled = Compile(functionLiteral.Body);
         if (compiled.HasError)
             return compiled;
 
         CurrentScope.ReplaceLastPopWithReturn();
-        
+
         if (CurrentScope.LastInstruction.Opcode != Opcode.OpReturnValue)
         {
             Emit(Opcode.OpReturn);

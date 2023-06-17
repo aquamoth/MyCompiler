@@ -642,7 +642,7 @@ public class Compiler_
                     "fn() { 24 }();",
                     Disassemble(
                         Code.Code.Make(Opcode.OpConstant, 1),
-                        Code.Code.Make(Opcode.OpCall),
+                        Code.Code.Make(Opcode.OpCall, 0),
                         Code.Code.Make(Opcode.OpPop)
                     ),
                     new object[]{
@@ -661,7 +661,7 @@ public class Compiler_
                         Code.Code.Make(Opcode.OpConstant, 1),
                         Code.Code.Make(Opcode.OpSetGlobal),
                         Code.Code.Make(Opcode.OpGetGlobal),
-                        Code.Code.Make(Opcode.OpCall),
+                        Code.Code.Make(Opcode.OpCall, 0),
                         Code.Code.Make(Opcode.OpPop)
                     ),
                     new object[]{
@@ -672,6 +672,54 @@ public class Compiler_
                                 Code.Code.Make(Opcode.OpReturnValue)
                             ), 0
                         ),
+                    }
+                },
+                {
+                    "let oneArg = fn(a) { a }; oneArg(24);",
+                    Disassemble(
+                        Code.Code.Make(Opcode.OpConstant, 0),
+                        Code.Code.Make(Opcode.OpSetGlobal, 0),
+                        Code.Code.Make(Opcode.OpGetGlobal, 0),
+                        Code.Code.Make(Opcode.OpConstant, 1),
+                        Code.Code.Make(Opcode.OpCall, 1),
+                        Code.Code.Make(Opcode.OpPop)
+                    ),
+                    new object[]{
+                        new CompiledFunction(
+                            Assemble(
+                                Code.Code.Make(Opcode.OpGetLocal, 0),
+                                Code.Code.Make(Opcode.OpReturnValue)
+                            ), 0
+                        ),
+                        new IntegerObject(24),
+                    }
+                },
+                {
+                    "let manyArg = fn(a, b, c) { a; b; c }; manyArg(24, 25, 26);",
+                    Disassemble(
+                        Code.Code.Make(Opcode.OpConstant, 0),
+                        Code.Code.Make(Opcode.OpSetGlobal, 0),
+                        Code.Code.Make(Opcode.OpGetGlobal, 0),
+                        Code.Code.Make(Opcode.OpConstant, 1),
+                        Code.Code.Make(Opcode.OpConstant, 2),
+                        Code.Code.Make(Opcode.OpConstant, 3),
+                        Code.Code.Make(Opcode.OpCall, 3),
+                        Code.Code.Make(Opcode.OpPop)
+                    ),
+                    new object[]{
+                        new CompiledFunction(
+                            Assemble(
+                                Code.Code.Make(Opcode.OpGetLocal, 0),
+                                Code.Code.Make(Opcode.OpPop),
+                                Code.Code.Make(Opcode.OpGetLocal, 1),
+                                Code.Code.Make(Opcode.OpPop),
+                                Code.Code.Make(Opcode.OpGetLocal, 2),
+                                Code.Code.Make(Opcode.OpReturnValue)
+                            ), 0
+                        ),
+                        new IntegerObject(24),
+                        new IntegerObject(25),
+                        new IntegerObject(26),
                     }
                 },
             };

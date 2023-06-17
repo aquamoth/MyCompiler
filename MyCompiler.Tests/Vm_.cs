@@ -281,6 +281,14 @@ public class Vm_
                     minusOne() + minusTwo();
                     """, new IntegerObject(97)
                 },
+                {   """
+                    let returnsOneReturner = fn() {
+                        let returnsOne = fn() { 1; };
+                        returnsOne;
+                    };
+                    returnsOneReturner()();
+                    """, new IntegerObject(1)
+                },
             };
         }
     }
