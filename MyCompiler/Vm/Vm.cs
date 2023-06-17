@@ -20,10 +20,10 @@ public class Vm
 
     public Vm(Bytecode bytecode, IObject[] globals)
     {
-        var mainFn = new CompiledFunction(bytecode.Instructions);
+        var mainFn = new CompiledFunction(bytecode.Instructions, 0);
 
         frames = new Stack<Frame>(MAX_FRAMES);
-        frames.Push(new Frame(mainFn));
+        frames.Push(new Frame(mainFn, 0));
 
         this.constants = bytecode.Constants;
         this.globals = globals;
@@ -46,7 +46,7 @@ public class Vm
             {
                 case Opcode.OpConstant:
                     {
-                        var constIndex = CurrentFrame.ReadConstant();
+                        var constIndex = CurrentFrame.ReadUInt16();
                         Push(constants[constIndex]);
                     }
                     break;
@@ -140,7 +140,7 @@ public class Vm
 
                 case Opcode.OpJumpNotTruthy:
                     {
-                        var pos = CurrentFrame.ReadConstant();
+                        var pos = CurrentFrame.ReadUInt16();
 
                         var condition = Pop();
                         if (!IsTruthy(condition))
@@ -150,28 +150,42 @@ public class Vm
 
                 case Opcode.OpJump:
                     {
-                        var pos = CurrentFrame.ReadConstant();
+                        var pos = CurrentFrame.ReadUInt16();
                         CurrentFrame.Jump(pos - 1);
                     }
                     break;
 
                 case Opcode.OpSetGlobal:
                     {
-                        var globalIndex = CurrentFrame.ReadConstant();
+                        var globalIndex = CurrentFrame.ReadUInt16();
                         globals[globalIndex] = Pop();
                     }
                     break;
 
                 case Opcode.OpGetGlobal:
                     {
-                        var globalIndex = CurrentFrame.ReadConstant();
+                        var globalIndex = CurrentFrame.ReadUInt16();
                         Push(globals[globalIndex]);
+                    }
+                    break;
+
+                case Opcode.OpSetLocal:
+                    {
+                        var localIndex = CurrentFrame.ReadUInt8();
+                        this.stack[CurrentFrame.BasePointer + localIndex] = Pop();
+                    }
+                    break;
+
+                case Opcode.OpGetLocal:
+                    {
+                        var localIndex = CurrentFrame.ReadUInt8();
+                        Push(this.stack[CurrentFrame.BasePointer + localIndex]);
                     }
                     break;
 
                 case Opcode.OpArray:
                     {
-                        var size = CurrentFrame.ReadConstant();
+                        var size = CurrentFrame.ReadUInt16();
 
                         var array = new IObject[size];
                         for (var i = size - 1; i >= 0; i--)
@@ -182,7 +196,7 @@ public class Vm
 
                 case Opcode.OpHash:
                     {
-                        var size = CurrentFrame.ReadConstant() / 2;
+                        var size = CurrentFrame.ReadUInt16() / 2;
 
                         var hash = new List<(IHashable, IObject)>();
                         for (var i = 0; i < size; i++)
@@ -224,10 +238,12 @@ public class Vm
                 case Opcode.OpCall:
                     {
                         var fn = Pop();
-                        if(fn is not CompiledFunction callable)
+                        if (fn is not CompiledFunction callable)
                             return new Exception($"calling non-function and non-built-in: {fn.Type}");
 
-                        frames.Push(new Frame(callable));
+                        var frame = new Frame(callable, sp);
+                        frames.Push(frame);
+                        sp = frame.BasePointer + callable.NumberOfLocals;
                     }
                     break;
 
@@ -235,6 +251,7 @@ public class Vm
                     {
                         var returnValue = Pop();
                         var frame = frames.Pop();
+                        this.sp = frame.BasePointer;
                         //if (frames.Count == 0)
                         //    return returnValue;
                         Push(returnValue);
@@ -244,6 +261,7 @@ public class Vm
                 case Opcode.OpReturn:
                     {
                         var frame = frames.Pop();
+                        this.sp = frame.BasePointer;
                         Push(NullObject.Value);
                     }
                     break;

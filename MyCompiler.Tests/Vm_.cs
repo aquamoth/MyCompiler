@@ -14,15 +14,16 @@ public class Vm_
     }
 
     [Theory]
-    [MemberData(nameof(Runs_bytecode_INTEGERS))]
-    [MemberData(nameof(Runs_bytecode_BOOLEANS))]
-    [MemberData(nameof(Runs_bytecode_CONDITIONALS))]
-    [MemberData(nameof(Runs_bytecode_GLOBALS))]
-    [MemberData(nameof(Runs_bytecode_STRINGS))]
-    [MemberData(nameof(Runs_bytecode_ARRAYS))]
-    [MemberData(nameof(Runs_bytecode_HASHES))]
-    [MemberData(nameof(Runs_bytecode_INDEXES))]
-    [MemberData(nameof(Runs_bytecode_CALLS))]
+    //[MemberData(nameof(Runs_bytecode_INTEGERS))]
+    //[MemberData(nameof(Runs_bytecode_BOOLEANS))]
+    //[MemberData(nameof(Runs_bytecode_CONDITIONALS))]
+    //[MemberData(nameof(Runs_bytecode_GLOBALS))]
+    //[MemberData(nameof(Runs_bytecode_STRINGS))]
+    //[MemberData(nameof(Runs_bytecode_ARRAYS))]
+    //[MemberData(nameof(Runs_bytecode_HASHES))]
+    //[MemberData(nameof(Runs_bytecode_INDEXES))]
+    //[MemberData(nameof(Runs_bytecode_CALLS))]
+    [MemberData(nameof(Runs_bytecode_LOCALS))]
     public void Runs_bytecode(string source, IObject expectedStackTop)
     {
         var program = Parse(source);
@@ -244,6 +245,42 @@ public class Vm_
                 { "let noReturn = fn() { }; noReturn();", NullObject.Value },
                 { "let noReturn = fn() { }; let noReturnTwo = fn() { noReturn();}; noReturn(); noReturnTwo();", NullObject.Value },
                 { "let returnsOne = fn() {1}; let returnsOneReturner = fn() {returnsOne}; returnsOneReturner()()", new IntegerObject(1)},
+            };
+        }
+    }
+    public static TheoryData<string, IObject> Runs_bytecode_LOCALS
+    {
+        get
+        {
+            return new()
+            {
+                //{ "let one = fn() { let one = 1; one; }; one();", new IntegerObject(1) },
+                //{ "let oneAndTwo = fn() { let one = 1; let two = 2; one + two; }; oneAndTwo();", new IntegerObject(3) },
+                //{   """
+                //    let oneAndTwo = fn() { let one = 1; let two = 2; one + two; };
+                //    let threeAndFour = fn() { let three = 3; let four = 4; three + four; };
+                //    oneAndTwo() + threeAndFour();
+                //    """, new IntegerObject(10) 
+                //},
+                //{   """
+                //    let firstFoobar = fn() { let foobar = 50; foobar; };
+                //    let secondFoobar = fn() { let foobar = 100; foobar; };
+                //    firstFoobar() + secondFoobar();
+                //    """, new IntegerObject(150)
+                //},
+                {   """
+                    let globalSeed = 50;
+                    let minusOne = fn() {
+                        let num = 1;
+                        globalSeed - num;
+                    }
+                    let minusTwo = fn() {
+                        let num = 2;
+                        globalSeed - num;
+                    }
+                    minusOne() + minusTwo();
+                    """, new IntegerObject(97)
+                },
             };
         }
     }

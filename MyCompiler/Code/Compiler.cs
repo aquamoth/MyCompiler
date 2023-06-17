@@ -214,9 +214,10 @@ public class Compiler
             Emit(Opcode.OpReturn);
         }
 
+        var numberOfLocals = _symbolTable.store.Count;
         var instructions = LeaveScope();
 
-        var fn = new CompiledFunction(instructions);
+        var fn = new CompiledFunction(instructions, numberOfLocals);
         return Emit(Opcode.OpConstant, AddConstant(fn));
     }
 

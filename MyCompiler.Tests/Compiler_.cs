@@ -327,7 +327,7 @@ public class Compiler_
                         Code.Code.Make(Opcode.OpSetLocal, 0),
                         Code.Code.Make(Opcode.OpGetLocal, 0),
                         Code.Code.Make(Opcode.OpReturnValue)
-                    ))
+                    ), 1)
                 }
             },
             {
@@ -354,7 +354,7 @@ public class Compiler_
                         Code.Code.Make(Opcode.OpGetLocal, 1),
                         Code.Code.Make(Opcode.OpAdd),
                         Code.Code.Make(Opcode.OpReturnValue)
-                    ))
+                    ), 2)
                 }
             },
         };
@@ -578,7 +578,7 @@ public class Compiler_
                                 Code.Code.Make(Opcode.OpConstant, 1),
                                 Code.Code.Make(Opcode.OpAdd),
                                 Code.Code.Make(Opcode.OpReturnValue)
-                            )
+                            ), 0
                         )
                     }
                 },
@@ -597,7 +597,7 @@ public class Compiler_
                                 Code.Code.Make(Opcode.OpConstant, 1),
                                 Code.Code.Make(Opcode.OpAdd),
                                 Code.Code.Make(Opcode.OpReturnValue)
-                            )
+                            ), 0
                         )
                     }
                 },
@@ -616,7 +616,7 @@ public class Compiler_
                                 Code.Code.Make(Opcode.OpPop),
                                 Code.Code.Make(Opcode.OpConstant, 1),
                                 Code.Code.Make(Opcode.OpReturnValue)
-                            )
+                            ), 0
                         )
                     }
                 },
@@ -630,7 +630,7 @@ public class Compiler_
                         new CompiledFunction(
                             Assemble(
                                 Code.Code.Make(Opcode.OpReturn)
-                            )
+                            ), 0
                         )
                     }
                 },
@@ -651,7 +651,7 @@ public class Compiler_
                             Assemble(
                                 Code.Code.Make(Opcode.OpConstant, 0),
                                 Code.Code.Make(Opcode.OpReturnValue)
-                            )
+                            ), 0
                         ),
                     }
                 },
@@ -670,7 +670,7 @@ public class Compiler_
                             Assemble(
                                 Code.Code.Make(Opcode.OpConstant, 0),
                                 Code.Code.Make(Opcode.OpReturnValue)
-                            )
+                            ), 0
                         ),
                     }
                 },

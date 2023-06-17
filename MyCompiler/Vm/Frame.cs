@@ -4,7 +4,7 @@ using System.Buffers.Binary;
 
 namespace MyCompiler.Vm;
 
-record Frame(CompiledFunction CompiledFunction)
+record Frame(CompiledFunction CompiledFunction, int BasePointer)
 {
     int ip = -1;
 
@@ -23,10 +23,17 @@ record Frame(CompiledFunction CompiledFunction)
         return true;
     }
 
-    public ushort ReadConstant()
+    public ushort ReadUInt16()
     {
         var constIndex = BinaryPrimitives.ReadUInt16BigEndian(Instructions.AsSpan()[(ip + 1)..]);
         ip += 2;
+        return constIndex;
+    }
+
+    public byte ReadUInt8()
+    {
+        ip += 1;
+        var constIndex = Instructions[ip];
         return constIndex;
     }
 
