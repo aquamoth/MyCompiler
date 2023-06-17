@@ -12,6 +12,7 @@ public class Vm
 
 
     readonly IObject[] constants;
+    readonly IObject[] builtins;
     readonly IObject[] globals;
     readonly IObject[] stack;
     int sp;
@@ -26,6 +27,7 @@ public class Vm
         frames.Push(new Frame(mainFn, 0));
 
         this.constants = bytecode.Constants;
+        this.builtins = BuiltIns.Functions.Select(x => x.Fn).ToArray();
         this.globals = globals;
 
         stack = new IObject[STACK_SIZE];
@@ -155,6 +157,13 @@ public class Vm
                     }
                     break;
 
+                case Opcode.OpGetBuiltin:
+                    {
+                        var builtinIndex = CurrentFrame.ReadUInt8();
+                        Push(builtins[builtinIndex]);
+                    }
+                    break;
+
                 case Opcode.OpSetGlobal:
                     {
                         var globalIndex = CurrentFrame.ReadUInt16();
@@ -238,7 +247,7 @@ public class Vm
                 case Opcode.OpCall:
                     {
                         var numberOfArguments = CurrentFrame.ReadUInt8();
-                        var result = CallFunction(numberOfArguments);
+                        var result = ExecuteCall(numberOfArguments);
                         if (result.HasError)
                             return result;
                     }
@@ -270,19 +279,44 @@ public class Vm
         return Maybe.Ok;
     }
 
-    private Maybe CallFunction(byte numberOfArguments)
+    private Maybe ExecuteCall(byte numberOfArguments)
     {
-        var fn = Peek(numberOfArguments);
-        if (fn is not CompiledFunction callable)
-            return new Exception($"calling non-function and non-built-in: {fn.Type}");
+        var callee = Peek(numberOfArguments);
 
-        if (callable.NumberOfParameters != numberOfArguments)
-            return new Exception($"wrong number of arguments: want {callable.NumberOfParameters}, got {numberOfArguments}");
+        var result = callee switch
+        {
+            BuiltIn builtin => CallBuiltin(builtin, numberOfArguments),
+            CompiledFunction function => CallFunction(function, numberOfArguments),
+            _ => new Exception($"calling non-function and non-built-in: {callee.Type}")
+        };
+        if (result.HasError)
+            return result;
 
-        var frame = new Frame(callable, this.sp - numberOfArguments);
+        return Maybe.Ok;
+    }
+
+    private Maybe CallFunction(CompiledFunction function, byte numberOfArguments)
+    {
+        if (function.NumberOfParameters != numberOfArguments)
+            return new Exception($"wrong number of arguments: want {function.NumberOfParameters}, got {numberOfArguments}");
+
+        var frame = new Frame(function, this.sp - numberOfArguments);
         frames.Push(frame);
 
-        this.sp = frame.BasePointer + callable.NumberOfLocals;
+        this.sp = frame.BasePointer + function.NumberOfLocals;
+
+        return Maybe.Ok;
+    }
+
+    private Maybe CallBuiltin(BuiltIn builtin, byte numberOfArguments)
+    {
+        var args = this.stack.AsSpan(this.sp - numberOfArguments, numberOfArguments);
+        var result = builtin.Fn(args.ToArray());
+        if (result.HasError) 
+            return result;
+
+        this.sp = this.sp - numberOfArguments - 1;
+        Push(result.Value); 
 
         return Maybe.Ok;
     }

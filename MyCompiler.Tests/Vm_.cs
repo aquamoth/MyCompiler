@@ -24,6 +24,7 @@ public class Vm_
     [MemberData(nameof(Runs_bytecode_INDEXES))]
     [MemberData(nameof(Runs_bytecode_CALLS))]
     [MemberData(nameof(Runs_bytecode_LOCALS))]
+    [MemberData(nameof(Runs_bytecode_BUILTINS))]
     public void Runs_bytecode(string source, IObject expectedStackTop)
     {
         var program = Parse(source);
@@ -309,6 +310,28 @@ public class Vm_
             };
         }
     }
+    public static TheoryData<string, IObject> Runs_bytecode_BUILTINS
+    {
+        get
+        {
+            return new()
+            {
+                { "len(\"\")", new IntegerObject(0) },
+                { "len(\"four\")", new IntegerObject(4) },
+                { "len(\"hello world\")", new IntegerObject(11) },
+                { "len([1, 2, 3])", new IntegerObject(3) },
+                { "len([])", new IntegerObject(0) },
+                { "puts(\"hello\", \"world!\")", NullObject.Value },
+                { "first([1, 2, 3])", new IntegerObject(1) },
+                { "first([])", NullObject.Value },
+                { "last([1, 2, 3])", new IntegerObject(3) },
+                { "last([])", NullObject.Value },
+                { "rest([1, 2, 3])", new ArrayObject(new[]{ new IntegerObject(2), new IntegerObject(3) }) },
+                { "rest([])", NullObject.Value },
+                { "push([], 1)", new ArrayObject(new[]{ new IntegerObject(1) }) },
+            };
+        }
+    }
 
     [Theory]
     [InlineData("fn() { 1; }(1);", 0, 1)]
@@ -327,6 +350,27 @@ public class Vm_
         Assert.True(computation.HasError);
 
         var expectedError = $"wrong number of arguments: want {expectedArguments}, got {actualArguments}";
+        Assert.Equal(expectedError, computation.Error!.Message);
+    }
+
+    [Theory]
+    [InlineData("len(1)", "argument to `len` not supported, got INTEGER")]
+    [InlineData("len(\"one\", \"two\")", "wrong number of arguments. got=2, want=1")]
+    [InlineData("first(1)", "argument to `first` must be ARRAY, got INTEGER")]
+    [InlineData("last(1)", "argument to `last` must be ARRAY, got INTEGER")]
+    [InlineData("push(1, 1)", "argument to `push` must be ARRAY, got INTEGER")]
+    public void Fails_builtin_calls(string source, string expectedError)
+    {
+        var program = Parse(source);
+
+        var compiler = new Compiler();
+        var compilation = compiler.Compile(program.Value);
+        Assert.False(compilation.HasError, compilation.Error?.Message);
+
+        var vm = new Vm.Vm(compiler.Bytecode());
+        var computation = vm.Run();
+
+        Assert.True(computation.HasError);
         Assert.Equal(expectedError, computation.Error!.Message);
     }
 

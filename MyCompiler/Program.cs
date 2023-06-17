@@ -23,6 +23,14 @@ var constants = new List<IObject>();
 var globals = new IObject[Vm.GLOBALS_SIZE];
 var symbolTable = new SymbolTable();
 
+foreach (var (index, builtin) in BuiltIns.Functions.Select((value, index) => (index, value)))
+{
+    var symbol = symbolTable.DefineBuiltin(index, builtin.Name);
+    if (symbol.HasError)
+        throw symbol.Error!;
+}
+
+
 if (args.Length == 0)
 {
     while (true)

@@ -59,7 +59,7 @@ public static class BuiltIns
                 arg0.Elements.Length == 0 ? NullObject.Value : arg0.Elements[0]
             ),
 
-            _ => new Exception($"Expected {ObjectType.ARRAY} but got {args[0].Type}")
+            _ => new Exception($"argument to `first` must be ARRAY, got {args[0].Type}")
         };
     }
 
@@ -74,7 +74,7 @@ public static class BuiltIns
                 arg0.Elements.Length == 0 ? NullObject.Value : arg0.Elements[^1]
             ),
 
-            _ => new Exception($"Expected {ObjectType.ARRAY} but got {args[0].Type}")
+            _ => new Exception($"argument to `last` must be ARRAY, got {args[0].Type}")
         };
     }
 
@@ -89,7 +89,7 @@ public static class BuiltIns
                 arg0.Elements.Length == 0 ? NullObject.Value : new ArrayObject(arg0.Elements[1..])
             ),
 
-            _ => new Exception($"Expected {ObjectType.ARRAY} but got {args[0].Type}")
+            _ => new Exception($"argument to `rest` must be ARRAY, got {args[0].Type}")
         };
     }
 
@@ -104,7 +104,7 @@ public static class BuiltIns
                 new ArrayObject(arg0.Elements.Concat(new[] { args[1] }).ToArray())
             ),
 
-            _ => new Exception($"Expected {ObjectType.ARRAY} but got {args[0].Type}")
+            _ => new Exception($"argument to `push` must be ARRAY, got {args[0].Type}")
         };
     }
 
