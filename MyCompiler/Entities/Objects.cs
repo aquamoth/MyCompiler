@@ -6,6 +6,7 @@ namespace MyCompiler.Entities;
 
 public enum ObjectType
 {
+    UNDEFINED,
     INTEGER,
     STRING,
     BOOLEAN,
@@ -164,7 +165,7 @@ public readonly record struct HashPair(IObject Key, IObject Value);
 public readonly record struct HashKey(ObjectType Type, long HashCode);
 
 
-record CompiledFunction(byte[] Instructions, int NumberOfLocals) : IObject, IEquatable<CompiledFunction>
+record CompiledFunction(byte[] Instructions, int NumberOfLocals, int NumberOfParameters) : IObject, IEquatable<CompiledFunction>
 {
     public ObjectType Type { get; init; } = ObjectType.COMPILED_FUNCTION;
     public string Inspect() => $"CompiledFunction({string.Join(", ", Instructions.Select(x => x))})";

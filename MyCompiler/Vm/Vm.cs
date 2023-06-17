@@ -20,7 +20,7 @@ public class Vm
 
     public Vm(Bytecode bytecode, IObject[] globals)
     {
-        var mainFn = new CompiledFunction(bytecode.Instructions, 0);
+        var mainFn = new CompiledFunction(bytecode.Instructions, 0, 0);
 
         frames = new Stack<Frame>(MAX_FRAMES);
         frames.Push(new Frame(mainFn, 0));
@@ -78,7 +78,7 @@ public class Vm
                         }
                         else
                         {
-                            return new Exception($"unable to add types {left.Type} + {right.Type}");
+                            return new Exception($"unable to add types {left?.Type ?? ObjectType.UNDEFINED} + {right?.Type ?? ObjectType.UNDEFINED}");
                         }
 
                     }
@@ -237,14 +237,10 @@ public class Vm
 
                 case Opcode.OpCall:
                     {
-                        var args = CurrentFrame.ReadUInt8();
-                        var fn = Peek();
-                        if (fn is not CompiledFunction callable)
-                            return new Exception($"calling non-function and non-built-in: {fn.Type}");
-
-                        var frame = new Frame(callable, sp);
-                        frames.Push(frame);
-                        sp = frame.BasePointer + callable.NumberOfLocals;
+                        var numberOfArguments = CurrentFrame.ReadUInt8();
+                        var result = CallFunction(numberOfArguments);
+                        if (result.HasError)
+                            return result;
                     }
                     break;
 
@@ -270,6 +266,23 @@ public class Vm
                     return new Exception($"unknown opcode {op}");
             }
         }
+
+        return Maybe.Ok;
+    }
+
+    private Maybe CallFunction(byte numberOfArguments)
+    {
+        var fn = Peek(numberOfArguments);
+        if (fn is not CompiledFunction callable)
+            return new Exception($"calling non-function and non-built-in: {fn.Type}");
+
+        if (callable.NumberOfParameters != numberOfArguments)
+            return new Exception($"wrong number of arguments: want {callable.NumberOfParameters}, got {numberOfArguments}");
+
+        var frame = new Frame(callable, this.sp - numberOfArguments);
+        frames.Push(frame);
+
+        this.sp = frame.BasePointer + callable.NumberOfLocals;
 
         return Maybe.Ok;
     }
@@ -385,12 +398,13 @@ public class Vm
         sp++;
     }
 
-    private IObject Peek()
+    private IObject Peek(byte stackPointerOffset = 0)
     {
-        if (sp == 0)
+        var position = this.sp - 1 - stackPointerOffset;
+        if (position < 0)
             throw new Exception("stack underflow during peek");
 
-        return stack[sp - 1];
+        return stack[position];
     }
 
     private IObject Pop()

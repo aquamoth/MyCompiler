@@ -245,6 +245,23 @@ public class Vm_
                 { "let noReturn = fn() { }; noReturn();", NullObject.Value },
                 { "let noReturn = fn() { }; let noReturnTwo = fn() { noReturn();}; noReturn(); noReturnTwo();", NullObject.Value },
                 { "let returnsOne = fn() {1}; let returnsOneReturner = fn() {returnsOne}; returnsOneReturner()()", new IntegerObject(1)},
+                { "let identity = fn(a) { a; }; identity(4);", new IntegerObject(4)},
+                { "let sum = fn(a, b) { let c = a + b; c; }; sum(1, 2);", new IntegerObject(3)},
+                { "let sum = fn(a, b) { let c = a + b; c; }; sum(1, 2) + sum(3, 4);", new IntegerObject(10)},
+                { "let sum = fn(a, b) { let c = a + b; c; }; let outer = fn() { sum(1, 2) + sum(3, 4); }; outer();", new IntegerObject(10)},
+                {
+                    """
+                    let globalNum = 10;
+                    let sum = fn(a, b) {
+                        let c = a + b;
+                        c + globalNum;
+                    };
+                    let outer = fn() {
+                        sum(1, 2) + sum(3, 4) + globalNum;
+                    };
+                    outer() + globalNum;
+                    """
+                    , new IntegerObject(50)},
             };
         }
     }
@@ -291,6 +308,26 @@ public class Vm_
                 },
             };
         }
+    }
+
+    [Theory]
+    [InlineData("fn() { 1; }(1);", 0, 1)]
+    [InlineData("fn(a) { a; }();", 1, 0)]
+    [InlineData("fn(a, b) { a + b; }(1);", 2, 1)]
+    public void Fails_function_call_with_wrong_number_of_arguments(string source, int expectedArguments, int actualArguments)
+    {
+        var program = Parse(source);
+
+        var compiler = new Compiler();
+        var compilation = compiler.Compile(program.Value);
+        Assert.False(compilation.HasError, compilation.Error?.Message);
+
+        var vm = new Vm.Vm(compiler.Bytecode());
+        var computation = vm.Run();
+        Assert.True(computation.HasError);
+
+        var expectedError = $"wrong number of arguments: want {expectedArguments}, got {actualArguments}";
+        Assert.Equal(expectedError, computation.Error!.Message);
     }
 
     private Helpers.Maybe<AstProgram> Parse(string Input)

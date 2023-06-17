@@ -231,7 +231,7 @@ public class Compiler
         var numberOfLocals = _symbolTable.store.Count;
         var instructions = LeaveScope();
 
-        var fn = new CompiledFunction(instructions, numberOfLocals);
+        var fn = new CompiledFunction(instructions, numberOfLocals, functionLiteral.Parameters.Length);
         return Emit(Opcode.OpConstant, AddConstant(fn));
     }
 
