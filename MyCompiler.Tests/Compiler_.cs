@@ -26,6 +26,7 @@ public class Compiler_
     [MemberData(nameof(Compiles_source_to_bytecode_INDEXES))]
     [MemberData(nameof(Compiles_source_to_bytecode_FUNCTIONS))]
     [MemberData(nameof(Compiles_source_to_bytecode_CALLS))]
+    [MemberData(nameof(Compiles_source_to_bytecode_BUILTINS))]
     public void Compiles_source_to_bytecode(string input, string expectedInstructions, object[] expectedConstants)
     {
         var compiler = new Compiler();
@@ -720,6 +721,27 @@ public class Compiler_
                         new IntegerObject(24),
                         new IntegerObject(25),
                         new IntegerObject(26),
+                    }
+                },
+            };
+    public static TheoryData<string, string, object[]> Compiles_source_to_bytecode_BUILTINS
+        => new()
+            {
+                {
+                    "len([]); push([], 1);",
+                    Disassemble(
+                        Code.Code.Make(Opcode.OpGetBuiltin, 0),
+                        Code.Code.Make(Opcode.OpArray, 0),
+                        Code.Code.Make(Opcode.OpCall, 1),
+                        Code.Code.Make(Opcode.OpPop),
+                        Code.Code.Make(Opcode.OpGetBuiltin, 5),
+                        Code.Code.Make(Opcode.OpArray, 0),
+                        Code.Code.Make(Opcode.OpConstant, 0),
+                        Code.Code.Make(Opcode.OpCall, 2),
+                        Code.Code.Make(Opcode.OpPop)
+                    ),
+                    new object[]{
+                        new IntegerObject(1),
                     }
                 },
             };

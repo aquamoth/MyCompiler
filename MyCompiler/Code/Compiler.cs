@@ -16,6 +16,14 @@ public class Compiler
     {
         _symbolTable = new();
         _constants = new();
+
+        foreach (var (index, builtin) in BuiltIns.Functions.Select((value, index) => (index, value)))
+        {
+            var symbol = _symbolTable.DefineBuiltin(index, builtin.Name);
+            if (symbol.HasError)
+                throw symbol.Error!;
+        }
+
         Scopes.Push(new CompilationScope());
     }
 
@@ -152,11 +160,11 @@ public class Compiler
                     if (symbol.HasError)
                         return symbol;
 
-                    var opcode = symbol.Value.Scope == Symbol.LOCAL_SCOPE
-                        ? Opcode.OpGetLocal
-                        : Opcode.OpGetGlobal;
+                    var opcode = LoadSymbol(symbol);
+                    if (opcode.HasError)
+                        return opcode;
 
-                    var emitted = Emit(opcode, symbol.Value.Index);
+                    var emitted = Emit(opcode.Value, symbol.Value.Index);
                     if (emitted.HasError)
                         return emitted;
                 }
@@ -204,6 +212,17 @@ public class Compiler
         }
 
         return Maybe.Ok;
+    }
+
+    private static Maybe<Opcode> LoadSymbol(Maybe<Symbol> symbol)
+    {
+        return symbol.Value.Scope switch
+        {
+            Symbol.LOCAL_SCOPE => Opcode.OpGetLocal,
+            Symbol.GLOBAL_SCOPE => Opcode.OpGetGlobal,
+            Symbol.BUILTIN_SCOPE => Opcode.OpGetBuiltin,
+            _ => new NotSupportedException($"Unsupported scope: {symbol.Value.Scope}")
+        };
     }
 
     private Maybe CompileFunction(FunctionLiteral functionLiteral)

@@ -1,4 +1,5 @@
 ﻿using MyCompiler.Helpers;
+using static System.Formats.Asn1.AsnWriter;
 
 namespace MyCompiler.Code;
 
@@ -28,6 +29,15 @@ public class SymbolTable
             return new Exception($"symbol {name} already defined");
 
         numDefinitions++;
+        return symbol;
+    }
+
+    internal Maybe<Symbol> DefineBuiltin(int index, string name)
+    {
+        var symbol = new Symbol(name, Symbol.BUILTIN_SCOPE, index);
+        if (!store.TryAdd(name, symbol))
+            return new Exception($"symbol {name} already defined");
+
         return symbol;
     }
 

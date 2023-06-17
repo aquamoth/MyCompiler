@@ -71,4 +71,36 @@ public class SymbolTable_
         Assert.Equal(expectedFirst, actualFirst);
         Assert.Equal(expectedSecond, actualSecond);
     }
+
+
+    [Fact]
+    public void Resolve_builtins()
+    {
+        var expectedSymbols = new[]
+        {
+            new Symbol("a", Symbol.BUILTIN_SCOPE, 0),
+            new Symbol("c", Symbol.BUILTIN_SCOPE, 1),
+            new Symbol("e", Symbol.BUILTIN_SCOPE, 2),
+            new Symbol("f", Symbol.BUILTIN_SCOPE, 3),
+        };
+
+        var global = new SymbolTable();
+        var firstLocal = new SymbolTable(global);
+        var secondLocal = new SymbolTable(firstLocal);
+
+        foreach((var name, var index) in expectedSymbols.Select((s, i) => (s.Name, i)))
+        {
+            global.DefineBuiltin(index, name);
+        }
+
+        foreach(var tbl in new[] { global, firstLocal, secondLocal })
+        {
+            foreach(var expected in expectedSymbols)
+            {
+                var actual = tbl.Resolve(expected.Name);
+                Assert.True(actual.HasValue, actual.Error?.Message);
+                Assert.Equal(expected, actual);
+            }
+        }
+    }
 }

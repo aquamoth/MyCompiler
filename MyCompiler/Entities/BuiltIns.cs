@@ -4,18 +4,27 @@ namespace MyCompiler.Entities;
 
 public static class BuiltIns
 {
-    static readonly Dictionary<string, BuiltIn> dictionary = new();
-
-    static BuiltIns()
+    public static readonly (string Name, BuiltIn Fn)[] Functions = new (string Name, BuiltIn Fn)[]
     {
-        dictionary.Add("len", new BuiltIn(BUILTIN_LEN));
-        dictionary.Add("first", new BuiltIn(BUILTIN_FIRST));
-        dictionary.Add("last", new BuiltIn(BUILTIN_LAST));
-        dictionary.Add("rest", new BuiltIn(BUILTIN_REST));
-        dictionary.Add("push", new BuiltIn(BUILTIN_PUSH));
-        dictionary.Add("gets", new BuiltIn(BUILTIN_GETS));
-        dictionary.Add("puts", new BuiltIn(BUILTIN_PUTS));
-    }
+        ("len"  , new BuiltIn(BUILTIN_LEN)  ),
+        ("puts" , new BuiltIn(BUILTIN_PUTS) ),
+        ("first", new BuiltIn(BUILTIN_FIRST)),
+        ("last" , new BuiltIn(BUILTIN_LAST) ),
+        ("rest" , new BuiltIn(BUILTIN_REST) ),
+        ("push" , new BuiltIn(BUILTIN_PUSH) ),
+        ("gets" , new BuiltIn(BUILTIN_GETS) ),
+    };
+
+    static readonly Dictionary<string, BuiltIn> dictionary = new()
+    {
+        { "len"  , new BuiltIn(BUILTIN_LEN  ) },
+        { "puts" , new BuiltIn(BUILTIN_PUTS ) },
+        { "first", new BuiltIn(BUILTIN_FIRST) },
+        { "last" , new BuiltIn(BUILTIN_LAST ) },
+        { "rest" , new BuiltIn(BUILTIN_REST ) },
+        { "push" , new BuiltIn(BUILTIN_PUSH ) },
+        { "gets" , new BuiltIn(BUILTIN_GETS ) },
+    };
 
     public static Maybe<BuiltIn> GetByName(string name)
     {
