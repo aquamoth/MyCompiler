@@ -4,11 +4,11 @@ using System.Buffers.Binary;
 
 namespace MyCompiler.Vm;
 
-record Frame(CompiledFunction CompiledFunction, int BasePointer)
+record Frame(Closure Closure, int BasePointer)
 {
     int ip = -1;
 
-    public byte[] Instructions => CompiledFunction.Instructions;
+    public byte[] Instructions => Closure.Function.Instructions;
 
     public bool TryReadInstruction(out Opcode opcode)
     {

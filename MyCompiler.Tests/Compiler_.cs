@@ -316,9 +316,25 @@ public class Compiler_
     => new()
         {
             {
+                "let num = 55; fn() { num }",
+                Disassemble(
+                    Code.Code.Make(Opcode.OpConstant, 0),
+                    Code.Code.Make(Opcode.OpSetGlobal, 0),
+                    Code.Code.Make(Opcode.OpClosure, 1, 0),
+                    Code.Code.Make(Opcode.OpPop)
+                ),
+                new object[]{
+                    new IntegerObject(55),
+                    new CompiledFunction(Assemble(
+                        Code.Code.Make(Opcode.OpGetLocal, 0), //TOOD: this is wrong
+                        Code.Code.Make(Opcode.OpReturnValue)
+                    ), 2, 0)
+                }
+            },
+            {
                 "fn(){ let num = 55; num }",
                 Disassemble(
-                    Code.Code.Make(Opcode.OpConstant, 1),
+                    Code.Code.Make(Opcode.OpClosure, 1, 0),
                     Code.Code.Make(Opcode.OpPop)
                 ),
                 new object[]{
@@ -340,7 +356,7 @@ public class Compiler_
                 }
                 """,
                 Disassemble(
-                    Code.Code.Make(Opcode.OpConstant, 2),
+                    Code.Code.Make(Opcode.OpClosure, 2, 0),
                     Code.Code.Make(Opcode.OpPop)
                 ),
                 new object[]{
@@ -567,7 +583,7 @@ public class Compiler_
                 {
                     "fn() { return 5 + 10 }",
                     Disassemble(
-                        Code.Code.Make(Opcode.OpConstant, 2),
+                        Code.Code.Make(Opcode.OpClosure, 2, 0),
                         Code.Code.Make(Opcode.OpPop)
                     ),
                     new object[]{
@@ -586,7 +602,7 @@ public class Compiler_
                 {
                     "fn() { 5 + 10 }",
                     Disassemble(
-                        Code.Code.Make(Opcode.OpConstant, 2),
+                        Code.Code.Make(Opcode.OpClosure, 2, 0),
                         Code.Code.Make(Opcode.OpPop)
                     ),
                     new object[]{
@@ -605,7 +621,7 @@ public class Compiler_
                 {
                     "fn() { 1; 2 }",
                     Disassemble(
-                        Code.Code.Make(Opcode.OpConstant, 2),
+                        Code.Code.Make(Opcode.OpClosure, 2, 0),
                         Code.Code.Make(Opcode.OpPop)
                     ),
                     new object[]{
@@ -624,7 +640,7 @@ public class Compiler_
                 {
                     "fn() { }",
                     Disassemble(
-                        Code.Code.Make(Opcode.OpConstant, 0),
+                        Code.Code.Make(Opcode.OpClosure, 0, 0),
                         Code.Code.Make(Opcode.OpPop)
                     ),
                     new object[]{
@@ -642,7 +658,7 @@ public class Compiler_
                 {
                     "fn() { 24 }();",
                     Disassemble(
-                        Code.Code.Make(Opcode.OpConstant, 1),
+                        Code.Code.Make(Opcode.OpClosure, 1, 0),
                         Code.Code.Make(Opcode.OpCall, 0),
                         Code.Code.Make(Opcode.OpPop)
                     ),
@@ -659,7 +675,7 @@ public class Compiler_
                 {
                     "let noArgs = fn() { 24 }; noArgs();",
                     Disassemble(
-                        Code.Code.Make(Opcode.OpConstant, 1),
+                        Code.Code.Make(Opcode.OpClosure, 1, 0),
                         Code.Code.Make(Opcode.OpSetGlobal),
                         Code.Code.Make(Opcode.OpGetGlobal),
                         Code.Code.Make(Opcode.OpCall, 0),
@@ -678,7 +694,7 @@ public class Compiler_
                 {
                     "let oneArg = fn(a) { a }; oneArg(24);",
                     Disassemble(
-                        Code.Code.Make(Opcode.OpConstant, 0),
+                        Code.Code.Make(Opcode.OpClosure, 0, 0),
                         Code.Code.Make(Opcode.OpSetGlobal, 0),
                         Code.Code.Make(Opcode.OpGetGlobal, 0),
                         Code.Code.Make(Opcode.OpConstant, 1),
@@ -698,7 +714,7 @@ public class Compiler_
                 {
                     "let manyArg = fn(a, b, c) { a; b; c }; manyArg(24, 25, 26);",
                     Disassemble(
-                        Code.Code.Make(Opcode.OpConstant, 0),
+                        Code.Code.Make(Opcode.OpClosure, 0, 0),
                         Code.Code.Make(Opcode.OpSetGlobal, 0),
                         Code.Code.Make(Opcode.OpGetGlobal, 0),
                         Code.Code.Make(Opcode.OpConstant, 1),
@@ -742,6 +758,23 @@ public class Compiler_
                     ),
                     new object[]{
                         new IntegerObject(1),
+                    }
+                },
+                {
+                    "fn() { len([]) }",
+                    Disassemble(
+                        Code.Code.Make(Opcode.OpClosure, 0, 0),
+                        Code.Code.Make(Opcode.OpPop)
+                    ),
+                    new object[]{
+                        new CompiledFunction(
+                            Assemble(
+                                Code.Code.Make(Opcode.OpGetBuiltin, 0), //TOOD: this is a bug in the book
+                                Code.Code.Make(Opcode.OpArray, 0),
+                                Code.Code.Make(Opcode.OpCall, 1),
+                                Code.Code.Make(Opcode.OpReturnValue)
+                            ), 0, 0
+                        ),
                     }
                 },
             };

@@ -251,7 +251,8 @@ public class Compiler
         var instructions = LeaveScope();
 
         var fn = new CompiledFunction(instructions, numberOfLocals, functionLiteral.Parameters.Length);
-        return Emit(Opcode.OpConstant, AddConstant(fn));
+        int fnIndex = AddConstant(fn);
+        return Emit(Opcode.OpClosure, fnIndex, 0);
     }
 
     private Maybe CompileIndexExpression(IndexExpression indexExpression)

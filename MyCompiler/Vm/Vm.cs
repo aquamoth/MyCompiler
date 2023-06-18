@@ -22,9 +22,11 @@ public class Vm
     public Vm(Bytecode bytecode, IObject[] globals)
     {
         var mainFn = new CompiledFunction(bytecode.Instructions, 0, 0);
+        var mainClosure = new Closure(mainFn);
+        var mainFrame = new Frame(mainClosure, 0);
 
         frames = new Stack<Frame>(MAX_FRAMES);
-        frames.Push(new Frame(mainFn, 0));
+        frames.Push(mainFrame);
 
         this.constants = bytecode.Constants;
         this.builtins = BuiltIns.Functions.Select(x => x.Fn).ToArray();
@@ -50,6 +52,14 @@ public class Vm
                     {
                         var constIndex = CurrentFrame.ReadUInt16();
                         Push(constants[constIndex]);
+                    }
+                    break;
+
+                case Opcode.OpClosure:
+                    {
+                        var constIndex = CurrentFrame.ReadUInt16();
+                        _ = CurrentFrame.ReadUInt8();
+                        PushClosure(constIndex);
                     }
                     break;
 
@@ -279,6 +289,17 @@ public class Vm
         return Maybe.Ok;
     }
 
+    private Maybe PushClosure(ushort constIndex)
+    {
+        var constant = constants[constIndex];
+        if (constant is not CompiledFunction function)
+            return new Exception($"not a function: {constant}");
+
+        var closure = new Closure(function);
+        Push(closure);
+        return Maybe.Ok;
+    }
+
     private Maybe ExecuteCall(byte numberOfArguments)
     {
         var callee = Peek(numberOfArguments);
@@ -286,7 +307,7 @@ public class Vm
         var result = callee switch
         {
             BuiltIn builtin => CallBuiltin(builtin, numberOfArguments),
-            CompiledFunction function => CallFunction(function, numberOfArguments),
+            Closure closure => CallClosure(closure, numberOfArguments),
             _ => new Exception($"calling non-function and non-built-in: {callee.Type}")
         };
         if (result.HasError)
@@ -295,15 +316,15 @@ public class Vm
         return Maybe.Ok;
     }
 
-    private Maybe CallFunction(CompiledFunction function, byte numberOfArguments)
+    private Maybe CallClosure(Closure closure, byte numberOfArguments)
     {
-        if (function.NumberOfParameters != numberOfArguments)
-            return new Exception($"wrong number of arguments: want {function.NumberOfParameters}, got {numberOfArguments}");
+        if (closure.Function.NumberOfParameters != numberOfArguments)
+            return new Exception($"wrong number of arguments: want {closure.Function.NumberOfParameters}, got {numberOfArguments}");
 
-        var frame = new Frame(function, this.sp - numberOfArguments);
+        var frame = new Frame(closure, this.sp - numberOfArguments);
         frames.Push(frame);
 
-        this.sp = frame.BasePointer + function.NumberOfLocals;
+        this.sp = frame.BasePointer + closure.Function.NumberOfLocals;
 
         return Maybe.Ok;
     }

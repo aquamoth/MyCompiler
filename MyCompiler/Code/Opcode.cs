@@ -34,6 +34,7 @@ public enum Opcode : byte
     OpSetLocal,
     OpGetBuiltin,
 
+    OpClosure,
     OpCall,
     OpReturnValue,
     OpReturn

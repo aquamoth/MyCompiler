@@ -14,6 +14,7 @@ public enum ObjectType
     RETURN_VALUE,
     FUNCTION,
     COMPILED_FUNCTION,
+    CLOSURE,
     BUILTIN,
     ARRAY,
     HASH
@@ -177,4 +178,16 @@ record CompiledFunction(byte[] Instructions, int NumberOfLocals, int NumberOfPar
         if (other is null) return false;
         return Instructions.SequenceEqual(other.Instructions);
     }
+}
+
+record Closure(CompiledFunction Function, params IObject[] Free) : IObject //, IEquatable<Closure>
+{
+    public ObjectType Type { get; init; } = ObjectType.CLOSURE;
+    public string Inspect() => $"Closure({Function.Inspect()})";
+    public override string ToString() => Inspect();
+    //public bool Equals(Closure? other)
+    //{
+    //    if (other is null) return false;
+    //    return function.Equals(other.function) && Free.SequenceEqual(other.Free);
+    //}
 }

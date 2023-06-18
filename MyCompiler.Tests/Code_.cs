@@ -27,6 +27,7 @@ namespace MyCompiler.Tests
                     {Opcode.OpDiv, Array.Empty<int>(), new byte[]{ (byte)Opcode.OpDiv } },
                     {Opcode.OpPop, Array.Empty<int>(), new byte[]{ (byte)Opcode.OpPop } },
                     {Opcode.OpGetLocal, new int[]{ 255 }, new byte[]{ (byte)Opcode.OpGetLocal, 0xFF } },
+                    {Opcode.OpClosure, new int[]{ 65534, 255 }, new byte[]{ (byte)Opcode.OpClosure, 0xFF, 0xFE, 0xFF } },
                 };
             }
         }
@@ -74,12 +75,14 @@ namespace MyCompiler.Tests
                         Code.Code.Make(Opcode.OpGetLocal, 1).Value,
                         Code.Code.Make(Opcode.OpConstant, 2).Value,
                         Code.Code.Make(Opcode.OpConstant, 65535).Value,
+                        Code.Code.Make(Opcode.OpClosure, 65535, 255).Value,
                     }.SelectMany(x=>x).ToArray(),
                     """
                     0000 OpAdd
                     0001 OpGetLocal 1
                     0003 OpConstant 2
                     0006 OpConstant 65535
+                    0009 OpClosure 65535 255
                     """
                 }
             };
