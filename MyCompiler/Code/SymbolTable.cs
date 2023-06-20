@@ -1,13 +1,14 @@
 ﻿using MyCompiler.Helpers;
-using static System.Formats.Asn1.AsnWriter;
 
 namespace MyCompiler.Code;
 
 public class SymbolTable
 {
-    public readonly SymbolTable? Outer;
-    internal readonly IDictionary<string, Symbol> store = new Dictionary<string, Symbol>();
     private int numDefinitions = 0;
+
+    internal IDictionary<string, Symbol> Store { get; init; }
+    internal SymbolTable? Outer { get; init; }
+    internal List<Symbol> FreeSymbols { get; } = new();
 
     public SymbolTable() : this(null)
     {
@@ -15,9 +16,9 @@ public class SymbolTable
 
     public SymbolTable(SymbolTable? outer)
     {
-        this.Outer = outer;
-        this.store = new Dictionary<string, Symbol>();
-        this.numDefinitions = 0;
+        Outer = outer;
+        Store = new Dictionary<string, Symbol>();
+        numDefinitions = 0;
     }
 
     public Maybe<Symbol> Define(string name)
@@ -25,17 +26,28 @@ public class SymbolTable
         var scope = Outer == null ? Symbol.GLOBAL_SCOPE : Symbol.LOCAL_SCOPE;
 
         var symbol = new Symbol(name, scope, numDefinitions);
-        if (!store.TryAdd(name, symbol))
+        if (!Store.TryAdd(name, symbol))
             return new Exception($"symbol {name} already defined");
 
         numDefinitions++;
         return symbol;
     }
 
+    public Maybe<Symbol> DefineFree(Symbol original)
+    {
+        FreeSymbols.Add(original);
+        var symbol = new Symbol(original.Name, Symbol.FREE_SCOPE, FreeSymbols.Count - 1);
+
+        if (!Store.TryAdd(symbol.Name, symbol))
+            return new Exception($"symbol {symbol.Name} already defined");
+
+        return symbol;
+    }
+
     internal Maybe<Symbol> DefineBuiltin(int index, string name)
     {
         var symbol = new Symbol(name, Symbol.BUILTIN_SCOPE, index);
-        if (!store.TryAdd(name, symbol))
+        if (!Store.TryAdd(name, symbol))
             return new Exception($"symbol {name} already defined");
 
         return symbol;
@@ -43,12 +55,21 @@ public class SymbolTable
 
     public Maybe<Symbol> Resolve(string name)
     {
-        if (store.TryGetValue(name, out var symbol))
+        if (Store.TryGetValue(name, out var symbol))
             return symbol;
 
-        if (Outer != null)
-            return Outer.Resolve(name);
+        if (Outer == null)
+            return new Exception($"unknown symbol {name}");
 
-        return new Exception($"unknown symbol {name}");
+        var outerSymbol = Outer.Resolve(name);
+        if (outerSymbol.HasError)
+            return outerSymbol;
+
+        symbol = outerSymbol.Value;
+        if (symbol.Scope == Symbol.GLOBAL_SCOPE || symbol.Scope == Symbol.BUILTIN_SCOPE)
+            return outerSymbol;
+
+        var freeSymbol = DefineFree(symbol);
+        return freeSymbol;
     }
 }

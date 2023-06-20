@@ -41,6 +41,7 @@ public static class Code
             Define(Opcode.OpGetLocal, 1),
             Define(Opcode.OpSetLocal, 1),
             Define(Opcode.OpGetBuiltin, 1),
+            Define(Opcode.OpGetFree, 1),
 
             Define(Opcode.OpClosure, 2, 1),
             Define (Opcode.OpCall, 1),

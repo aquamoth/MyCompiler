@@ -160,11 +160,7 @@ public class Compiler
                     if (symbol.HasError)
                         return symbol;
 
-                    var opcode = LoadSymbol(symbol);
-                    if (opcode.HasError)
-                        return opcode;
-
-                    var emitted = Emit(opcode.Value, symbol.Value.Index);
+                    var emitted = LoadSymbol(symbol.Value);
                     if (emitted.HasError)
                         return emitted;
                 }
@@ -214,15 +210,21 @@ public class Compiler
         return Maybe.Ok;
     }
 
-    private static Maybe<Opcode> LoadSymbol(Maybe<Symbol> symbol)
+    private Maybe<int> LoadSymbol(Symbol symbol)
     {
-        return symbol.Value.Scope switch
+        Maybe<Opcode> opcode = symbol.Scope switch
         {
-            Symbol.LOCAL_SCOPE => Opcode.OpGetLocal,
             Symbol.GLOBAL_SCOPE => Opcode.OpGetGlobal,
+            Symbol.LOCAL_SCOPE => Opcode.OpGetLocal,
             Symbol.BUILTIN_SCOPE => Opcode.OpGetBuiltin,
-            _ => new NotSupportedException($"Unsupported scope: {symbol.Value.Scope}")
+            Symbol.FREE_SCOPE => Opcode.OpGetFree,
+            _ => new NotSupportedException($"Unsupported scope: {symbol.Scope}")
         };
+
+        if (opcode.HasError)
+            return opcode.Error!;
+
+        return Emit(opcode.Value, symbol.Index);
     }
 
     private Maybe CompileFunction(FunctionLiteral functionLiteral)
@@ -247,12 +249,20 @@ public class Compiler
             Emit(Opcode.OpReturn);
         }
 
-        var numberOfLocals = _symbolTable.store.Count;
+        var freeSymbols = _symbolTable.FreeSymbols;
+        var numberOfLocals = _symbolTable.Store.Count;
         var instructions = LeaveScope();
+        
+        foreach (var freeSymbol in freeSymbols)
+        {
+            var emitted = LoadSymbol(freeSymbol);
+            if (emitted.HasError)
+                return emitted;
+        }
 
         var fn = new CompiledFunction(instructions, numberOfLocals, functionLiteral.Parameters.Length);
         int fnIndex = AddConstant(fn);
-        return Emit(Opcode.OpClosure, fnIndex, 0);
+        return Emit(Opcode.OpClosure, fnIndex, freeSymbols.Count);
     }
 
     private Maybe CompileIndexExpression(IndexExpression indexExpression)

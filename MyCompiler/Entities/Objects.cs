@@ -169,7 +169,9 @@ public readonly record struct HashKey(ObjectType Type, long HashCode);
 record CompiledFunction(byte[] Instructions, int NumberOfLocals, int NumberOfParameters) : IObject, IEquatable<CompiledFunction>
 {
     public ObjectType Type { get; init; } = ObjectType.COMPILED_FUNCTION;
-    public string Inspect() => $"CompiledFunction({string.Join(", ", Instructions.Select(x => x))})";
+    public string Inspect() => $@"CompiledFunction(
+{Code.Code.Disassemble(Instructions).Value}
+)";
 
     public override string ToString() => Inspect();
 

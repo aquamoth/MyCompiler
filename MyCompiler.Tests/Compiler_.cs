@@ -27,6 +27,7 @@ public class Compiler_
     [MemberData(nameof(Compiles_source_to_bytecode_FUNCTIONS))]
     [MemberData(nameof(Compiles_source_to_bytecode_CALLS))]
     [MemberData(nameof(Compiles_source_to_bytecode_BUILTINS))]
+    [MemberData(nameof(Compiles_source_to_bytecode_CLOSURES))]
     public void Compiles_source_to_bytecode(string input, string expectedInstructions, object[] expectedConstants)
     {
         var compiler = new Compiler();
@@ -40,6 +41,10 @@ public class Compiler_
 
         var actualInstructions = Code.Code.Disassemble(bytecode.Instructions);
         Assert.True(actualInstructions.HasValue, actualInstructions.Error?.Message);
+
+        outputHelper.WriteLine(actualInstructions.Value);
+        foreach (var constant in bytecode.Constants)
+            outputHelper.WriteLine(constant.Inspect());
 
         Assert.Equal(expectedInstructions, actualInstructions.Value);
         Assert.Equal(expectedConstants, bytecode.Constants);
@@ -326,7 +331,7 @@ public class Compiler_
                 new object[]{
                     new IntegerObject(55),
                     new CompiledFunction(Assemble(
-                        Code.Code.Make(Opcode.OpGetLocal, 0), //TOOD: this is wrong
+                        Code.Code.Make(Opcode.OpGetGlobal, 0),
                         Code.Code.Make(Opcode.OpReturnValue)
                     ), 2, 0)
                 }
@@ -778,6 +783,149 @@ public class Compiler_
                     }
                 },
             };
+    public static TheoryData<string, string, object[]> Compiles_source_to_bytecode_CLOSURES
+        => new()
+            {
+                {
+                    """
+                    fn(a) {
+                        fn(b) {
+                            a + b
+                        }
+                    }
+                    """,
+                    Disassemble(
+                        Code.Code.Make(Opcode.OpClosure, 1, 0),
+                        Code.Code.Make(Opcode.OpPop)
+                    ),
+                    new object[]
+                    {
+                        new CompiledFunction(
+                            Assemble(
+                                Code.Code.Make(Opcode.OpGetFree, 0),
+                                Code.Code.Make(Opcode.OpGetLocal, 0),
+                                Code.Code.Make(Opcode.OpAdd),
+                                Code.Code.Make(Opcode.OpReturnValue)
+                            ), 0, 1
+                        ),
+                        new CompiledFunction(
+                            Assemble(
+                                Code.Code.Make(Opcode.OpGetLocal, 0),
+                                Code.Code.Make(Opcode.OpClosure, 0, 1),
+                                Code.Code.Make(Opcode.OpReturnValue)
+                            ), 0, 1
+                        )
+                    }
+                },
+                {
+                    """
+                    fn(a) {
+                        fn(b) {
+                            fn(c) {
+                                a + b + c
+                            }
+                        }
+                    }
+                    """,
+                    Disassemble(
+                        Code.Code.Make(Opcode.OpClosure, 2, 0),
+                        Code.Code.Make(Opcode.OpPop)
+                    ),
+                    new object[]
+                    {
+                        new CompiledFunction(
+                            Assemble(
+                                Code.Code.Make(Opcode.OpGetFree, 0),
+                                Code.Code.Make(Opcode.OpGetFree, 1),
+                                Code.Code.Make(Opcode.OpAdd),
+                                Code.Code.Make(Opcode.OpGetLocal, 0),
+                                Code.Code.Make(Opcode.OpAdd),
+                                Code.Code.Make(Opcode.OpReturnValue)
+                            ),0,1
+                        ),
+                        new CompiledFunction(
+                            Assemble(
+                                Code.Code.Make(Opcode.OpGetFree, 0),
+                                Code.Code.Make(Opcode.OpGetLocal, 0),
+                                Code.Code.Make(Opcode.OpClosure, 0, 2),
+                                Code.Code.Make(Opcode.OpReturnValue)
+                            ),0,1
+                        ),
+                        new CompiledFunction(
+                            Assemble(
+                                Code.Code.Make(Opcode.OpGetLocal, 0),
+                                Code.Code.Make(Opcode.OpClosure, 1, 1),
+                                Code.Code.Make(Opcode.OpReturnValue)
+                            ), 0,1
+                        )
+                    }
+                },
+                {
+                    """
+                    let global = 55;
+
+                    fn() {
+                        let a = 66;
+
+                        fn() {
+                            let b = 77;
+
+                            fn() {
+                                let c = 88;
+
+                                global + a + b + c;
+                            }
+                        }
+                    }                    
+                    """,
+                    Disassemble(
+                        Code.Code.Make(Opcode.OpConstant, 0),
+                        Code.Code.Make(Opcode.OpSetGlobal, 0),
+                        Code.Code.Make(Opcode.OpClosure, 6, 0),
+                        Code.Code.Make(Opcode.OpPop)
+                    ),
+                    new object[]
+                    {
+                        new IntegerObject(55),
+                        new IntegerObject(66),
+                        new IntegerObject(77),
+                        new IntegerObject(88),
+                        new CompiledFunction(
+                            Assemble(
+                                Code.Code.Make(Opcode.OpConstant, 3),
+                                Code.Code.Make(Opcode.OpSetLocal, 0),
+                                Code.Code.Make(Opcode.OpGetGlobal, 0),
+                                Code.Code.Make(Opcode.OpGetFree, 0),
+                                Code.Code.Make(Opcode.OpAdd),
+                                Code.Code.Make(Opcode.OpGetFree, 1),
+                                Code.Code.Make(Opcode.OpAdd),
+                                Code.Code.Make(Opcode.OpGetLocal, 0),
+                                Code.Code.Make(Opcode.OpAdd),
+                                Code.Code.Make(Opcode.OpReturnValue)
+                            ), 1, 0
+                        ),
+                        new CompiledFunction(
+                            Assemble(
+                                Code.Code.Make(Opcode.OpConstant, 2),
+                                Code.Code.Make(Opcode.OpSetLocal, 0),
+                                Code.Code.Make(Opcode.OpGetFree, 0),
+                                Code.Code.Make(Opcode.OpGetLocal, 0),
+                                Code.Code.Make(Opcode.OpClosure, 4, 2),
+                                Code.Code.Make(Opcode.OpReturnValue)
+                            ),1,0
+                        ),
+                        new CompiledFunction(
+                            Assemble(
+                                Code.Code.Make(Opcode.OpConstant, 1),
+                                Code.Code.Make(Opcode.OpSetLocal, 0),
+                                Code.Code.Make(Opcode.OpGetLocal, 0),
+                                Code.Code.Make(Opcode.OpClosure, 5, 1),
+                                Code.Code.Make(Opcode.OpReturnValue)
+                            ),1,0
+                        )
+                    }
+                },
+            };
 
     [Fact]
     public void Symbol_defines_symbols()
@@ -837,7 +985,7 @@ public class Compiler_
     private static string Disassemble(params Maybe<byte[]>[] operations)
         => Code.Code.Disassemble(operations.SelectMany(x => x.Value).ToArray()).Value;
 
-    private static byte[] Assemble(params Maybe<byte[]>[] operations) 
+    private static byte[] Assemble(params Maybe<byte[]>[] operations)
         => operations.SelectMany(x => x.Value).ToArray();
 
     private Helpers.Maybe<AstProgram> Parse(string Input)

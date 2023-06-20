@@ -45,8 +45,8 @@ public class SymbolTable_
         {
             new Symbol("a", Symbol.GLOBAL_SCOPE, 0),
             new Symbol("b", Symbol.GLOBAL_SCOPE, 1),
-            new Symbol("c", Symbol.LOCAL_SCOPE, 0),
-            new Symbol("d", Symbol.LOCAL_SCOPE, 1),
+            new Symbol("c", Symbol.FREE_SCOPE, 0),
+            new Symbol("d", Symbol.FREE_SCOPE, 1),
             new Symbol("e", Symbol.LOCAL_SCOPE, 0),
             new Symbol("f", Symbol.LOCAL_SCOPE, 1),
         };
@@ -70,6 +70,38 @@ public class SymbolTable_
 
         Assert.Equal(expectedFirst, actualFirst);
         Assert.Equal(expectedSecond, actualSecond);
+    }
+
+
+    [Fact]
+    public void Errors_resolving_unresolvable_free()
+    {
+        var expectedSecond = new[]
+        {
+            new Symbol("a", Symbol.GLOBAL_SCOPE, 0),
+            new Symbol("c", Symbol.FREE_SCOPE, 0),
+            new Symbol("e", Symbol.LOCAL_SCOPE, 0),
+            new Symbol("f", Symbol.LOCAL_SCOPE, 1),
+        };
+
+        var global = new SymbolTable();
+        global.Define("a");
+
+        var firstLocal = new SymbolTable(global);
+        firstLocal.Define("c");
+
+        var secondLocal = new SymbolTable(firstLocal);
+        secondLocal.Define("e");
+        secondLocal.Define("f");
+
+        var actualSecond = expectedSecond.Select(s => secondLocal.Resolve(s.Name).Value);
+
+        var actual_b = secondLocal.Resolve("b");
+        var actual_d = secondLocal.Resolve("d");
+
+        Assert.Equal(expectedSecond, actualSecond);
+        Assert.False(actual_b.HasValue, "b should not be resolvable");
+        Assert.False(actual_d.HasValue, "d should not be resolvable");
     }
 
 
