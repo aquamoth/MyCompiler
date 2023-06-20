@@ -58,8 +58,8 @@ public class Vm
                 case Opcode.OpClosure:
                     {
                         var constIndex = CurrentFrame.ReadUInt16();
-                        _ = CurrentFrame.ReadUInt8();
-                        PushClosure(constIndex);
+                        var numberOfFree = CurrentFrame.ReadUInt8();
+                        PushClosure(constIndex, numberOfFree);
                     }
                     break;
 
@@ -202,6 +202,13 @@ public class Vm
                     }
                     break;
 
+                case Opcode.OpGetFree:
+                    {
+                        var freeIndex = CurrentFrame.ReadUInt8();
+                        Push(CurrentFrame.Closure.Free[freeIndex]);
+                    }
+                    break;
+
                 case Opcode.OpArray:
                     {
                         var size = CurrentFrame.ReadUInt16();
@@ -289,13 +296,17 @@ public class Vm
         return Maybe.Ok;
     }
 
-    private Maybe PushClosure(ushort constIndex)
+    private Maybe PushClosure(ushort constIndex, ushort numberOfFree)
     {
         var constant = constants[constIndex];
         if (constant is not CompiledFunction function)
             return new Exception($"not a function: {constant}");
 
-        var closure = new Closure(function);
+        var free = new IObject[numberOfFree];
+        for (var i = numberOfFree - 1; i >= 0; i--)
+            free[i] = Pop();
+
+        var closure = new Closure(function, free);
         Push(closure);
         return Maybe.Ok;
     }
@@ -333,11 +344,11 @@ public class Vm
     {
         var args = this.stack.AsSpan(this.sp - numberOfArguments, numberOfArguments);
         var result = builtin.Fn(args.ToArray());
-        if (result.HasError) 
+        if (result.HasError)
             return result;
 
         this.sp = this.sp - numberOfArguments - 1;
-        Push(result.Value); 
+        Push(result.Value);
 
         return Maybe.Ok;
     }

@@ -25,6 +25,7 @@ public class Vm_
     [MemberData(nameof(Runs_bytecode_CALLS))]
     [MemberData(nameof(Runs_bytecode_LOCALS))]
     [MemberData(nameof(Runs_bytecode_BUILTINS))]
+    [MemberData(nameof(Runs_bytecode_CLOSURES))]
     public void Runs_bytecode(string source, IObject expectedStackTop)
     {
         var program = Parse(source);
@@ -329,6 +330,98 @@ public class Vm_
                 { "rest([1, 2, 3])", new ArrayObject(new[]{ new IntegerObject(2), new IntegerObject(3) }) },
                 { "rest([])", NullObject.Value },
                 { "push([], 1)", new ArrayObject(new[]{ new IntegerObject(1) }) },
+            };
+        }
+    }
+    public static TheoryData<string, IObject> Runs_bytecode_CLOSURES
+    {
+        get
+        {
+            return new()
+            {
+                {
+                    """
+                    let newClosure = fn(a) {
+                        fn() { a; };
+                    };
+                    let closure = newClosure(99);
+                    closure();
+                    """,
+                    new IntegerObject(99)
+                },
+                {
+                    """
+                    let newAdder = fn(a, b) {
+                        fn(c) { a + b + c };
+                    };
+                    let adder = newAdder(1, 2);
+                    adder(8);
+                    """,
+                    new IntegerObject(11)
+                },
+                {
+                    """
+                    let newAdder = fn(a, b) {
+                        let c = a + b;
+                        fn(d) { c + d };
+                    };
+                    let adder = newAdder(1, 2);
+                    adder(8);
+                    """,
+                    new IntegerObject(11)
+               },
+               {
+                    """
+                    let newAdderOuter = fn(a, b) {
+                        let c = a + b;
+                        fn(d) {
+                            let e = d + c;
+                            fn(f) { e + f; };
+                        };
+                    };
+                    let newAdderInner = newAdderOuter(1, 2)
+                    let adder = newAdderInner(3);
+                    adder(8);
+                    """,
+                    new IntegerObject(14)
+               },
+               {
+                    """
+                    let a = 1;
+                    let newAdderOuter = fn(b) {
+                        fn(c) {
+                            fn(d) { a + b + c + d };
+                        };
+                    };
+                    let newAdderInner = newAdderOuter(2)
+                    let adder = newAdderInner(3);
+                    adder(8);
+                    """,
+                    new IntegerObject(14)
+               },
+               {
+                    """
+                    let newClosure = fn(a, b) {
+                        let one = fn() { a; };
+                        let two = fn() { b; };
+                        fn() { one() + two(); };
+                    };
+                    let closure = newClosure(9, 90);
+                    closure();
+                    """,
+                    new IntegerObject(99)
+               },
+               {
+                    """
+                    let newClosure = fn(a, b) {
+                        let one = fn() { a / b; };
+                        fn() { a - one(); };
+                    };
+                    let closure = newClosure(99, 3);
+                    closure();
+                    """,
+                    new IntegerObject(66)
+               },
             };
         }
     }
